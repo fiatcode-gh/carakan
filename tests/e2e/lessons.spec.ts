@@ -601,3 +601,40 @@ test("[P-A11Y] focus stays in the lesson after every step instead of falling to 
   }
   await expect(page.locator(".done__title")).toBeFocused();
 });
+
+test("[P-B05] a storage read that fails after boot shows the storage error with a retry, on the ladder and in a lesson", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const real = IDBObjectStore.prototype.getAllKeys;
+    IDBObjectStore.prototype.getAllKeys = function (...args) {
+      if ((window as { __failReads?: boolean }).__failReads) {
+        throw new DOMException("closed", "InvalidStateError");
+      }
+      return real.apply(this, args);
+    };
+    (window as { __failReads?: boolean }).__failReads = true;
+  });
+  const heal = () =>
+    page.evaluate(() => {
+      (window as { __failReads?: boolean }).__failReads = false;
+    });
+  const alert = page.getByRole("alert");
+  const retry = page.getByRole("button", { name: id["retryButton"]! });
+
+  await gotoRoute(page, "#/");
+  await expect(alert).toHaveText(new RegExp(id["storageErrorTitle"]!));
+  await heal();
+  await retry.click();
+  await expect(page.locator(".ladder")).toBeVisible();
+
+  await page.evaluate(() => {
+    (window as { __failReads?: boolean }).__failReads = true;
+  });
+  await gotoRoute(page, "#/lesson/u1");
+  await expect(alert).toHaveText(new RegExp(id["storageErrorTitle"]!));
+  await heal();
+  await retry.click();
+  await expect(page.locator(".lesson")).toBeVisible();
+  await expect(alert).toHaveCount(0);
+});
