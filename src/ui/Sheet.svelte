@@ -139,6 +139,7 @@
 
   .sheet__body {
     display: grid;
+    align-content: start;
     gap: var(--space-5);
     padding: var(--space-5);
     overflow-y: auto;

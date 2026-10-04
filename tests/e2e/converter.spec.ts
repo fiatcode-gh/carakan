@@ -55,16 +55,9 @@ async function openAksara(page: Page, catalog = id): Promise<void> {
   await aksaraInput(page, catalog).waitFor();
 }
 
-async function pickGlyph(
-  page: Page,
-  label: string,
-  section?: string,
-): Promise<void> {
+async function pickGlyph(page: Page, label: string): Promise<void> {
   await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
   const sheet = picker(page);
-  if (section !== undefined) {
-    await sheet.getByRole("tab", { name: section, exact: true }).click();
-  }
   await sheet.getByRole("button", { name: label, exact: true }).click();
   await expect(sheet).toBeHidden();
 }
@@ -238,7 +231,7 @@ test("[P-U07] picker inserts ha then na; the scheme toggle changes the output", 
   await pickGlyph(page, "na");
   await expect(aksaraInput(page)).toHaveValue(successOutput("hana"));
   await expect(outputOf(page)).toContainText("hana");
-  await pickGlyph(page, "ta murda", id["sectionMurda"]!);
+  await pickGlyph(page, "ta murda");
   const aksara = await aksaraInput(page).inputValue();
   const latin = (scheme: "pujl" | "jgst") => {
     const result = toLatin(aksara, { scheme });
@@ -271,15 +264,16 @@ test("[P-U08] the picker inserts at the caret", async ({ page }) => {
   await expect(aksaraInput(page)).toHaveValue(successOutput("hacarana"));
 });
 
-test("[P-U08] [W11] [W12] [W13] the picker is a modal sheet with section tabs and display names", async ({
+test("[P-U08] [W11] [W12] [W13] the picker is a modal sheet with stacked section headings and display names", async ({
   page,
 }) => {
   await openAksara(page);
   await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
   const sheet = picker(page);
   await expect(sheet).toBeVisible();
-  const tabs = sheet.getByRole("tab");
-  await expect(tabs).toHaveText([
+  await expect(sheet.getByRole("tablist")).toHaveCount(0);
+  const headings = sheet.getByRole("heading", { level: 3 });
+  await expect(headings).toHaveText([
     id["sectionCarakan"]!,
     id["sectionSwara"]!,
     id["sectionMurda"]!,
@@ -289,20 +283,40 @@ test("[P-U08] [W11] [W12] [W13] the picker is a modal sheet with section tabs an
   await expect(
     sheet.getByRole("button", { name: "ha", exact: true }),
   ).toBeVisible();
-  await tabs.nth(4).click();
-  await expect(
-    sheet.getByRole("button", { name: "pada adeg-adeg", exact: true }),
-  ).toBeVisible();
-  await tabs.nth(1).click();
-  await expect(
-    sheet.getByRole("button", { name: "a panjang", exact: true }),
-  ).toBeVisible();
   await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await shoot(page, "picker");
+  for (const name of [
+    id["sectionSwara"]!,
+    id["sectionMurda"]!,
+    id["sectionAngka"]!,
+    id["sectionPada"]!,
+  ]) {
+    const heading = sheet.getByRole("heading", { level: 3, name, exact: true });
+    await heading.scrollIntoViewIfNeeded();
+    await expect(heading).toBeVisible();
+  }
+  const pada = sheet.getByRole("button", {
+    name: "pada adeg-adeg",
+    exact: true,
+  });
+  await pada.scrollIntoViewIfNeeded();
+  await expect(pada).toBeVisible();
+  await shoot(page, "picker-pada");
   await sheet.getByRole("button", { name: id["closeButton"]! }).click();
   await expect(sheet).toBeHidden();
+});
+
+test("[P-U08] a Pada entry inserts into the aksara input", async ({ page }) => {
+  await openAksara(page);
+  await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+  const sheet = picker(page);
+  await sheet
+    .getByRole("button", { name: "pada adeg-adeg", exact: true })
+    .click();
+  await expect(sheet).toBeHidden();
+  await expect(aksaraInput(page)).not.toHaveValue("");
 });
 
 test("[P-S03] the input and output survive switching to Bagan and back", async ({
@@ -329,7 +343,6 @@ test.describe("English UI picker", () => {
     await openAksara(page, en);
     await page.getByRole("button", { name: en["glyphPickerTitle"]! }).click();
     const sheet = picker(page, en);
-    await sheet.getByRole("tab", { name: en["sectionSwara"]! }).click();
     await expect(
       sheet.getByRole("button", { name: "long a", exact: true }),
     ).toBeVisible();

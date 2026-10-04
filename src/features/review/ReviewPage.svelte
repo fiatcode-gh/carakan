@@ -42,15 +42,8 @@
     retry: $t("reviewGroupRetry"),
   } satisfies Record<ReviewItemKind, string>);
 
-  const grades: readonly {
-    grade: ReviewGrade;
-    variant: "secondary" | "primary";
-  }[] = [
-    { grade: "again", variant: "secondary" },
-    { grade: "hard", variant: "secondary" },
-    { grade: "good", variant: "primary" },
-    { grade: "easy", variant: "secondary" },
-  ];
+  // Equal-weight buttons; each marker differs in shape as well as tone.
+  const grades: readonly ReviewGrade[] = ["again", "hard", "good", "easy"];
   const gradeLabel = $derived({
     again: $t("gradeAgain"),
     hard: $t("gradeHard"),
@@ -122,15 +115,20 @@
                     {#if item.revealed}
                       <p class="card__name">{info?.name ?? item.itemId}</p>
                       <div class="grades">
-                        {#each grades as { grade, variant }}
+                        {#each grades as grade}
                           <Button
-                            {variant}
+                            variant="secondary"
+                            class="grade-btn"
                             data-grade-again={grade === "again"
                               ? item.itemId
                               : undefined}
                             onclick={() =>
                               void review.grade(item.itemId, grade)}
                           >
+                            <span
+                              class={["grade-dot", `grade-dot--${grade}`]}
+                              aria-hidden="true"
+                            ></span>
                             {gradeLabel[grade]}
                           </Button>
                         {/each}
@@ -193,7 +191,40 @@
   .grades {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--space-3);
+    gap: var(--space-2);
     width: 100%;
+  }
+
+  .grades :global(.grade-btn) {
+    justify-content: flex-start;
+    padding-inline: var(--space-3);
+    font-size: var(--text-sm);
+  }
+
+  .grade-dot {
+    flex: none;
+    width: 0.75rem;
+    height: 0.75rem;
+    border: 2px solid var(--color-text);
+    border-radius: var(--radius-full);
+  }
+
+  .grade-dot--again {
+    border-radius: 2px;
+    background: var(--color-accent);
+    rotate: 45deg;
+  }
+
+  .grade-dot--hard {
+    background: var(--color-text-muted);
+  }
+
+  .grade-dot--good {
+    background: var(--color-reward-fill);
+  }
+
+  .grade-dot--easy {
+    border-radius: 2px;
+    background: var(--color-link);
   }
 </style>

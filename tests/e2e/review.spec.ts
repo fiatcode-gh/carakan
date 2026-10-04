@@ -242,6 +242,28 @@ test("[P-R04][P-R03] fresh and due cards sit under their headers; revealing show
   await shoot(page, "revealed");
 });
 
+test("[P-R12] revealed grade buttons carry equal weight and each a marker", async ({
+  page,
+}) => {
+  await openReview(page, { srs: [fresh("ha", NOW - HOUR)] });
+  const card = cards(page).first();
+  await reveal(card).click();
+  const keys = ["gradeAgain", "gradeHard", "gradeGood", "gradeEasy"];
+  const backgrounds: string[] = [];
+  for (const key of keys) {
+    const button = gradeButton(card, id[key]!);
+    await expect(button.locator(".grade-dot")).toHaveCount(1);
+    await expect(button.locator(".grade-dot")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
+    backgrounds.push(
+      await button.evaluate((el) => getComputedStyle(el).backgroundColor),
+    );
+  }
+  expect(new Set(backgrounds).size, "same background on all four").toBe(1);
+});
+
 test("[P-R14] a hidden card keeps its name and grade buttons out of the DOM; revealing focuses Again", async ({
   page,
 }) => {
