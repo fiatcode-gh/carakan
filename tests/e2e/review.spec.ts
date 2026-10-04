@@ -513,10 +513,17 @@ test("[P-R11] a mistake made in a lesson surfaces the drill without a reload", a
     if (wrongOnWulu) expect(logged).toBe(true);
   };
 
+  // The done view and the top bar both carry a "Kembali" button; click the
+  // done view's own button once it is shown, as lessons.spec.ts does.
+  const backFromDone = async () => {
+    await expect(page.locator(".trophy")).toBeVisible();
+    await page.locator(".lesson__foot").getByRole("button").click();
+  };
+
   await play("u1", 5, false);
-  await page.getByRole("button", { name: id["backButton"]! }).click();
+  await backFromDone();
   await play("u2", 2, true);
-  await page.getByRole("button", { name: id["backButton"]! }).click();
+  await backFromDone();
   await page.getByRole("link", { name: id["navReview"]! }).click();
   await expect(
     page.getByRole("heading", { level: 2, name: id["drillHeading"]! }),
