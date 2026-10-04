@@ -63,6 +63,8 @@ describe("[P-D02] engine never throws", () => {
     );
   });
 
+  // 140,000 conversions take about 2.5 s locally and over 5 s (Vitest's
+  // default) on GitHub's runners; the work is fixed, so allow for slow hosts.
   test("toAksara and toLatin never throw on seeded random input", () => {
     const rand = lcg(0x5eed);
     const latin = [
@@ -91,5 +93,5 @@ describe("[P-D02] engine never throws", () => {
         expect(() => toLatin(input, { scheme })).not.toThrow();
       }
     }
-  });
+  }, 30_000);
 });
