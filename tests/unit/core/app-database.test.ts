@@ -98,7 +98,7 @@ test("[P-S09] state survives closing and reopening the database", async () => {
   );
 });
 
-test("[P-S09] a connection the browser closes reports it", async () => {
+test("[P-S10] a connection the browser closes reports it", async () => {
   const { openCarakanDb } = await import("../../../src/core/db/database.ts");
   const { forceCloseDatabase } = await import("fake-indexeddb");
   const { unwrap } = await import("idb");

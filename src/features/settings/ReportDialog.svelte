@@ -25,7 +25,6 @@
     placeholder={$t("reportHint")}
     multiline
     rows={6}
-    invalid={failed}
     bind:value={description}
   />
   {#if failed}

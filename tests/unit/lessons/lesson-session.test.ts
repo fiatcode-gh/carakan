@@ -328,7 +328,7 @@ test("[P-B08] starting again resets the session", async () => {
   expect(get(session.state)).toMatchObject({ kind: "meet", index: 0 });
 });
 
-test("[P-B14] a rejected completion write keeps the feedback and retry completes the unit", async () => {
+test("[P-S10] a rejected completion write keeps the feedback and retry completes the unit", async () => {
   const { session, completions } = await setup();
   session.start(u1, new Set());
   for (let i = 0; i < 5; i++) await session.meetNext();
@@ -350,7 +350,7 @@ test("[P-B14] a rejected completion write keeps the feedback and retry completes
   expect(await completions.completedUnitIds()).toContain("u1");
 });
 
-test("[P-B12] a rejected mistake write keeps the question and a later answer clears the failure", async () => {
+test("[P-S10] a rejected mistake write keeps the question and a later answer clears the failure", async () => {
   const unit = new Unit({
     id: "uX",
     name: "da/dha",

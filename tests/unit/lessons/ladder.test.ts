@@ -143,7 +143,7 @@ test("[P-B02] preview is the first five non-empty glyph chars joined by a space"
   expect(ladderPreview(unknown, table)).toBe(table.byId.get("ha")!.char);
 });
 
-test("[P-B05] a rejected completions read leaves an error state that a retry clears", async () => {
+test("[P-S10] a rejected completions read leaves an error state that a retry clears", async () => {
   const completions = new UnitCompletionRepository(await openFreshDb());
   const model = new LadderModel({ units, completions });
   const failing = vi

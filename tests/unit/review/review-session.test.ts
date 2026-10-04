@@ -109,7 +109,7 @@ test("operations run in call order", async () => {
   ]);
 });
 
-test("[P-R05] a rejected read or grade leaves an error state that a refresh clears", async () => {
+test("[P-S10] a rejected read or grade leaves an error state that a refresh clears", async () => {
   const { queue, session } = await setup();
   await queue.enqueue("ha", T0);
   await session.refresh();

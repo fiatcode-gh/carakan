@@ -602,7 +602,7 @@ test("[P-A11Y] focus stays in the lesson after every step instead of falling to 
   await expect(page.locator(".done__title")).toBeFocused();
 });
 
-test("[P-B05] a storage read that fails after boot shows the storage error with a retry, on the ladder and in a lesson", async ({
+test("[P-S10] a storage read that fails after boot shows the storage error with a retry, on the ladder and in a lesson", async ({
   page,
 }) => {
   await page.addInitScript(() => {

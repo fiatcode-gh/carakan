@@ -196,7 +196,7 @@ test("[P-R09] a suku-wulu drill never shows a bare combining mark", async () => 
   }
 });
 
-test("[P-R09] a rejected refresh leaves an error state that a refresh clears", async () => {
+test("[P-S10] a rejected refresh leaves an error state that a refresh clears", async () => {
   const { mistakes, session } = await setup();
   await mistakes.record("da-dha", NOW);
   const failing = vi
@@ -209,7 +209,7 @@ test("[P-R09] a rejected refresh leaves an error state that a refresh clears", a
   expect(ready(session).pairKey).toBe("da-dha");
 });
 
-test("[P-R10] a rejected answer write reports failure and can be answered again", async () => {
+test("[P-S10] a rejected answer write reports failure and can be answered again", async () => {
   const { mistakes, session } = await setup();
   await mistakes.record("da-dha", NOW);
   await session.refresh();
