@@ -19,6 +19,7 @@ import {
 } from "./support/a11y.ts";
 import { gotoRoute } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
+import { answerCurrentQuestion } from "./support/lesson.ts";
 import {
   createSolver,
   type QuestionPrompt,
@@ -564,4 +565,39 @@ test.describe("English interface", () => {
     await settle(page);
     await expectAccessible(page);
   });
+});
+
+test("[P-A11Y] focus stays in the lesson after every step instead of falling to the body", async ({
+  page,
+}) => {
+  const body = () =>
+    page.evaluate(() => document.activeElement === document.body);
+  const proceed = page.getByRole("button", { name: id["continueButton"]! });
+  await gotoRoute(page, "#/lesson/u1");
+  const glyphs = unit("u1").glyphs.length;
+
+  // Each meet card puts focus on Continue.
+  for (let i = 0; i < glyphs; i++) {
+    await expect(page.locator(".lesson .chip--count")).toHaveText(
+      `${i + 1}/${glyphs}`,
+    );
+    if (i > 0) await expect(proceed).toBeFocused();
+    await proceed.click();
+  }
+
+  // A new question focuses its first option; an answer focuses the feedback.
+  await expect(page.locator(".options button").first()).toBeFocused();
+  await answerCurrentQuestion(page, solver);
+  await expect(page.locator(".feedback")).toBeFocused();
+  expect(await body()).toBe(false);
+  await proceed.click();
+  await expect(page.locator(".options button").first()).toBeFocused();
+
+  // Finish the lesson: the done heading takes focus.
+  for (;;) {
+    const q = await answerCurrentQuestion(page, solver);
+    await proceed.click();
+    if (q.number === q.total) break;
+  }
+  await expect(page.locator(".done__title")).toBeFocused();
 });

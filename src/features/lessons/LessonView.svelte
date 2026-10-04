@@ -29,6 +29,20 @@
           : current.kind,
   );
 
+  // Every step re-creates the view, destroying the button just activated, so
+  // focus is placed again: first option, Continue, feedback or the heading.
+  // The page's own focus handling covers the first render.
+  let lessonEl = $state<HTMLElement>();
+  let firstKey = true;
+  $effect(() => {
+    void viewKey;
+    if (firstKey) {
+      firstKey = false;
+      return;
+    }
+    lessonEl?.querySelector<HTMLElement>("[data-autofocus]")?.focus();
+  });
+
   function promptChar(glyphId: string): string {
     return glyphInfo.byId.get(glyphId)?.char ?? "";
   }
@@ -43,7 +57,7 @@
 </script>
 
 {#key viewKey}
-  <div class="lesson">
+  <div class="lesson" bind:this={lessonEl}>
     {#if failed}
       <div class="lesson__failure" role="alert">
         <Icon name="hard-drive" />
@@ -65,7 +79,12 @@
         </Flashcard>
       </div>
       <div class="lesson__foot">
-        <Button variant="primary" block onclick={() => void session.meetNext()}>
+        <Button
+          variant="primary"
+          block
+          data-autofocus
+          onclick={() => void session.meetNext()}
+        >
           {$t("continueButton")}
         </Button>
       </div>
@@ -98,6 +117,8 @@
               current.correct ? "feedback--correct" : "feedback--wrong",
             ]}
             role="status"
+            tabindex="-1"
+            data-autofocus
           >
             <Icon name={current.correct ? "circle-check" : "circle-x"} />
             <span
@@ -124,6 +145,7 @@
               {#if current.kind === "question"}
                 <Button
                   variant={aksaraOptions ? "aksara-option" : "option"}
+                  data-autofocus={index === 0 ? "" : undefined}
                   onclick={() => void session.answer(index)}
                 >
                   {option}
@@ -161,7 +183,7 @@
         <div class="trophy" aria-hidden="true">
           <Icon name="trophy" />
         </div>
-        <h2 class="done__title">
+        <h2 class="done__title" tabindex="-1" data-autofocus>
           {$t("lessonDone", {
             correct: current.correct,
             total: current.total,
@@ -284,6 +306,11 @@
 
   .lesson__body--done :global(.ornament) {
     width: min(100%, 14rem);
+  }
+
+  /* The heading takes focus when the lesson ends; it is not a control. */
+  .done__title:focus {
+    outline: none;
   }
 
   .done__title {
