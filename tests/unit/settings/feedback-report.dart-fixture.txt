@@ -1,0 +1,7 @@
+Laporan kesalahan — Carakan (Aksara Jawa)
+Versi aplikasi: 0.1.0+1
+Aturan (ruleset): kaj1-2021-simplified-v1
+Sumber aturan: Kongres Aksara Jawa I Yogyakarta 2021 (Tata Tulis Simplified), JGST (Komisi I), PUJL (Balai Bahasa Yogyakarta), Wewaton Sriwedari 1926 (nenek moyang), Pedoman Penulisan Aksara Jawa 2002.
+
+Deskripsi kesalahan:
+saté salah
