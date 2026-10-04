@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { loadContent } from "../../../src/content/content-repository.ts";
 import { GlyphInfoTable } from "../../../src/content/glyph-info-table.ts";
 import { Unit } from "../../../src/content/unit.ts";
@@ -141,4 +141,17 @@ test("[P-B02] preview is the first five non-empty glyph chars joined by a space"
     unlock: "previous",
   });
   expect(ladderPreview(unknown, table)).toBe(table.byId.get("ha")!.char);
+});
+
+test("[P-B05] a rejected completions read leaves an error state that a retry clears", async () => {
+  const completions = new UnitCompletionRepository(await openFreshDb());
+  const model = new LadderModel({ units, completions });
+  const failing = vi
+    .spyOn(completions, "completedUnitIds")
+    .mockRejectedValueOnce(new Error("idb closed"));
+  await model.refresh();
+  expect(get(model.state)).toEqual({ kind: "error" });
+  failing.mockRestore();
+  await model.refresh();
+  expect(get(model.state).kind).toBe("ready");
 });

@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { MistakeLogRepository } from "../../../src/core/db/mistake-log-repository.ts";
 import { UnitCompletionRepository } from "../../../src/core/db/unit-completion-repository.ts";
 import { openFreshDb } from "./db-helpers.ts";
@@ -96,4 +96,16 @@ test("[P-S09] state survives closing and reopening the database", async () => {
   expect(await new UnitCompletionRepository(second).completedUnitIds()).toEqual(
     new Set(["u1"]),
   );
+});
+
+test("[P-S09] a connection the browser closes reports it", async () => {
+  const { openCarakanDb } = await import("../../../src/core/db/database.ts");
+  const { forceCloseDatabase } = await import("fake-indexeddb");
+  const { unwrap } = await import("idb");
+  const terminated = vi.fn();
+  const db = await openCarakanDb(`carakan-lost-${Math.random()}`, terminated);
+  expect(terminated).not.toHaveBeenCalled();
+  // fake-indexeddb types the parameter as the constructor, not the instance.
+  forceCloseDatabase(unwrap(db) as never);
+  expect(terminated).toHaveBeenCalledOnce();
 });

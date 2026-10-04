@@ -46,6 +46,15 @@
   {/snippet}
   {#if $state.kind === "loading"}
     <StateView kind="loading" title={$t("loadingLabel")} page />
+  {:else if $state.kind === "error"}
+    <StateView
+      kind="error"
+      title={$t("storageErrorTitle")}
+      icon="hard-drive"
+      actionLabel={$t("retryButton")}
+      onaction={() => void ladder.refresh()}
+      page
+    />
   {:else}
     <ol class="ladder">
       {#each $state.statuses as { unit, status }, i (unit.id)}

@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { ConfusionPair } from "../../../src/content/confusion-pair.ts";
 import { GlyphInfoTable } from "../../../src/content/glyph-info-table.ts";
 import { Unit } from "../../../src/content/unit.ts";
@@ -326,4 +326,78 @@ test("[P-B08] starting again resets the session", async () => {
   for (let i = 0; i < 5; i++) await session.meetNext();
   session.start(u1, new Set());
   expect(get(session.state)).toMatchObject({ kind: "meet", index: 0 });
+});
+
+test("[P-B14] a rejected completion write keeps the feedback and retry completes the unit", async () => {
+  const { session, completions } = await setup();
+  session.start(u1, new Set());
+  for (let i = 0; i < 5; i++) await session.meetNext();
+  const plan = planFor(u1, new Set());
+  for (const [i, e] of plan.entries()) {
+    await session.answer(answerOf(e));
+    if (i < plan.length - 1) await session.continueAfterFeedback();
+  }
+  const failing = vi
+    .spyOn(completions, "complete")
+    .mockRejectedValueOnce(new Error("idb closed"));
+  await session.continueAfterFeedback();
+  expect(get(session.state).kind).toBe("feedback");
+  expect(get(session.failed)).toBe(true);
+  failing.mockRestore();
+  await session.retry();
+  expect(get(session.state).kind).toBe("done");
+  expect(get(session.failed)).toBe(false);
+  expect(await completions.completedUnitIds()).toContain("u1");
+});
+
+test("[P-B12] a rejected mistake write keeps the question and a later answer clears the failure", async () => {
+  const unit = new Unit({
+    id: "uX",
+    name: "da/dha",
+    glyphs: ["da", "dha"],
+    unlock: "previous",
+  });
+  const chars = new GlyphInfoTable(
+    new Map([
+      [
+        "da",
+        {
+          id: "da",
+          name: "da",
+          char: javaneseChar("JAVANESE LETTER DA"),
+          pujl: "da",
+        },
+      ],
+      [
+        "dha",
+        {
+          id: "dha",
+          name: "dha",
+          char: javaneseChar("JAVANESE LETTER DA MAHAPRANA"),
+          pujl: "dha",
+        },
+      ],
+    ]),
+  );
+  const { session, mistakes } = await setup({
+    glyphInfo: chars,
+    confusionPairs: [
+      new ConfusionPair({ a: "da", b: "dha", label: "da – dha" }),
+    ],
+  });
+  session.start(unit, new Set());
+  await session.meetNext();
+  await session.meetNext();
+  const question = get(session.state);
+  if (question.kind !== "question") throw new Error("no question");
+  const failing = vi
+    .spyOn(mistakes, "record")
+    .mockRejectedValue(new Error("idb closed"));
+  await session.answer((question.exercise.answerIndex + 1) % 2);
+  expect(get(session.state).kind).toBe("question");
+  expect(get(session.failed)).toBe(true);
+  failing.mockRestore();
+  await session.retry();
+  expect(get(session.state).kind).toBe("feedback");
+  expect(get(session.failed)).toBe(false);
 });

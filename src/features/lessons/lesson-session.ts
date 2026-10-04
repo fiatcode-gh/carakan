@@ -70,6 +70,10 @@ export class LessonSession {
   #correct = 0;
   /** Set while a write is pending; a double tap must not run it twice. */
   #busy = false;
+  readonly #failed = writable(false);
+  /** True while the last step could not be stored; the state is unchanged. */
+  readonly failed: Readable<boolean> = readonly(this.#failed);
+  #retryStep: (() => Promise<void>) | null = null;
 
   constructor(deps: LessonDeps) {
     this.#deps = deps;
@@ -92,7 +96,38 @@ export class LessonSession {
     this.#emitMeet(unit);
   }
 
-  async meetNext(): Promise<void> {
+  meetNext(): Promise<void> {
+    return this.#attempt(() => this.#meetNext());
+  }
+
+  answer(index: number): Promise<void> {
+    return this.#attempt(() => this.#answer(index));
+  }
+
+  /** After the last question's feedback (W05) this completes the unit. */
+  continueAfterFeedback(): Promise<void> {
+    return this.#attempt(() => this.#continueAfterFeedback());
+  }
+
+  /** Runs the step that failed to store again. */
+  async retry(): Promise<void> {
+    const step = this.#retryStep;
+    if (step !== null) await this.#attempt(step);
+  }
+
+  /** A failed write leaves the state as it was and raises `failed`. */
+  async #attempt(step: () => Promise<void>): Promise<void> {
+    try {
+      await step();
+      this.#retryStep = null;
+      this.#failed.set(false);
+    } catch {
+      this.#retryStep = step;
+      this.#failed.set(true);
+    }
+  }
+
+  async #meetNext(): Promise<void> {
     const unit = this.#unit;
     const current = get(this.#state);
     if (unit === null || current.kind !== "meet" || this.#busy) return;
@@ -106,7 +141,7 @@ export class LessonSession {
     }
   }
 
-  async answer(index: number): Promise<void> {
+  async #answer(index: number): Promise<void> {
     const unit = this.#unit;
     const current = get(this.#state);
     if (unit === null || current.kind !== "question" || this.#busy) return;
@@ -130,8 +165,7 @@ export class LessonSession {
     }
   }
 
-  /** After the last question's feedback (W05) this completes the unit. */
-  async continueAfterFeedback(): Promise<void> {
+  async #continueAfterFeedback(): Promise<void> {
     const unit = this.#unit;
     if (unit === null || get(this.#state).kind !== "feedback" || this.#busy) {
       return;

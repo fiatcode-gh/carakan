@@ -11,8 +11,17 @@ import {
 
 export type CarakanDb = IDBPDatabase<CarakanDbSchema>;
 
-export function openCarakanDb(name: string = DB_NAME): Promise<CarakanDb> {
+/**
+ * `onTerminated` runs when the browser closes the connection abnormally (for
+ * example site data cleared while the app is open); the handle is unusable
+ * after that and must be reopened.
+ */
+export function openCarakanDb(
+  name: string = DB_NAME,
+  onTerminated?: () => void,
+): Promise<CarakanDb> {
   return openDB<CarakanDbSchema>(name, DB_VERSION, {
+    terminated: onTerminated,
     upgrade(db) {
       const srs = db.createObjectStore(SRS_ITEMS, { keyPath: "itemId" });
       srs.createIndex(SRS_DUE_AT_INDEX, "dueAt");

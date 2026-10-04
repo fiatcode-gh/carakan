@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { get } from "svelte/store";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { ConfusionPair } from "../../../src/content/confusion-pair.ts";
 import { loadContent } from "../../../src/content/content-repository.ts";
 import { GlyphInfoTable } from "../../../src/content/glyph-info-table.ts";
@@ -194,4 +194,33 @@ test("[P-R09] a suku-wulu drill never shows a bare combining mark", async () => 
       `drill option "${s}" starts with a bare combining mark`,
     ).toBe(false);
   }
+});
+
+test("[P-R09] a rejected refresh leaves an error state that a refresh clears", async () => {
+  const { mistakes, session } = await setup();
+  await mistakes.record("da-dha", NOW);
+  const failing = vi
+    .spyOn(mistakes, "topPairs")
+    .mockRejectedValueOnce(new Error("idb closed"));
+  await session.refresh();
+  expect(get(session.state)).toEqual<DrillState>({ kind: "error" });
+  failing.mockRestore();
+  await session.refresh();
+  expect(ready(session).pairKey).toBe("da-dha");
+});
+
+test("[P-R10] a rejected answer write reports failure and can be answered again", async () => {
+  const { mistakes, session } = await setup();
+  await mistakes.record("da-dha", NOW);
+  await session.refresh();
+  const { exercises } = ready(session);
+  const right = exercises[0]!.answerIndex;
+  const failing = vi
+    .spyOn(mistakes, "recover")
+    .mockRejectedValueOnce(new Error("idb closed"));
+  expect(await session.answer(0, right)).toBe(false);
+  expect(ready(session).answered.has(0)).toBe(false);
+  failing.mockRestore();
+  expect(await session.answer(0, right)).toBe(true);
+  expect(ready(session).answered.get(0)).toBe(true);
 });

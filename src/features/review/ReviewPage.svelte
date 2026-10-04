@@ -94,9 +94,25 @@
       {#key $drillState.exercises}
         <DrillSection session={drill} drill={$drillState} />
       {/key}
+    {:else if $drillState.kind === "error"}
+      <StateView
+        kind="error"
+        title={$t("storageErrorTitle")}
+        icon="hard-drive"
+        actionLabel={$t("retryButton")}
+        onaction={() => void drill.refresh()}
+      />
     {/if}
     {#if $reviewState.kind === "empty"}
       <StateView kind="empty" title={$t("reviewEmpty")} />
+    {:else if $reviewState.kind === "error"}
+      <StateView
+        kind="error"
+        title={$t("storageErrorTitle")}
+        icon="hard-drive"
+        actionLabel={$t("retryButton")}
+        onaction={() => void review.refresh()}
+      />
     {:else}
       <div class="stack stack--loose" bind:this={list}>
         {#each runs as run, r (r)}

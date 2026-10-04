@@ -21,11 +21,20 @@
   // The session keeps correctness only; W02 also marks the picked option.
   // The parent re-creates this component for a new plan, so picks reset.
   let picks = $state<Record<number, number>>({});
+  // An answer that could not be stored stays open: tapping again retries it.
+  let unsaved = $state<Record<number, true>>({});
 
-  function pick(exerciseIndex: number, optionIndex: number): void {
+  async function pick(
+    exerciseIndex: number,
+    optionIndex: number,
+  ): Promise<void> {
     if (drill.answered.has(exerciseIndex) || exerciseIndex in picks) return;
     picks[exerciseIndex] = optionIndex;
-    void session.answer(exerciseIndex, optionIndex);
+    delete unsaved[exerciseIndex];
+    if (!(await session.answer(exerciseIndex, optionIndex))) {
+      delete picks[exerciseIndex];
+      unsaved[exerciseIndex] = true;
+    }
   }
 </script>
 
@@ -67,13 +76,19 @@
                   : index === picks[i]
                     ? "wrong"
                     : undefined}
-              onclick={() => pick(i, index)}
+              onclick={() => void pick(i, index)}
             >
               {option}
             </Button>
           </li>
         {/each}
       </ul>
+      {#if i in unsaved}
+        <p class="feedback feedback--wrong" role="alert">
+          <Icon name="hard-drive" />
+          <span>{$t("storageErrorTitle")}</span>
+        </p>
+      {/if}
       {#if correct !== undefined}
         <p
           class={[

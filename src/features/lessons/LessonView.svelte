@@ -16,6 +16,8 @@
   const { glyphInfo } = getServices();
   const lesson = $derived(session.state);
   const current = $derived($lesson);
+  const failedStore = $derived(session.failed);
+  const failed = $derived($failedStore);
 
   const viewKey = $derived(
     current.kind === "meet"
@@ -42,6 +44,15 @@
 
 {#key viewKey}
   <div class="lesson">
+    {#if failed}
+      <div class="lesson__failure" role="alert">
+        <Icon name="hard-drive" />
+        <p>{$t("storageErrorTitle")}</p>
+        <Button variant="secondary" onclick={() => void session.retry()}>
+          <Icon name="refresh-cw" />{$t("retryButton")}
+        </Button>
+      </div>
+    {/if}
     {#if current.kind === "meet"}
       <div class="lesson__body">
         <p class="lesson__counter">
@@ -187,6 +198,19 @@
     align-content: center;
     justify-items: center;
     text-align: center;
+  }
+
+  .lesson__failure {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 2px dashed var(--color-danger);
+    border-radius: var(--radius-lg);
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+    font-weight: var(--weight-bold);
+    line-height: var(--leading-snug);
   }
 
   .lesson__counter {

@@ -9,6 +9,7 @@ export type ReviewItemKind = "fresh" | "due" | "retry";
 
 export type ReviewState =
   | { readonly kind: "empty" }
+  | { readonly kind: "error" }
   | {
       readonly kind: "ready";
       readonly items: readonly {
@@ -24,7 +25,9 @@ const retryGap = 30 * MINUTE;
 
 /**
  * The shared review queue surface (spec 4.4). Every operation runs through
- * one promise chain, in call order, like the bloc's event queue.
+ * one promise chain, in call order, like the bloc's event queue. A failed
+ * storage operation never rejects: it leaves the `error` state, and the next
+ * `refresh` retries.
  */
 export class ReviewSession {
   readonly #queue: ReviewQueue;
@@ -70,8 +73,10 @@ export class ReviewSession {
   }
 
   #run(operation: () => Promise<void>): Promise<void> {
-    const result = this.#tail.then(operation);
-    this.#tail = result.catch(() => undefined);
+    const result = this.#tail
+      .then(operation)
+      .catch(() => this.#state.set({ kind: "error" }));
+    this.#tail = result;
     return result;
   }
 

@@ -13,7 +13,9 @@ export interface ComputedLadder {
 }
 
 export type LadderState =
-  { readonly kind: "loading" } | ({ readonly kind: "ready" } & ComputedLadder);
+  | { readonly kind: "loading" }
+  | { readonly kind: "error" }
+  | ({ readonly kind: "ready" } & ComputedLadder);
 
 /**
  * Unit 1 is ready; unit n is ready iff unit n-1 is completed; a unit with a
@@ -66,9 +68,14 @@ export class LadderModel {
     deps.completions.changes.subscribe(() => void this.refresh());
   }
 
+  /** Never rejects: a failed read is the `error` state, and a refresh retries. */
   async refresh(): Promise<void> {
-    const done = await this.#completions.completedUnitIds();
-    this.#state.set({ kind: "ready", ...computeLadder(this.#units, done) });
+    try {
+      const done = await this.#completions.completedUnitIds();
+      this.#state.set({ kind: "ready", ...computeLadder(this.#units, done) });
+    } catch {
+      this.#state.set({ kind: "error" });
+    }
   }
 }
 

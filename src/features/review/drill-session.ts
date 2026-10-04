@@ -13,6 +13,7 @@ import {
 
 export type DrillState =
   | { readonly kind: "empty" }
+  | { readonly kind: "error" }
   | {
       readonly kind: "ready";
       readonly pairKey: string;
@@ -50,7 +51,16 @@ export class DrillSession {
     });
   }
 
+  /** Never rejects: a failed read is the `error` state, and a refresh retries. */
   async refresh(): Promise<void> {
+    try {
+      await this.#refresh();
+    } catch {
+      this.#state.set({ kind: "error" });
+    }
+  }
+
+  async #refresh(): Promise<void> {
     const { pairs, corpus, glyphInfo, mistakes, seedSource } = this.#deps;
     const [top] = await mistakes.topPairs(1);
     const pair =
@@ -87,24 +97,30 @@ export class DrillSession {
     });
   }
 
-  async answer(exerciseIndex: number, selectedIndex: number): Promise<void> {
+  /** False when the answer could not be stored; the exercise stays open. */
+  async answer(exerciseIndex: number, selectedIndex: number): Promise<boolean> {
     const current = get(this.#state);
-    if (current.kind !== "ready") return;
+    if (current.kind !== "ready") return true;
     const exercise = current.exercises[exerciseIndex];
-    if (exercise === undefined) return;
+    if (exercise === undefined) return true;
     const correct = selectedIndex === exercise.answerIndex;
     const { mistakes, now } = this.#deps;
-    if (correct) await mistakes.recover(current.pairKey, now());
-    else await mistakes.record(current.pairKey, now());
+    try {
+      if (correct) await mistakes.recover(current.pairKey, now());
+      else await mistakes.record(current.pairKey, now());
+    } catch {
+      return false;
+    }
     // Another answer or a refresh may have landed during the write.
     const latest = get(this.#state);
     if (latest.kind !== "ready" || latest.exercises !== current.exercises) {
-      return;
+      return true;
     }
     this.#state.set({
       ...latest,
       answered: new Map(latest.answered).set(exerciseIndex, correct),
     });
+    return true;
   }
 }
 

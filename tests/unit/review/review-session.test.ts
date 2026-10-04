@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { ReviewQueue } from "../../../src/core/srs/review-queue.ts";
 import { ReviewSession } from "../../../src/features/review/review-session.ts";
 import { openFreshDb } from "../core/db-helpers.ts";
@@ -107,4 +107,27 @@ test("operations run in call order", async () => {
     ["na", "fresh", true],
     ["ha", "retry", false],
   ]);
+});
+
+test("[P-R05] a rejected read or grade leaves an error state that a refresh clears", async () => {
+  const { queue, session } = await setup();
+  await queue.enqueue("ha", T0);
+  await session.refresh();
+  const read = vi
+    .spyOn(queue, "dueStates")
+    .mockRejectedValueOnce(new Error("idb closed"));
+  await session.refresh();
+  expect(get(session.state)).toEqual({ kind: "error" });
+  read.mockRestore();
+  await session.refresh();
+  expect(ids(session)).toEqual(["ha"]);
+
+  const write = vi
+    .spyOn(queue, "grade")
+    .mockRejectedValueOnce(new Error("idb closed"));
+  await session.grade("ha", "good");
+  expect(get(session.state)).toEqual({ kind: "error" });
+  write.mockRestore();
+  await session.refresh();
+  expect(ids(session)).toEqual(["ha"]);
 });

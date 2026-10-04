@@ -11,7 +11,12 @@ import type { TabId } from "./router.ts";
 import { createSingletons, type Services } from "./services.ts";
 
 export type BootResult =
-  | { readonly kind: "ready"; readonly services: Services }
+  | {
+      readonly kind: "ready";
+      readonly services: Services;
+      /** Settles when the browser closes the database under the app. */
+      readonly storageLost: Promise<void>;
+    }
   | { readonly kind: "storage-error" }
   | { readonly kind: "content-error" };
 
@@ -71,16 +76,23 @@ async function requestPersistentStorage(): Promise<void> {
 /**
  * The returned function opens storage and loads content. The database stays
  * open across calls, so a retry after `content-error` re-runs content loading
- * only; a retry after `storage-error` tries to open storage again.
+ * only; a retry after `storage-error` tries to open storage again. A database
+ * the browser closed is opened again by the next call.
  */
 export function createBootstrap(
   runtime: LocaleRuntime,
 ): () => Promise<BootResult> {
   let db: CarakanDb | null = null;
+  let storageLost = Promise.resolve();
   return async () => {
     if (db === null) {
+      let lose = () => {};
+      storageLost = new Promise<void>((resolve) => (lose = resolve));
       try {
-        db = await openCarakanDb();
+        db = await openCarakanDb(undefined, () => {
+          db = null;
+          lose();
+        });
       } catch {
         return { kind: "storage-error" };
       }
@@ -107,6 +119,6 @@ export function createBootstrap(
       singleton: createSingletons(),
     };
     void requestPersistentStorage();
-    return { kind: "ready", services };
+    return { kind: "ready", services, storageLost };
   };
 }

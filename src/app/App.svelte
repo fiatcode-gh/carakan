@@ -21,7 +21,15 @@
 
   async function start(): Promise<void> {
     phase = { kind: "loading" };
-    phase = await boot();
+    const result = await boot();
+    phase = result;
+    // The services hold the closed connection: boot again, which reopens it
+    // (or shows the storage error with its retry).
+    if (result.kind === "ready") {
+      void result.storageLost.then(() => {
+        if (phase === result) void start();
+      });
+    }
   }
 
   onMount(start);
