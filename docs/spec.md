@@ -64,7 +64,7 @@ Content `v1` is carried over byte for byte in `public/content/v1/`: `aksara.json
 ## 6. Offline and PWA
 
 - `vite-plugin-pwa` (`generateSW`, `registerType: 'prompt'`) precaches every file in `dist` (html, js, css, json, woff2, ttf, png, svg, webmanifest, txt): shell, content and fonts. After the first load every surface works with no network. The manifest (`id`, `start_url`, `scope` all `/`) and icons make the app installable on Android Chrome.
-- Update policy: a new service worker waits. It activates on the next launch (all clients closed) or when the user accepts the update banner. The banner never shows on `#/lesson/*` and the app never reloads by itself, so an update never interrupts a lesson or review.
+- Update policy: a new service worker waits. It activates on the next launch (all clients closed) or when the user accepts the update banner. The banner never shows on `#/lesson/*`, and only the window whose Reload button was tapped reloads (`onNeedReload` in `UpdateBanner.svelte`; the library default reloads every window). Another window keeps running on its loaded assets, since the app has one bundle and no lazy chunks, and gets the new build on its next load or its own Reload, so an update never interrupts a lesson or review.
 - Persistence: the app requests `navigator.storage.persist()` at startup when storage is not yet persistent.
 - Risk: learner state lives only in browser storage. Clearing site data erases progress. There is no export or import (deferred, section 12).
 

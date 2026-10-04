@@ -158,3 +158,63 @@ test("a waiting update activates on the next launch with no prompt", async ({
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("accepting in one window does not reload another window that is mid-lesson", async ({
+  page: ladder,
+  context,
+}) => {
+  await installAndControl(ladder);
+
+  const lesson = await context.newPage();
+  await gotoRoute(lesson, "#/lesson/u1");
+  await walkMeet(lesson, 5);
+  await lesson.locator(".options button").first().waitFor();
+  const prompt = await lesson.locator(".lesson").innerHTML();
+  await lesson.evaluate(() => {
+    const w = window as unknown as Record<string, unknown>;
+    w["__lifetime"] = true;
+    w["__controllerChanges"] = 0;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      (w["__controllerChanges"] as number)++;
+    });
+  });
+
+  await publishV2(ladder);
+  await expect(banner(ladder)).toBeVisible();
+  await Promise.all([
+    ladder.waitForEvent("load"),
+    ladder.getByRole("button", { name: id["updateReloadButton"]! }).click(),
+  ]);
+  await ladder.locator('#app[data-boot="ready"]').waitFor();
+  expect(await buildOf(ladder)).toBe("e2e-v2");
+
+  // The other window sees the worker change, yet keeps its page and question.
+  await expect
+    .poll(() =>
+      lesson.evaluate(
+        () =>
+          (window as unknown as Record<string, number>)["__controllerChanges"],
+      ),
+    )
+    .toBe(1);
+  expect(
+    await lesson.evaluate(
+      () => (window as unknown as Record<string, unknown>)["__lifetime"],
+    ),
+  ).toBe(true);
+  expect(await buildOf(lesson)).toBe("e2e-v1");
+  expect(await lesson.locator(".lesson").innerHTML()).toBe(prompt);
+  await expect(banner(lesson)).toHaveCount(0);
+
+  // Once it is off the lesson, its own accept loads the new build.
+  await lesson.evaluate(() => {
+    location.hash = "#/";
+  });
+  await expect(banner(lesson)).toBeVisible();
+  await Promise.all([
+    lesson.waitForEvent("load"),
+    lesson.getByRole("button", { name: id["updateReloadButton"]! }).click(),
+  ]);
+  await lesson.locator('#app[data-boot="ready"]').waitFor();
+  expect(await buildOf(lesson)).toBe("e2e-v2");
+});

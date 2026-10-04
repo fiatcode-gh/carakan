@@ -6,11 +6,32 @@
 
   const { t } = getI18n();
 
+  // Set while this page's own Reload is waiting for the worker to take over.
+  let accepted = false;
+  // The new worker took over because another window accepted. This page keeps
+  // running on the assets it loaded; its next load is the new build.
+  let takenOverElsewhere = $state(false);
+
   // The only code path that registers the worker, asks it to take over, or
-  // reloads: a waiting worker otherwise activates on the next launch.
+  // reloads. The library reloads every window on `controlling`, so it is
+  // `onNeedReload` that limits the reload to the window that accepted: a lesson
+  // in another window is never interrupted.
   const { needRefresh, updateServiceWorker } = useRegisterSW({
     immediate: true,
+    onNeedReload() {
+      if (accepted) window.location.reload();
+      else takenOverElsewhere = true;
+    },
   });
+
+  function reload(): void {
+    // No waiting worker is left to activate; a plain reload loads the new build.
+    if (takenOverElsewhere) window.location.reload();
+    else {
+      accepted = true;
+      void updateServiceWorker(true);
+    }
+  }
 
   // "Later" lasts for this page lifetime; the next launch asks again.
   let later = $state(false);
@@ -23,7 +44,7 @@
   <div class="update" role="status">
     <p class="update__text">{$t("updateAvailable")}</p>
     <div class="update__actions">
-      <Button variant="primary" onclick={() => void updateServiceWorker(true)}>
+      <Button variant="primary" onclick={reload}>
         {$t("updateReloadButton")}
       </Button>
       <Button variant="quiet" onclick={() => (later = true)}>
