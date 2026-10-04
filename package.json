@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "vitest run",
+    "gen:codepoints": "node tools/gen-codepoints.ts",
     "check": "tsc -p src/engine/tsconfig.json --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
