@@ -1,0 +1,126 @@
+/*
+ * Carakan design tokens, three tiers (Task 07 prototype; Task 10 promotes this
+ * file verbatim to src/styles/tokens.css).
+ *   1. primitives: brand hexes plus the tints/shades needed for WCAG AA
+ *   2. semantic roles: the only colours components may use
+ *   3. scales: type, aksara, spacing, radii, elevation, motion, sizing
+ * tests/unit/design/contrast.test.ts parses this file and asserts the ratios.
+ */
+
+:root {
+  /* ---- 1. primitives ------------------------------------------------- */
+
+  /* paper */
+  --paper-50: #fffcf5; /* new: raised card face */
+  --paper-100: #faf3e7; /* brand paper */
+  --paper-200: #f3e8d3; /* brand paper-warm */
+  --paper-300: #efe4cf; /* brand paper-dark */
+  --paper-400: #e0d1b5; /* new: solid hairline (was 12% soga alpha) */
+
+  /* soga ink */
+  --soga-900: #4a3728; /* brand soga */
+  --soga-500: #6b5c4a; /* adjusted from brand soga-soft #7a6b59 (4.09:1 on paper-dark) */
+  --soga-400: #857460; /* new: control borders, >= 3:1 */
+
+  /* indigo */
+  --indigo-600: #2e5e8c; /* brand indigo */
+  --indigo-700: #244c73; /* new: correct-answer text */
+  --indigo-100: #dde7f1; /* new: tint */
+
+  /* terracotta */
+  --terracotta-500: #b34a26; /* brand terracotta */
+  --terracotta-700: #8f3a1c; /* new: wrong-answer text, pressed accent */
+  --terracotta-100: #f4ddd1; /* new: tint */
+
+  /* gold */
+  --gold-400: #d9a441; /* brand gold: fills only, never text or thin lines on paper */
+  --gold-600: #8f6508; /* new: reward indicator and outlines, >= 3:1 */
+  --gold-200: #f3e1b3; /* new: tint */
+
+  /* ---- 2. semantic roles --------------------------------------------- */
+
+  --color-bg: var(--paper-100);
+  --color-surface: var(--paper-200);
+  --color-surface-raised: var(--paper-50);
+  --color-surface-sunken: var(--paper-300);
+  --color-text: var(--soga-900);
+  --color-text-muted: var(--soga-500);
+  --color-accent: var(--terracotta-500);
+  --color-accent-pressed: var(--terracotta-700);
+  --color-accent-soft: var(--terracotta-100);
+  --color-on-accent: var(--paper-50);
+  --color-link: var(--indigo-600);
+  --color-reward: var(--gold-600);
+  --color-reward-fill: var(--gold-400);
+  --color-reward-soft: var(--gold-200);
+  --color-border: var(--paper-400);
+  --color-border-strong: var(--soga-400);
+  --color-focus: var(--indigo-600);
+  --color-success: var(--indigo-700);
+  --color-success-soft: var(--indigo-100);
+  --color-danger: var(--terracotta-700);
+  --color-danger-soft: var(--terracotta-100);
+  --color-scrim: rgb(74 55 40 / 0.55);
+  --color-shadow: rgb(74 55 40 / 0.14);
+
+  /* ---- 3. scales ----------------------------------------------------- */
+
+  /* type */
+  --font-ui: "MPLUS Rounded 1c", system-ui, sans-serif;
+  --font-aksara: "MPLUS Rounded 1c", "Jejeg", sans-serif;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.625rem;
+  --text-2xl: 2.125rem;
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-body: 1.55;
+  --weight-regular: 400;
+  --weight-bold: 700;
+
+  /* aksara (Jejeg stacks tall: generous line height is set per use) */
+  --aksara-sm: 1.5rem;
+  --aksara-md: 2rem;
+  --aksara-lg: 3rem;
+  --aksara-xl: 4.5rem;
+  --aksara-hero: 7.5rem;
+  --aksara-leading: 1.9;
+
+  /* spacing, 4px grid */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
+
+  /* radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  /* elevation */
+  --shadow-slip: 0 1px 0 var(--color-border), 0 3px 10px var(--color-shadow);
+  --shadow-sheet: 0 -10px 36px rgb(74 55 40 / 0.28);
+
+  /* motion */
+  --dur-fast: 140ms;
+  --dur-base: 280ms;
+  --ease-out: cubic-bezier(0.22, 0.8, 0.3, 1);
+
+  /* sizing */
+  --touch-min: 48px;
+  --focus-ring: 3px solid var(--color-focus);
+  --focus-offset: 3px;
+  --content-max: 40rem;
+  --rail-width: 7rem;
+  --tab-height: 4.5rem;
+  --bar-height: 3.5rem;
+}

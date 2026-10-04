@@ -1,0 +1,2503 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#faf3e7" />
+    <title>Carakan</title>
+    <link rel="stylesheet" href="./tokens.css" />
+    <link rel="stylesheet" href="./components.css" />
+    <style>
+      /* Prototype-only layout helpers (not promoted to the design system). */
+      .page--lesson {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-5);
+        min-height: calc(100dvh - var(--bar-height));
+      }
+      .page--lesson > .lesson-body {
+        flex: 1;
+        display: grid;
+        gap: var(--space-5);
+        align-content: start;
+      }
+      .variant {
+        display: grid;
+        gap: var(--space-3);
+      }
+      .variant > .proto-tag {
+        justify-self: start;
+      }
+    </style>
+    <script type="module" src="./prototype.ts"></script>
+  </head>
+  <body data-chrome="tabs">
+    <a class="skip-link" href="#main" data-skip>Lewati ke konten</a>
+
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <symbol id="i-arrow-left-right" viewBox="0 0 24 24">
+          <path d="M8 3 4 7l4 4" />
+          <path d="M4 7h16" />
+          <path d="m16 21 4-4-4-4" />
+          <path d="M20 17H4" />
+        </symbol>
+        <symbol id="i-arrow-left" viewBox="0 0 24 24">
+          <path d="m12 19-7-7 7-7" />
+          <path d="M19 12H5" />
+        </symbol>
+        <symbol id="i-book-open" viewBox="0 0 24 24">
+          <path d="M12 5v16" />
+          <path
+            d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"
+          />
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24">
+          <path d="M20 6 9 17l-5-5" />
+        </symbol>
+        <symbol id="i-chevron-right" viewBox="0 0 24 24">
+          <path d="m9 18 6-6-6-6" />
+        </symbol>
+        <symbol id="i-circle-check" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <path d="m16 9-5.5 5.5L8 12" />
+        </symbol>
+        <symbol id="i-circle-help" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+          <path d="M12 17h.01" />
+        </symbol>
+        <symbol id="i-circle-x" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <path d="m15 9-6 6" />
+          <path d="m9 9 6 6" />
+        </symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24">
+          <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+          <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+        </symbol>
+        <symbol id="i-graduation-cap" viewBox="0 0 24 24">
+          <path
+            d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"
+          />
+          <path d="M22 10v6" />
+          <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
+        </symbol>
+        <symbol id="i-hard-drive" viewBox="0 0 24 24">
+          <path d="M10 16h.01" />
+          <path
+            d="M2.212 11.577a2 2 0 0 0-.212.896V18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5.527a2 2 0 0 0-.212-.896L18.55 5.11A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"
+          />
+          <path d="M21.946 12.013H2.054" />
+          <path d="M6 16h.01" />
+        </symbol>
+        <symbol id="i-info" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 16v-4" />
+          <path d="M12 8h.01" />
+        </symbol>
+        <symbol id="i-keyboard" viewBox="0 0 24 24">
+          <path d="M10 8h.01" />
+          <path d="M12 12h.01" />
+          <path d="M14 8h.01" />
+          <path d="M16 12h.01" />
+          <path d="M18 8h.01" />
+          <path d="M6 8h.01" />
+          <path d="M7 16h10" />
+          <path d="M8 12h.01" />
+          <rect width="20" height="16" x="2" y="4" rx="2" />
+        </symbol>
+        <symbol id="i-layout-grid" viewBox="0 0 24 24">
+          <rect width="7" height="7" x="3" y="3" rx="1" />
+          <rect width="7" height="7" x="14" y="3" rx="1" />
+          <rect width="7" height="7" x="14" y="14" rx="1" />
+          <rect width="7" height="7" x="3" y="14" rx="1" />
+        </symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24">
+          <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </symbol>
+        <symbol id="i-play" viewBox="0 0 24 24">
+          <path
+            d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"
+          />
+        </symbol>
+        <symbol id="i-refresh-cw" viewBox="0 0 24 24">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+          <path d="M21 3v5h-5" />
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+          <path d="M8 16H3v5" />
+        </symbol>
+        <symbol id="i-repeat" viewBox="0 0 24 24">
+          <path d="m17 2 4 4-4 4" />
+          <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+          <path d="m7 22-4-4 4-4" />
+          <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+        </symbol>
+        <symbol id="i-settings" viewBox="0 0 24 24">
+          <path
+            d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"
+          />
+          <circle cx="12" cy="12" r="3" />
+        </symbol>
+        <symbol id="i-triangle-alert" viewBox="0 0 24 24">
+          <path
+            d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"
+          />
+          <path d="M12 9v4" />
+          <path d="M12 17h.01" />
+        </symbol>
+        <symbol id="i-trophy" viewBox="0 0 24 24">
+          <path d="M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2" />
+          <path d="M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2" />
+          <path d="M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3" />
+          <path d="M4 22h16" />
+          <path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" />
+          <path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3" />
+        </symbol>
+        <symbol id="i-x" viewBox="0 0 24 24">
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <main id="main" tabindex="-1">
+      <!-- 1. ladder ----------------------------------------------------- -->
+      <section
+        id="ladder"
+        class="screen"
+        data-chrome="tabs"
+        data-tab="ladder"
+        aria-labelledby="ladder-h"
+        hidden
+      >
+        <header class="top-bar">
+          <div class="top-bar__inner">
+            <h1 id="ladder-h" class="top-bar__title">Belajar</h1>
+            <div class="top-bar__actions">
+              <a class="btn btn--icon" href="#teacher" aria-label="Untuk Guru">
+                <svg class="icon" aria-hidden="true">
+                  <use href="#i-graduation-cap" />
+                </svg>
+              </a>
+              <a class="btn btn--icon" href="#settings" aria-label="Pengaturan">
+                <svg class="icon" aria-hidden="true">
+                  <use href="#i-settings" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </header>
+        <div class="page">
+          <ol class="ladder stagger">
+            <li class="ladder__step" style="--i: 0">
+              <span class="medallion medallion--completed" aria-hidden="true">
+                1
+                <span class="medallion__badge"
+                  ><svg class="icon"><use href="#i-check" /></svg
+                ></span>
+              </span>
+              <a class="unit unit--completed" href="#lesson-meet">
+                <span class="unit__name"
+                  ><span class="visually-hidden">1. </span
+                  ><span data-unit-name="u1"></span
+                ></span>
+                <span
+                  class="aksara unit__preview"
+                  data-unit-preview="u1"
+                ></span>
+                <span class="unit__status">
+                  <svg class="icon icon--sm" aria-hidden="true">
+                    <use href="#i-circle-check" />
+                  </svg>
+                  Selesai
+                  <svg class="icon icon--sm unit__go" aria-hidden="true">
+                    <use href="#i-chevron-right" />
+                  </svg>
+                </span>
+              </a>
+            </li>
+            <li class="ladder__step" style="--i: 1">
+              <span class="medallion medallion--ready" aria-hidden="true">
+                2
+                <span class="medallion__badge"
+                  ><svg class="icon"><use href="#i-play" /></svg
+                ></span>
+              </span>
+              <a class="unit unit--ready" href="#lesson-meet">
+                <span class="unit__name"
+                  ><span class="visually-hidden">2. </span
+                  ><span data-unit-name="u2"></span
+                ></span>
+                <span
+                  class="aksara unit__preview"
+                  data-unit-preview="u2"
+                ></span>
+                <span class="unit__status">
+                  <svg class="icon icon--sm" aria-hidden="true">
+                    <use href="#i-play" />
+                  </svg>
+                  Siap dipelajari
+                  <svg class="icon icon--sm unit__go" aria-hidden="true">
+                    <use href="#i-chevron-right" />
+                  </svg>
+                </span>
+              </a>
+            </li>
+            <li class="ladder__step" style="--i: 2">
+              <span class="medallion medallion--locked" aria-hidden="true">
+                3
+                <span class="medallion__badge"
+                  ><svg class="icon"><use href="#i-lock" /></svg
+                ></span>
+              </span>
+              <a class="unit unit--locked" role="link" aria-disabled="true">
+                <span class="unit__name"
+                  ><span class="visually-hidden">3. </span
+                  ><span data-unit-name="u3"></span
+                ></span>
+                <span
+                  class="aksara unit__preview"
+                  data-unit-preview="u3"
+                ></span>
+                <span class="unit__status">
+                  <svg class="icon icon--sm" aria-hidden="true">
+                    <use href="#i-lock" />
+                  </svg>
+                  Terkunci
+                </span>
+              </a>
+            </li>
+            <li class="ladder__step" style="--i: 3">
+              <span class="medallion medallion--locked" aria-hidden="true">
+                4
+                <span class="medallion__badge"
+                  ><svg class="icon"><use href="#i-lock" /></svg
+                ></span>
+              </span>
+              <a class="unit unit--locked" role="link" aria-disabled="true">
+                <span class="unit__name"
+                  ><span class="visually-hidden">4. </span
+                  ><span data-unit-name="u4"></span
+                ></span>
+                <span
+                  class="aksara unit__preview"
+                  data-unit-preview="u4"
+                ></span>
+                <span class="unit__status">
+                  <svg class="icon icon--sm" aria-hidden="true">
+                    <use href="#i-lock" />
+                  </svg>
+                  Terkunci
+                </span>
+              </a>
+            </li>
+            <li class="ladder__step" style="--i: 4">
+              <span class="medallion medallion--locked" aria-hidden="true">
+                5
+                <span class="medallion__badge"
+                  ><svg class="icon"><use href="#i-lock" /></svg
+                ></span>
+              </span>
+              <a class="unit unit--locked" role="link" aria-disabled="true">
+                <span class="unit__name"
+                  ><span class="visually-hidden">5. </span
+                  ><span data-unit-name="u5"></span
+                ></span>
+                <span
+                  class="aksara unit__preview"
+                  data-unit-preview="u5"
+                ></span>
+                <span class="unit__status">
+                  <svg class="icon icon--sm" aria-hidden="true">
+                    <use href="#i-lock" />
+                  </svg>
+                  Terkunci
+                </span>
+              </a>
+            </li>
+            <li class="ladder__step" style="--i: 5">
+              <span class="medallion medallion--locked" aria-hidden="true">
+                6
+                <span class="medallion__badge"
+                  ><svg class="icon"><use href="#i-lock" /></svg
+                ></span>
+              </span>
+              <a class="unit unit--locked" role="link" aria-disabled="true">
+                <span class="unit__name"
+                  ><span class="visually-hidden">6. </span
+                  ><span data-unit-name="u6"></span
+                ></span>
+                <span
+                  class="aksara unit__preview"
+                  data-unit-preview="u6"
+                ></span>
+                <span class="unit__status">
+                  <svg class="icon icon--sm" aria-hidden="true">
+                    <use href="#i-lock" />
+                  </svg>
+                  Terkunci
+                </span>
+              </a>
+            </li>
+            <li class="ladder__step" style="--i: 6">
+              <span class="medallion medallion--locked" aria-hidden="true">
+                7
+                <span class="medallion__badge"
+                  ><svg class="icon"><use href="#i-lock" /></svg
+                ></span>
+              </span>
+              <a class="unit unit--locked" role="link" aria-disabled="true">
+                <span class="unit__name"
+                  ><span class="visually-hidden">7. </span
+                  ><span data-unit-name="u7"></span
+                ></span>
+                <span
+                  class="aksara unit__preview"
+                  data-unit-preview="u7"
+                ></span>
+                <span class="unit__status">
+                  <svg class="icon icon--sm" aria-hidden="true">
+                    <use href="#i-lock" />
+                  </svg>
+                  Terkunci
+                </span>
+              </a>
+            </li>
+            <li class="ladder__step" style="--i: 7">
+              <span class="medallion medallion--locked" aria-hidden="true">
+                8
+                <span class="medallion__badge"
+                  ><svg class="icon"><use href="#i-lock" /></svg
+                ></span>
+              </span>
+              <a class="unit unit--locked" role="link" aria-disabled="true">
+                <span class="unit__name"
+                  ><span class="visually-hidden">8. </span
+                  ><span data-unit-name="u8"></span
+                ></span>
+                <span
+                  class="aksara unit__preview"
+                  data-unit-preview="u8"
+                ></span>
+                <span class="unit__status">
+                  <svg class="icon icon--sm" aria-hidden="true">
+                    <use href="#i-lock" />
+                  </svg>
+                  Terkunci
+                </span>
+              </a>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- teacher (pushed; linked from the ladder, not one of the 14) ----- -->
+      <section
+        id="teacher"
+        class="screen"
+        data-chrome="none"
+        data-tab="ladder"
+        aria-labelledby="teacher-h"
+        hidden
+      >
+        <header class="top-bar top-bar--back">
+          <div class="top-bar__inner">
+            <a class="btn btn--icon" href="#ladder" aria-label="Kembali">
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-arrow-left" />
+              </svg>
+            </a>
+            <h1 id="teacher-h" class="top-bar__title">Untuk Guru</h1>
+          </div>
+        </header>
+        <div class="page stack">
+          <article class="slip">
+            <h2 class="slip__title">
+              Perbedaan urutan dari urutan tradisional
+            </h2>
+            <p class="slip__body">
+              Urutan tradisional menyelesaikan semua 20 aksara nglegena sebelum
+              mengenalkan sandhangan. Tanpa sandhangan, setiap suku kata
+              berbunyi konsonan + /a/, dan kosakata yang bisa dibaca murid hanya
+              sekitar belasan kata. Aplikasi ini menarik wulu (i) dan suku (u)
+              ke depan, langsung setelah baris pertama ha na ca ra ka, sehingga
+              kosakata langsung meluas. Sumber: Kongres Aksara Jawa I Yogyakarta
+              2021; lihat halaman Tentang.
+            </p>
+          </article>
+          <article class="slip">
+            <h2 class="slip__title">Urutan unit</h2>
+            <ol class="slip__list">
+              <li>ha na ca ra ka</li>
+              <li>wulu (i) dan suku (u) — dimajukan</li>
+              <li>da ta sa wa la</li>
+              <li>pa dha ja ya nya</li>
+              <li>ma ga ba tha nga</li>
+              <li>sandhangan lain</li>
+              <li>pasangan</li>
+              <li>sayap lanjutan: murda dan swara</li>
+            </ol>
+            <p class="slip__body">
+              Rekan, angka, dan pada tersedia di bagan bebas, tidak dikunci.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- 2. lesson-meet ------------------------------------------------- -->
+      <section
+        id="lesson-meet"
+        class="screen"
+        data-chrome="none"
+        data-tab="ladder"
+        aria-labelledby="lesson-meet-h"
+        hidden
+      >
+        <header class="top-bar top-bar--back">
+          <div class="top-bar__inner">
+            <a class="btn btn--icon" href="#ladder" aria-label="Kembali">
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-arrow-left" />
+              </svg>
+            </a>
+            <h1 id="lesson-meet-h" class="top-bar__title">Belajar</h1>
+            <span class="chip chip--count" aria-label="1 dari 5">1/5</span>
+          </div>
+        </header>
+        <div class="page page--lesson">
+          <div class="lesson-body">
+            <div
+              class="progress"
+              role="progressbar"
+              aria-valuemin="0"
+              aria-valuemax="5"
+              aria-valuenow="1"
+              aria-label="Soal 1 dari 5"
+              style="--value: 20%"
+            >
+              <div class="progress__bar"></div>
+            </div>
+            <article class="flashcard stagger" aria-label="ha">
+              <p
+                class="aksara flashcard__glyph"
+                data-id="ha"
+                aria-hidden="true"
+                style="--i: 0"
+              ></p>
+              <span class="flashcard__rule" style="--i: 1"></span>
+              <h2 class="flashcard__name" style="--i: 2">ha</h2>
+              <p style="--i: 3"><span class="chip">Bunyi · ha</span></p>
+            </article>
+          </div>
+          <div class="lesson-foot">
+            <a class="btn btn--primary btn--block" href="#lesson-q-glyph"
+              >Lanjut</a
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. lesson-q-glyph ---------------------------------------------- -->
+      <section
+        id="lesson-q-glyph"
+        class="screen"
+        data-chrome="none"
+        data-tab="ladder"
+        aria-labelledby="lesson-q-glyph-h"
+        hidden
+      >
+        <header class="top-bar top-bar--back">
+          <div class="top-bar__inner">
+            <a class="btn btn--icon" href="#ladder" aria-label="Kembali">
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-arrow-left" />
+              </svg>
+            </a>
+            <h1 id="lesson-q-glyph-h" class="top-bar__title">Belajar</h1>
+          </div>
+        </header>
+        <div class="page page--lesson">
+          <div class="lesson-body">
+            <div class="stack--tight stack">
+              <p class="kicker">Soal 3 dari 8</p>
+              <div
+                class="progress"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="8"
+                aria-valuenow="2"
+                aria-label="Soal 3 dari 8"
+                style="--value: 25%"
+              >
+                <div class="progress__bar"></div>
+              </div>
+            </div>
+            <div
+              class="flashcard flashcard--compact"
+              role="img"
+              aria-label="na"
+            >
+              <p
+                class="aksara flashcard__glyph"
+                data-id="na"
+                aria-hidden="true"
+              ></p>
+            </div>
+            <ul class="options stagger">
+              <li style="--i: 0">
+                <a class="btn btn--option" href="#lesson-feedback"
+                  >ca<svg class="icon btn__mark" aria-hidden="true">
+                    <use href="#i-check" /></svg
+                ></a>
+              </li>
+              <li style="--i: 1">
+                <a class="btn btn--option" href="#lesson-feedback"
+                  >na<svg class="icon btn__mark" aria-hidden="true">
+                    <use href="#i-check" /></svg
+                ></a>
+              </li>
+              <li style="--i: 2">
+                <a class="btn btn--option" href="#lesson-feedback"
+                  >ra<svg class="icon btn__mark" aria-hidden="true">
+                    <use href="#i-check" /></svg
+                ></a>
+              </li>
+              <li style="--i: 3">
+                <a class="btn btn--option" href="#lesson-feedback"
+                  >ka<svg class="icon btn__mark" aria-hidden="true">
+                    <use href="#i-check" /></svg
+                ></a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. lesson-q-sound ---------------------------------------------- -->
+      <section
+        id="lesson-q-sound"
+        class="screen"
+        data-chrome="none"
+        data-tab="ladder"
+        aria-labelledby="lesson-q-sound-h"
+        hidden
+      >
+        <header class="top-bar top-bar--back">
+          <div class="top-bar__inner">
+            <a class="btn btn--icon" href="#ladder" aria-label="Kembali">
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-arrow-left" />
+              </svg>
+            </a>
+            <h1 id="lesson-q-sound-h" class="top-bar__title">Belajar</h1>
+          </div>
+        </header>
+        <div class="page page--lesson">
+          <div class="lesson-body">
+            <div class="stack--tight stack">
+              <p class="kicker">Soal 4 dari 8</p>
+              <div
+                class="progress"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="8"
+                aria-valuenow="3"
+                aria-label="Soal 4 dari 8"
+                style="--value: 37.5%"
+              >
+                <div class="progress__bar"></div>
+              </div>
+            </div>
+            <div class="flashcard flashcard--compact">
+              <p class="flashcard__name" style="font-size: var(--text-2xl)">
+                ca
+              </p>
+            </div>
+            <ul class="options options--grid stagger">
+              <li style="--i: 0">
+                <a
+                  class="btn btn--aksara-option"
+                  href="#lesson-feedback"
+                  aria-label="ha"
+                  ><span data-id="ha"></span
+                ></a>
+              </li>
+              <li style="--i: 1">
+                <a
+                  class="btn btn--aksara-option"
+                  href="#lesson-feedback"
+                  aria-label="ca"
+                  ><span data-id="ca"></span
+                ></a>
+              </li>
+              <li style="--i: 2">
+                <a
+                  class="btn btn--aksara-option"
+                  href="#lesson-feedback"
+                  aria-label="ra"
+                  ><span data-id="ra"></span
+                ></a>
+              </li>
+              <li style="--i: 3">
+                <a
+                  class="btn btn--aksara-option"
+                  href="#lesson-feedback"
+                  aria-label="ka"
+                  ><span data-id="ka"></span
+                ></a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. lesson-feedback --------------------------------------------- -->
+      <section
+        id="lesson-feedback"
+        class="screen"
+        data-chrome="none"
+        data-tab="ladder"
+        aria-labelledby="lesson-feedback-h"
+        hidden
+      >
+        <header class="top-bar top-bar--back">
+          <div class="top-bar__inner">
+            <a class="btn btn--icon" href="#ladder" aria-label="Kembali">
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-arrow-left" />
+              </svg>
+            </a>
+            <h1 id="lesson-feedback-h" class="top-bar__title">Belajar</h1>
+          </div>
+        </header>
+        <div class="page stack" style="gap: var(--space-7)">
+          <div class="variant">
+            <span class="proto-tag">Varian: jawaban benar</span>
+            <p class="kicker">Soal 3 dari 8</p>
+            <div class="feedback feedback--correct" role="status">
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-circle-check" />
+              </svg>
+              <span>Benar!</span>
+              <span
+                class="aksara aksara--lg"
+                style="
+                  margin-inline-start: auto;
+                  line-height: 1.6;
+                  color: var(--color-text);
+                "
+                data-id="na"
+                aria-hidden="true"
+              ></span>
+            </div>
+            <ul class="options">
+              <li>
+                <span class="btn btn--option" aria-disabled="true">ca</span>
+              </li>
+              <li>
+                <span class="btn btn--option is-correct"
+                  >na<svg class="icon btn__mark" aria-hidden="true">
+                    <use href="#i-check" /></svg
+                ></span>
+              </li>
+              <li>
+                <span class="btn btn--option" aria-disabled="true">ra</span>
+              </li>
+              <li>
+                <span class="btn btn--option" aria-disabled="true">ka</span>
+              </li>
+            </ul>
+            <a class="btn btn--primary btn--block" href="#lesson-q-sound"
+              >Lanjut</a
+            >
+          </div>
+
+          <div class="variant">
+            <span class="proto-tag">Varian: jawaban salah</span>
+            <p class="kicker">Soal 3 dari 8</p>
+            <div class="feedback feedback--wrong" role="status">
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-circle-x" />
+              </svg>
+              <span>Belum tepat</span>
+              <span
+                class="aksara aksara--lg"
+                style="
+                  margin-inline-start: auto;
+                  line-height: 1.6;
+                  color: var(--color-text);
+                "
+                data-id="na"
+                aria-hidden="true"
+              ></span>
+            </div>
+            <ul class="options">
+              <li>
+                <span class="btn btn--option" aria-disabled="true">ca</span>
+              </li>
+              <li>
+                <span class="btn btn--option is-correct"
+                  >na<svg class="icon btn__mark" aria-hidden="true">
+                    <use href="#i-check" /></svg
+                ></span>
+              </li>
+              <li>
+                <span class="btn btn--option is-wrong"
+                  >ra<svg class="icon btn__mark" aria-hidden="true">
+                    <use href="#i-circle-x" /></svg
+                ></span>
+              </li>
+              <li>
+                <span class="btn btn--option" aria-disabled="true">ka</span>
+              </li>
+            </ul>
+            <a class="btn btn--primary btn--block" href="#lesson-done"
+              >Lanjut</a
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. lesson-done -------------------------------------------------- -->
+      <section
+        id="lesson-done"
+        class="screen"
+        data-chrome="none"
+        data-tab="ladder"
+        aria-labelledby="lesson-done-h"
+        hidden
+      >
+        <header class="top-bar top-bar--back">
+          <div class="top-bar__inner">
+            <a class="btn btn--icon" href="#ladder" aria-label="Kembali">
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-arrow-left" />
+              </svg>
+            </a>
+            <h1 class="top-bar__title">Belajar</h1>
+          </div>
+        </header>
+        <div class="page page--lesson">
+          <div
+            class="lesson-body"
+            style="
+              align-content: center;
+              justify-items: center;
+              text-align: center;
+            "
+          >
+            <div class="trophy" aria-hidden="true">
+              <svg class="icon"><use href="#i-trophy" /></svg>
+            </div>
+            <h2 id="lesson-done-h" style="font-size: var(--text-xl)">
+              Selesai! 7 dari 8 benar
+            </h2>
+            <div
+              class="ornament"
+              style="width: min(100%, 14rem)"
+              aria-hidden="true"
+            >
+              <span class="ornament__lozenge"></span>
+            </div>
+            <p
+              class="aksara aksara--lg"
+              aria-hidden="true"
+              data-unit-preview="u1"
+            ></p>
+          </div>
+          <div class="lesson-foot">
+            <a class="btn btn--primary btn--block" href="#ladder">Kembali</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. chart --------------------------------------------------------- -->
+      <section
+        id="chart"
+        class="screen"
+        data-chrome="tabs"
+        data-tab="chart"
+        aria-labelledby="chart-h"
+        hidden
+      >
+        <header class="top-bar">
+          <div class="top-bar__inner">
+            <h1 id="chart-h" class="top-bar__title">Bagan Aksara</h1>
+          </div>
+        </header>
+        <div class="page stack" style="gap: var(--space-7)">
+          <section class="chart-section" aria-labelledby="cs-carakan">
+            <div class="chart-section__head">
+              <h2 id="cs-carakan" class="chart-section__title">Carakan</h2>
+              <div class="ornament" aria-hidden="true">
+                <span class="ornament__lozenge"></span>
+              </div>
+            </div>
+            <ul class="tiles tiles--rows">
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="ha">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="ha"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">ha</span>
+                </button>
+              </li>
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="na">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="na"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">na</span>
+                </button>
+              </li>
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="ca">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="ca"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">ca</span>
+                </button>
+              </li>
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="ra">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="ra"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">ra</span>
+                </button>
+              </li>
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="ka">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="ka"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">ka</span>
+                </button>
+              </li>
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="da">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="da"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">da</span>
+                </button>
+              </li>
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="ta">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="ta"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">ta</span>
+                </button>
+              </li>
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="sa">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="sa"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">sa</span>
+                </button>
+              </li>
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="wa">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="wa"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">wa</span>
+                </button>
+              </li>
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="la">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="la"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">la</span>
+                </button>
+              </li>
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="pa">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="pa"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">pa</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-na"
+                  aria-label="dha"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="dha"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">dha</span>
+                </button>
+              </li>
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="ja">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="ja"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">ja</span>
+                </button>
+              </li>
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="ya">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="ya"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">ya</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-na"
+                  aria-label="nya"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="nya"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">nya</span>
+                </button>
+              </li>
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="ma">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="ma"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">ma</span>
+                </button>
+              </li>
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="ga">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="ga"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">ga</span>
+                </button>
+              </li>
+              <li>
+                <button class="glyph-tile" data-open="sheet-na" aria-label="ba">
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="ba"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">ba</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-na"
+                  aria-label="tha"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="tha"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">tha</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-na"
+                  aria-label="nga"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="nga"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">nga</span>
+                </button>
+              </li>
+            </ul>
+          </section>
+
+          <section class="chart-section" aria-labelledby="cs-vowel">
+            <div class="chart-section__head">
+              <h2 id="cs-vowel" class="chart-section__title">
+                Sandhangan vokal
+              </h2>
+              <div class="ornament" aria-hidden="true">
+                <span class="ornament__lozenge"></span>
+              </div>
+            </div>
+            <ul class="tiles">
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-wulu"
+                  aria-label="wulu"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="wulu"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">wulu</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-wulu"
+                  aria-label="suku"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="suku"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true">suku</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-wulu"
+                  aria-label="taling"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="taling"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true"
+                    >taling</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-wulu"
+                  aria-label="tarung"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="tarung"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true"
+                    >tarung</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-wulu"
+                  aria-label="pepet"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="pepet"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true"
+                    >pepet</span
+                  >
+                </button>
+              </li>
+            </ul>
+          </section>
+
+          <section class="chart-section" aria-labelledby="cs-angka">
+            <div class="chart-section__head">
+              <h2 id="cs-angka" class="chart-section__title">Angka</h2>
+              <div class="ornament" aria-hidden="true">
+                <span class="ornament__lozenge"></span>
+              </div>
+            </div>
+            <ul class="tiles">
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-angka"
+                  aria-label="angka 0"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="angka-0"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true"
+                    >angka 0</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-angka"
+                  aria-label="angka 1"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="angka-1"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true"
+                    >angka 1</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-angka"
+                  aria-label="angka 2"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="angka-2"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true"
+                    >angka 2</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-angka"
+                  aria-label="angka 3"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="angka-3"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true"
+                    >angka 3</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-angka"
+                  aria-label="angka 4"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="angka-4"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true"
+                    >angka 4</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-angka"
+                  aria-label="angka 5"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="angka-5"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true"
+                    >angka 5</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-angka"
+                  aria-label="angka 6"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="angka-6"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true"
+                    >angka 6</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-angka"
+                  aria-label="angka 7"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="angka-7"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true"
+                    >angka 7</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-angka"
+                  aria-label="angka 8"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="angka-8"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true"
+                    >angka 8</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button
+                  class="glyph-tile"
+                  data-open="sheet-angka"
+                  aria-label="angka 9"
+                >
+                  <span
+                    class="aksara glyph-tile__glyph"
+                    data-id="angka-9"
+                    aria-hidden="true"
+                  ></span
+                  ><span class="glyph-tile__name" aria-hidden="true"
+                    >angka 9</span
+                  >
+                </button>
+              </li>
+            </ul>
+          </section>
+        </div>
+
+        <!-- 8. chart-detail: sheets over the chart (W11) -->
+        <dialog class="sheet" id="sheet-na" aria-labelledby="sheet-na-h">
+          <span class="sheet__grab" aria-hidden="true"></span>
+          <div class="sheet__head">
+            <h2 id="sheet-na-h" class="sheet__title" tabindex="-1" autofocus>
+              na
+            </h2>
+            <button class="btn btn--icon" data-close aria-label="Tutup">
+              <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+            </button>
+          </div>
+          <div class="sheet__body">
+            <div class="detail-head">
+              <p
+                class="aksara detail-head__glyph"
+                data-id="na"
+                aria-hidden="true"
+              ></p>
+              <div>
+                <p class="detail-head__name">na</p>
+                <p class="detail-head__sub">na / na — ada murda</p>
+              </div>
+            </div>
+            <dl class="facts">
+              <div class="facts__row">
+                <dt>Bunyi</dt>
+                <dd>na (JGST na)</dd>
+              </div>
+              <div class="facts__row">
+                <dt>Pasangan</dt>
+                <dd
+                  class="aksara aksara--md"
+                  data-id="pasangan-na"
+                  aria-hidden="true"
+                ></dd>
+              </div>
+              <div class="facts__row">
+                <dt>Murda</dt>
+                <dd
+                  class="aksara aksara--md"
+                  data-id="naMurda"
+                  aria-hidden="true"
+                ></dd>
+              </div>
+            </dl>
+            <section class="stack stack--tight" aria-labelledby="ex-na">
+              <h3 id="ex-na" class="kicker">Contoh kata</h3>
+              <ul class="examples">
+                <li class="examples__row">
+                  <span>wani</span
+                  ><span
+                    class="aksara"
+                    data-latin="wani"
+                    aria-hidden="true"
+                  ></span>
+                </li>
+                <li class="examples__row">
+                  <span>dina</span
+                  ><span
+                    class="aksara"
+                    data-latin="dina"
+                    aria-hidden="true"
+                  ></span>
+                </li>
+                <li class="examples__row">
+                  <span>jaran</span
+                  ><span
+                    class="aksara"
+                    data-latin="jaran"
+                    aria-hidden="true"
+                  ></span>
+                </li>
+                <li class="examples__row">
+                  <span>manuk</span
+                  ><span
+                    class="aksara"
+                    data-latin="manuk"
+                    aria-hidden="true"
+                  ></span>
+                </li>
+              </ul>
+            </section>
+          </div>
+        </dialog>
+
+        <dialog class="sheet" id="sheet-wulu" aria-labelledby="sheet-wulu-h">
+          <span class="sheet__grab" aria-hidden="true"></span>
+          <div class="sheet__head">
+            <h2 id="sheet-wulu-h" class="sheet__title" tabindex="-1" autofocus>
+              wulu
+            </h2>
+            <button class="btn btn--icon" data-close aria-label="Tutup">
+              <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+            </button>
+          </div>
+          <div class="sheet__body">
+            <div class="detail-head">
+              <p
+                class="aksara detail-head__glyph"
+                data-id="wulu"
+                aria-hidden="true"
+              ></p>
+              <div>
+                <p class="detail-head__name">wulu</p>
+                <p class="detail-head__sub">i / i</p>
+              </div>
+            </div>
+            <dl class="facts">
+              <div class="facts__row">
+                <dt>Fungsi</dt>
+                <dd>Mengubah vokal suku kata</dd>
+              </div>
+            </dl>
+            <section class="stack stack--tight" aria-labelledby="ex-wulu">
+              <h3 id="ex-wulu" class="kicker">Contoh kata</h3>
+              <ul class="examples">
+                <li class="examples__row">
+                  <span>wit</span
+                  ><span
+                    class="aksara"
+                    data-latin="wit"
+                    aria-hidden="true"
+                  ></span>
+                </li>
+                <li class="examples__row">
+                  <span>dina</span
+                  ><span
+                    class="aksara"
+                    data-latin="dina"
+                    aria-hidden="true"
+                  ></span>
+                </li>
+                <li class="examples__row">
+                  <span>pitik</span
+                  ><span
+                    class="aksara"
+                    data-latin="pitik"
+                    aria-hidden="true"
+                  ></span>
+                </li>
+                <li class="examples__row">
+                  <span>iwak</span
+                  ><span
+                    class="aksara"
+                    data-latin="iwak"
+                    aria-hidden="true"
+                  ></span>
+                </li>
+              </ul>
+            </section>
+          </div>
+        </dialog>
+
+        <dialog class="sheet" id="sheet-angka" aria-labelledby="sheet-angka-h">
+          <span class="sheet__grab" aria-hidden="true"></span>
+          <div class="sheet__head">
+            <h2 id="sheet-angka-h" class="sheet__title" tabindex="-1" autofocus>
+              angka 1
+            </h2>
+            <button class="btn btn--icon" data-close aria-label="Tutup">
+              <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+            </button>
+          </div>
+          <div class="sheet__body">
+            <div class="detail-head">
+              <p
+                class="aksara detail-head__glyph"
+                data-id="angka-1"
+                aria-hidden="true"
+              ></p>
+              <div>
+                <p class="detail-head__name">angka 1</p>
+                <p class="detail-head__sub">
+                  ditulis
+                  <span
+                    class="aksara aksara--sm"
+                    data-latin="1"
+                    aria-hidden="true"
+                  ></span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </dialog>
+      </section>
+
+      <!-- 9. review -------------------------------------------------------- -->
+      <section
+        id="review"
+        class="screen"
+        data-chrome="tabs"
+        data-tab="review"
+        aria-labelledby="review-h"
+        hidden
+      >
+        <header class="top-bar">
+          <div class="top-bar__inner">
+            <h1 id="review-h" class="top-bar__title">Ulangi</h1>
+            <a
+              class="btn btn--icon"
+              href="#review-help"
+              aria-label="Tentang Ulangi"
+            >
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-circle-help" />
+              </svg>
+            </a>
+          </div>
+        </header>
+        <div class="page stack" style="gap: var(--space-7)">
+          <section class="stack" aria-labelledby="drill-h">
+            <h2 id="drill-h" class="group-title">
+              <span>Latihan fokus</span>
+              <span class="ornament" style="flex: 1" aria-hidden="true"
+                ><span class="ornament__lozenge"></span
+              ></span>
+            </h2>
+            <article class="slip drill stack">
+              <div
+                class="flashcard flashcard--compact"
+                role="img"
+                aria-label="dha"
+              >
+                <p
+                  class="aksara flashcard__glyph"
+                  data-id="dha"
+                  aria-hidden="true"
+                ></p>
+              </div>
+              <ul class="options options--grid">
+                <li>
+                  <span class="btn btn--option is-wrong"
+                    >da<svg class="icon btn__mark" aria-hidden="true">
+                      <use href="#i-circle-x" /></svg
+                  ></span>
+                </li>
+                <li>
+                  <span class="btn btn--option is-correct"
+                    >dha<svg class="icon btn__mark" aria-hidden="true">
+                      <use href="#i-check" /></svg
+                  ></span>
+                </li>
+                <li>
+                  <span class="btn btn--option" aria-disabled="true">ta</span>
+                </li>
+                <li>
+                  <span class="btn btn--option" aria-disabled="true">tha</span>
+                </li>
+              </ul>
+              <div class="feedback feedback--wrong" role="status">
+                <svg class="icon" aria-hidden="true">
+                  <use href="#i-circle-x" />
+                </svg>
+                <span>Belum tepat</span>
+              </div>
+            </article>
+          </section>
+
+          <section class="stack" aria-labelledby="g-fresh">
+            <h2 id="g-fresh" class="group-title">
+              <span>Baru</span>
+              <span class="ornament" style="flex: 1" aria-hidden="true"
+                ><span class="ornament__lozenge"></span
+              ></span>
+            </h2>
+            <article class="slip review-card">
+              <div class="review-card__head">
+                <p
+                  class="aksara review-card__glyph"
+                  data-id="ha"
+                  aria-hidden="true"
+                ></p>
+                <p class="review-card__name">ha</p>
+              </div>
+              <div class="grades">
+                <button class="btn btn--grade">
+                  <span class="btn__dot btn__dot--again"></span>Ulangi
+                </button>
+                <button class="btn btn--grade">
+                  <span class="btn__dot btn__dot--hard"></span>Agak sulit
+                </button>
+                <button class="btn btn--grade">
+                  <span class="btn__dot btn__dot--good"></span>Lancar
+                </button>
+                <button class="btn btn--grade">
+                  <span class="btn__dot btn__dot--easy"></span>Mudah
+                </button>
+              </div>
+            </article>
+          </section>
+
+          <section class="stack" aria-labelledby="g-due">
+            <h2 id="g-due" class="group-title">
+              <span>Waktunya diulang</span>
+              <span class="ornament" style="flex: 1" aria-hidden="true"
+                ><span class="ornament__lozenge"></span
+              ></span>
+            </h2>
+            <article class="slip review-card">
+              <div class="review-card__head">
+                <p
+                  class="aksara review-card__glyph"
+                  data-id="ca"
+                  aria-hidden="true"
+                ></p>
+                <p class="review-card__name">ca</p>
+              </div>
+              <div class="grades">
+                <button class="btn btn--grade">
+                  <span class="btn__dot btn__dot--again"></span>Ulangi
+                </button>
+                <button class="btn btn--grade">
+                  <span class="btn__dot btn__dot--hard"></span>Agak sulit
+                </button>
+                <button class="btn btn--grade">
+                  <span class="btn__dot btn__dot--good"></span>Lancar
+                </button>
+                <button class="btn btn--grade">
+                  <span class="btn__dot btn__dot--easy"></span>Mudah
+                </button>
+              </div>
+            </article>
+          </section>
+
+          <section class="stack" aria-labelledby="g-retry">
+            <h2 id="g-retry" class="group-title">
+              <span>Coba lagi</span>
+              <span class="ornament" style="flex: 1" aria-hidden="true"
+                ><span class="ornament__lozenge"></span
+              ></span>
+            </h2>
+            <article class="slip review-card">
+              <div class="review-card__head">
+                <p
+                  class="aksara review-card__glyph"
+                  data-id="ra"
+                  aria-hidden="true"
+                ></p>
+                <p class="review-card__name">ra</p>
+              </div>
+              <div class="grades">
+                <button class="btn btn--grade">
+                  <span class="btn__dot btn__dot--again"></span>Ulangi
+                </button>
+                <button class="btn btn--grade">
+                  <span class="btn__dot btn__dot--hard"></span>Agak sulit
+                </button>
+                <button class="btn btn--grade">
+                  <span class="btn__dot btn__dot--good"></span>Lancar
+                </button>
+                <button class="btn btn--grade">
+                  <span class="btn__dot btn__dot--easy"></span>Mudah
+                </button>
+              </div>
+            </article>
+          </section>
+        </div>
+      </section>
+
+      <!-- review help (pushed; linked from review, not one of the 14) ------ -->
+      <section
+        id="review-help"
+        class="screen"
+        data-chrome="none"
+        data-tab="review"
+        aria-labelledby="review-help-h"
+        hidden
+      >
+        <header class="top-bar top-bar--back">
+          <div class="top-bar__inner">
+            <a class="btn btn--icon" href="#review" aria-label="Kembali">
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-arrow-left" />
+              </svg>
+            </a>
+            <h1 id="review-help-h" class="top-bar__title">Tentang Ulangi</h1>
+          </div>
+        </header>
+        <div class="page stack">
+          <article class="slip">
+            <h2 class="slip__title">Kenapa harus diulang?</h2>
+            <p class="slip__body">
+              Ingatan cepat hilang. Mengulang tepat sebelum lupa membuat huruf
+              melekat — dan setiap keberhasilan menjauhkan jadwal: 10 menit,
+              lalu 1, 3, 8, 20 hari.
+            </p>
+          </article>
+          <article class="slip">
+            <h2 class="slip__title">Arti tombolnya</h2>
+            <ul class="slip__list">
+              <li class="help-grade">
+                <span class="btn__dot btn__dot--again"></span>
+                <p>
+                  Ulangi — belum bisa: coba lagi sekarang, lalu 10 menit lagi.
+                </p>
+              </li>
+              <li class="help-grade">
+                <span class="btn__dot btn__dot--hard"></span>
+                <p>Agak sulit — susah tapi bisa: ulangi besok.</p>
+              </li>
+              <li class="help-grade">
+                <span class="btn__dot btn__dot--good"></span>
+                <p>Lancar — besok, lalu makin jarang.</p>
+              </li>
+              <li class="help-grade">
+                <span class="btn__dot btn__dot--easy"></span>
+                <p>Mudah — terlalu gampang: 6 hari lagi, lalu makin cepat.</p>
+              </li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <!-- 10. review-empty ------------------------------------------------- -->
+      <section
+        id="review-empty"
+        class="screen"
+        data-chrome="tabs"
+        data-tab="review"
+        aria-labelledby="review-empty-h"
+        hidden
+      >
+        <header class="top-bar">
+          <div class="top-bar__inner">
+            <h1 id="review-empty-h" class="top-bar__title">Ulangi</h1>
+            <a
+              class="btn btn--icon"
+              href="#review-help"
+              aria-label="Tentang Ulangi"
+            >
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-circle-help" />
+              </svg>
+            </a>
+          </div>
+        </header>
+        <div class="page">
+          <div class="state state--empty state--page">
+            <div class="state__icon" aria-hidden="true">
+              <svg class="icon"><use href="#i-check" /></svg>
+            </div>
+            <p class="state__title">Tidak ada yang perlu diulang</p>
+            <a class="btn btn--secondary" href="#ladder">Belajar</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- 11. converter-l2a ------------------------------------------------ -->
+      <section
+        id="converter-l2a"
+        class="screen"
+        data-chrome="tabs"
+        data-tab="converter"
+        aria-labelledby="converter-l2a-h"
+        hidden
+      >
+        <header class="top-bar">
+          <div class="top-bar__inner">
+            <h1 id="converter-l2a-h" class="top-bar__title">Ubah Aksara</h1>
+            <a class="btn btn--icon" href="#settings" aria-label="Tentang">
+              <svg class="icon" aria-hidden="true"><use href="#i-info" /></svg>
+            </a>
+          </div>
+        </header>
+        <div class="page stack" style="gap: var(--space-5)">
+          <fieldset class="segmented" style="margin: 0">
+            <legend class="visually-hidden">Arah ubah</legend>
+            <label class="segmented__option">
+              <input
+                type="radio"
+                name="dir-l2a"
+                checked
+                data-goto="converter-l2a"
+              />
+              <span class="segmented__label">Latin → Aksara</span>
+            </label>
+            <label class="segmented__option">
+              <input type="radio" name="dir-l2a" data-goto="converter-a2l" />
+              <span class="segmented__label">Aksara → Latin</span>
+            </label>
+          </fieldset>
+
+          <div class="variant">
+            <span class="proto-tag">Varian: berhasil</span>
+            <div class="field">
+              <label class="field__label" for="l2a-in-1"
+                >Ketik kata dalam huruf Latin…</label
+              >
+              <textarea id="l2a-in-1" class="field__input" rows="3">
+hanacaraka</textarea>
+            </div>
+            <div class="result">
+              <p class="result__label" id="l2a-out-label">Hasil</p>
+              <p
+                class="aksara result__output"
+                aria-labelledby="l2a-out-label"
+                data-latin="hanacaraka"
+              ></p>
+              <button
+                class="btn btn--primary btn--block"
+                data-toast="toast-copy"
+              >
+                <svg class="icon" aria-hidden="true"><use href="#i-copy" /></svg
+                >Salin
+              </button>
+            </div>
+          </div>
+
+          <div class="ornament" aria-hidden="true">
+            <span class="ornament__lozenge"></span>
+          </div>
+
+          <div class="variant" data-convert-of="sega">
+            <span class="proto-tag">Varian: ambigu</span>
+            <div class="field">
+              <label class="field__label visually-hidden" for="l2a-in-2"
+                >Ketik kata dalam huruf Latin…</label
+              >
+              <textarea id="l2a-in-2" class="field__input" rows="2">
+sega</textarea>
+            </div>
+            <div class="result">
+              <p
+                class="kicker"
+                style="color: var(--color-text); font-size: var(--text-md)"
+              >
+                Huruf “e” bisa dibaca dua cara — pilih salah satu:
+              </p>
+              <div
+                class="chips"
+                role="group"
+                aria-label="Huruf “e” bisa dibaca dua cara — pilih salah satu:"
+                data-slot="candidates"
+              ></div>
+              <p class="result__label">Hasil</p>
+              <p class="aksara result__output" data-slot="output"></p>
+              <button class="btn btn--secondary btn--block">
+                <svg class="icon" aria-hidden="true"><use href="#i-copy" /></svg
+                >Salin
+              </button>
+            </div>
+          </div>
+
+          <div class="ornament" aria-hidden="true">
+            <span class="ornament__lozenge"></span>
+          </div>
+
+          <div class="variant" data-convert-of="kuwi!">
+            <span class="proto-tag">Varian: galat</span>
+            <div class="field">
+              <label class="field__label visually-hidden" for="l2a-in-3"
+                >Ketik kata dalam huruf Latin…</label
+              >
+              <textarea
+                id="l2a-in-3"
+                class="field__input field__input--error"
+                rows="2"
+                aria-invalid="true"
+              >
+kuwi!</textarea>
+            </div>
+            <div class="result result--error" role="alert">
+              <p class="result__title">
+                <svg class="icon" aria-hidden="true">
+                  <use href="#i-triangle-alert" />
+                </svg>
+                <span
+                  >Tidak bisa mengubah: <span data-slot="message"></span
+                ></span>
+              </p>
+              <p class="result__echo" data-slot="echo"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 12. converter-a2l ------------------------------------------------ -->
+      <section
+        id="converter-a2l"
+        class="screen"
+        data-chrome="tabs"
+        data-tab="converter"
+        aria-labelledby="converter-a2l-h"
+        hidden
+      >
+        <header class="top-bar">
+          <div class="top-bar__inner">
+            <h1 id="converter-a2l-h" class="top-bar__title">Ubah Aksara</h1>
+            <a class="btn btn--icon" href="#settings" aria-label="Tentang">
+              <svg class="icon" aria-hidden="true"><use href="#i-info" /></svg>
+            </a>
+          </div>
+        </header>
+        <div class="page stack" style="gap: var(--space-5)">
+          <fieldset class="segmented" style="margin: 0">
+            <legend class="visually-hidden">Arah ubah</legend>
+            <label class="segmented__option">
+              <input type="radio" name="dir-a2l" data-goto="converter-l2a" />
+              <span class="segmented__label">Latin → Aksara</span>
+            </label>
+            <label class="segmented__option">
+              <input
+                type="radio"
+                name="dir-a2l"
+                checked
+                data-goto="converter-a2l"
+              />
+              <span class="segmented__label">Aksara → Latin</span>
+            </label>
+          </fieldset>
+
+          <div class="field">
+            <label class="field__label" for="a2l-in"
+              >Tempel atau pilih aksara</label
+            >
+            <textarea
+              id="a2l-in"
+              class="field__input field__input--aksara"
+              rows="2"
+              data-latin="hanacaraka"
+            ></textarea>
+            <button
+              class="btn btn--secondary btn--block"
+              data-open="sheet-picker"
+            >
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-keyboard" /></svg
+              >Pilih aksara
+            </button>
+          </div>
+
+          <fieldset class="segmented" style="margin: 0">
+            <legend class="visually-hidden">Ejaan Latin</legend>
+            <label class="segmented__option">
+              <input type="radio" name="scheme" checked />
+              <span class="segmented__label">PUJL</span>
+            </label>
+            <label class="segmented__option">
+              <input type="radio" name="scheme" />
+              <span class="segmented__label">JGST</span>
+            </label>
+          </fieldset>
+
+          <div class="result">
+            <p class="result__label" id="a2l-out-label">Hasil</p>
+            <p
+              class="result__output result__output--latin"
+              aria-labelledby="a2l-out-label"
+            >
+              hanacaraka
+            </p>
+            <button
+              class="btn btn--primary btn--block"
+              data-toast="toast-copy-a2l"
+            >
+              <svg class="icon" aria-hidden="true"><use href="#i-copy" /></svg
+              >Salin
+            </button>
+          </div>
+        </div>
+
+        <!-- glyph picker (W11 sheet, W12 section titles, W13 display names) -->
+        <dialog
+          class="sheet"
+          id="sheet-picker"
+          aria-labelledby="sheet-picker-h"
+        >
+          <span class="sheet__grab" aria-hidden="true"></span>
+          <div class="sheet__head">
+            <h2
+              id="sheet-picker-h"
+              class="sheet__title"
+              tabindex="-1"
+              autofocus
+            >
+              Pilih aksara
+            </h2>
+            <button class="btn btn--icon" data-close aria-label="Tutup">
+              <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+            </button>
+          </div>
+          <div class="sheet__body">
+            <section class="picker__group" aria-labelledby="pk-carakan">
+              <h3 id="pk-carakan" class="chart-section__title">Carakan</h3>
+              <ul class="picker__grid">
+                <li>
+                  <button class="picker__entry" aria-label="ha">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="ha"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true">ha</span>
+                  </button>
+                </li>
+                <li>
+                  <button class="picker__entry" aria-label="na">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="na"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true">na</span>
+                  </button>
+                </li>
+                <li>
+                  <button class="picker__entry" aria-label="ca">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="ca"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true">ca</span>
+                  </button>
+                </li>
+                <li>
+                  <button class="picker__entry" aria-label="ra">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="ra"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true">ra</span>
+                  </button>
+                </li>
+                <li>
+                  <button class="picker__entry" aria-label="ka">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="ka"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true">ka</span>
+                  </button>
+                </li>
+                <li>
+                  <button class="picker__entry" aria-label="da">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="da"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true">da</span>
+                  </button>
+                </li>
+              </ul>
+            </section>
+            <section class="picker__group" aria-labelledby="pk-swara">
+              <h3 id="pk-swara" class="chart-section__title">Swara</h3>
+              <ul class="picker__grid">
+                <li>
+                  <button class="picker__entry" aria-label="a">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="a"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true">a</span>
+                  </button>
+                </li>
+                <li>
+                  <button class="picker__entry" aria-label="i">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="i"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true">i</span>
+                  </button>
+                </li>
+                <li>
+                  <button class="picker__entry" aria-label="u">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="u"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true">u</span>
+                  </button>
+                </li>
+                <li>
+                  <button class="picker__entry" aria-label="i panjang">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-glyph="JAVANESE LETTER I JAVANESE VOWEL SIGN TARUNG"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true"
+                      >i panjang</span
+                    >
+                  </button>
+                </li>
+                <li>
+                  <button class="picker__entry" aria-label="u panjang">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-glyph="JAVANESE LETTER U JAVANESE VOWEL SIGN TARUNG"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true"
+                      >u panjang</span
+                    >
+                  </button>
+                </li>
+              </ul>
+            </section>
+            <section class="picker__group" aria-labelledby="pk-murda">
+              <h3 id="pk-murda" class="chart-section__title">Murda</h3>
+              <ul class="picker__grid">
+                <li>
+                  <button class="picker__entry" aria-label="na murda">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="naMurda"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true"
+                      >na murda</span
+                    >
+                  </button>
+                </li>
+                <li>
+                  <button class="picker__entry" aria-label="ka murda">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="kaMurda"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true"
+                      >ka murda</span
+                    >
+                  </button>
+                </li>
+                <li>
+                  <button class="picker__entry" aria-label="ta murda">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="taMurda"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true"
+                      >ta murda</span
+                    >
+                  </button>
+                </li>
+              </ul>
+            </section>
+            <section class="picker__group" aria-labelledby="pk-angka">
+              <h3 id="pk-angka" class="chart-section__title">Angka</h3>
+              <ul class="picker__grid">
+                <li>
+                  <button class="picker__entry" aria-label="angka 0">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="angka-0"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true"
+                      >angka 0</span
+                    >
+                  </button>
+                </li>
+                <li>
+                  <button class="picker__entry" aria-label="angka 1">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="angka-1"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true"
+                      >angka 1</span
+                    >
+                  </button>
+                </li>
+                <li>
+                  <button class="picker__entry" aria-label="angka 2">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="angka-2"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true"
+                      >angka 2</span
+                    >
+                  </button>
+                </li>
+              </ul>
+            </section>
+            <section class="picker__group" aria-labelledby="pk-pada">
+              <h3 id="pk-pada" class="chart-section__title">Pada</h3>
+              <ul class="picker__grid">
+                <li>
+                  <button class="picker__entry" aria-label="pada adeg-adeg">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="adegAdeg"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true"
+                      >pada adeg-adeg</span
+                    >
+                  </button>
+                </li>
+                <li>
+                  <button class="picker__entry" aria-label="pada windu">
+                    <span
+                      class="aksara glyph-tile__glyph"
+                      data-id="windu"
+                      aria-hidden="true"
+                    ></span
+                    ><span class="glyph-tile__name" aria-hidden="true"
+                      >pada windu</span
+                    >
+                  </button>
+                </li>
+              </ul>
+            </section>
+          </div>
+        </dialog>
+      </section>
+
+      <!-- 13. settings ----------------------------------------------------- -->
+      <section
+        id="settings"
+        class="screen"
+        data-chrome="none"
+        data-tab="converter"
+        aria-labelledby="settings-h"
+        hidden
+      >
+        <header class="top-bar top-bar--back">
+          <div class="top-bar__inner">
+            <a class="btn btn--icon" href="#ladder" aria-label="Kembali">
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-arrow-left" />
+              </svg>
+            </a>
+            <h1 id="settings-h" class="top-bar__title">Pengaturan</h1>
+          </div>
+        </header>
+        <div class="page stack" style="gap: var(--space-6)">
+          <fieldset
+            class="stack stack--tight"
+            style="border: 0; margin: 0; padding: 0"
+          >
+            <legend
+              class="chart-section__title"
+              style="padding: 0; margin-bottom: var(--space-3)"
+            >
+              Bahasa
+            </legend>
+            <label class="choice"
+              ><input type="radio" name="lang" /><span
+                >Ikuti sistem</span
+              ></label
+            >
+            <label class="choice"
+              ><input type="radio" name="lang" checked /><span
+                >Bahasa Indonesia</span
+              ></label
+            >
+            <label class="choice"
+              ><input type="radio" name="lang" /><span>English</span></label
+            >
+          </fieldset>
+
+          <section class="stack" aria-labelledby="about-h">
+            <h2 id="about-h" class="chart-section__title">Tentang aplikasi</h2>
+            <article
+              class="slip slip--raised"
+              style="display: flex; gap: var(--space-4); align-items: center"
+            >
+              <span
+                class="aksara aksara--xl"
+                style="line-height: 1.6"
+                data-latin="ca"
+                aria-hidden="true"
+              ></span>
+              <div>
+                <p class="slip__title">Carakan</p>
+                <p class="meta" style="color: var(--color-text-muted)">
+                  Aksara Jawa
+                </p>
+                <p class="meta">Versi 1.0.0</p>
+              </div>
+            </article>
+            <article class="slip">
+              <h3 class="slip__title">Aturan (ruleset)</h3>
+              <p class="slip__body"><code>kaj1-2021-simplified-v3</code></p>
+            </article>
+            <article class="slip">
+              <h3 class="slip__title">Sumber aturan</h3>
+              <p class="slip__body">
+                Kongres Aksara Jawa I Yogyakarta 2021 — Tata Tulis Aksara Jawa
+                (gaya Simplified), transliterasi JGST (Komisi I). Tulisan Latin
+                untuk pengguna mengikuti PUJL (Balai Bahasa Yogyakarta). Nenek
+                moyang: Wewaton Sriwedari 1926 dan Pedoman Penulisan Aksara Jawa
+                2002. Lihat docs/references/CITATIONS.md di repositori.
+              </p>
+            </article>
+            <article class="slip">
+              <h3 class="slip__title">Font</h3>
+              <p class="slip__body">
+                Aksara Jawa: nyk Ngayogyan Jejeg, Typeface © Apri Nugroho
+                2018–2020. Hasil Kajian Fonta Tim Kongres Aksara Jawa, Seksi
+                Bahasa dan Sastra, Dinas Kebudayaan (Kundha Kabudayan) Daerah
+                Istimewa Yogyakarta, 2020; dikembangkan oleh Apri Nugroho dan
+                Arif Budiarto. Huruf Latin: MPLUS Rounded 1c (SIL Open Font
+                License 1.1). Keterangan lisensi di
+                <a href="/licenses/">licenses/</a>.
+              </p>
+            </article>
+            <article class="slip">
+              <h3 class="slip__title">Korpus kata</h3>
+              <p class="slip__body">
+                Kata dasar dari Wiktionary (CC BY-SA 4.0, dengan atribusi per
+                kata di
+                <a href="/content/v1/words.json">content/v1/words.json</a>) dan
+                peninjauan penutur asli. Lihat
+                docs/references/wordlist-licensing.md.
+              </p>
+            </article>
+            <button
+              class="btn btn--secondary btn--block"
+              data-open="sheet-report"
+            >
+              <svg class="icon" aria-hidden="true"><use href="#i-mail" /></svg
+              >Laporkan kesalahan
+            </button>
+          </section>
+        </div>
+
+        <dialog
+          class="sheet"
+          id="sheet-report"
+          aria-labelledby="sheet-report-h"
+        >
+          <span class="sheet__grab" aria-hidden="true"></span>
+          <div class="sheet__head">
+            <h2
+              id="sheet-report-h"
+              class="sheet__title"
+              tabindex="-1"
+              autofocus
+            >
+              Laporkan kesalahan
+            </h2>
+            <button class="btn btn--icon" data-close aria-label="Tutup">
+              <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
+            </button>
+          </div>
+          <div class="sheet__body">
+            <div class="field">
+              <label class="field__label" for="report-in"
+                >Apa yang salah?</label
+              >
+              <textarea id="report-in" class="field__input" rows="4"></textarea>
+            </div>
+          </div>
+          <div class="sheet__foot">
+            <button class="btn btn--quiet" data-close>Batal</button>
+            <button class="btn btn--primary" data-close>Salin laporan</button>
+          </div>
+        </dialog>
+      </section>
+
+      <!-- 14. states -------------------------------------------------------- -->
+      <section
+        id="states"
+        class="screen"
+        data-chrome="none"
+        data-tab="ladder"
+        aria-labelledby="states-h"
+        hidden
+      >
+        <header class="top-bar">
+          <div class="top-bar__inner">
+            <h1 id="states-h" class="top-bar__title">Carakan</h1>
+          </div>
+        </header>
+        <div class="page stack" style="gap: var(--space-7)">
+          <div class="variant">
+            <span class="proto-tag">Varian: memuat aplikasi</span>
+            <div class="slip slip--raised">
+              <div class="state" role="status">
+                <div class="spinner" aria-hidden="true"></div>
+                <p class="state__title">Memuat…</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="variant">
+            <span class="proto-tag">Varian: konten gagal dimuat</span>
+            <div class="slip slip--raised">
+              <div class="state state--error" role="alert">
+                <div class="state__icon" aria-hidden="true">
+                  <svg class="icon"><use href="#i-triangle-alert" /></svg>
+                </div>
+                <p class="state__title">Konten aplikasi tidak bisa dimuat.</p>
+                <button class="btn btn--primary">
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#i-refresh-cw" /></svg
+                  >Coba lagi
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="variant">
+            <span class="proto-tag">Varian: pembaruan tersedia</span>
+            <div class="banner" role="status">
+              <svg class="icon" aria-hidden="true"><use href="#i-info" /></svg>
+              <p>Versi baru Carakan sudah siap.</p>
+              <div class="banner__actions">
+                <button class="btn btn--quiet">Nanti</button>
+                <button class="btn btn--primary">Muat ulang</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="variant">
+            <span class="proto-tag">Varian: penyimpanan bermasalah</span>
+            <div class="banner banner--danger" role="alert">
+              <svg class="icon" aria-hidden="true">
+                <use href="#i-hard-drive" />
+              </svg>
+              <p>
+                Penyimpanan perangkat tidak tersedia, jadi kemajuan belajar
+                tidak bisa disimpan.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast-copy" role="status" hidden>
+      <svg class="icon" aria-hidden="true"><use href="#i-info" /></svg>
+      <span
+        >Catatan: aplikasi lain tanpa font aksara akan menampilkan
+        kotak-kotak.</span
+      >
+    </div>
+
+    <div class="toast" id="toast-copy-a2l" role="status" hidden>
+      <svg class="icon" aria-hidden="true"><use href="#i-info" /></svg>
+      <span
+        >Catatan: aplikasi lain tanpa font aksara akan menampilkan
+        kotak-kotak.</span
+      >
+    </div>
+
+    <nav class="tab-bar" aria-label="Navigasi utama">
+      <a class="tab-bar__item" href="#ladder" data-tab="ladder">
+        <span class="tab-bar__pill"
+          ><svg class="icon" aria-hidden="true"><use href="#i-book-open" /></svg
+        ></span>
+        Belajar
+      </a>
+      <a class="tab-bar__item" href="#chart" data-tab="chart">
+        <span class="tab-bar__pill"
+          ><svg class="icon" aria-hidden="true">
+            <use href="#i-layout-grid" /></svg
+        ></span>
+        Bagan
+      </a>
+      <a class="tab-bar__item" href="#review" data-tab="review">
+        <span class="tab-bar__pill"
+          ><svg class="icon" aria-hidden="true"><use href="#i-repeat" /></svg
+        ></span>
+        Ulangi
+      </a>
+      <a class="tab-bar__item" href="#converter-l2a" data-tab="converter">
+        <span class="tab-bar__pill"
+          ><svg class="icon" aria-hidden="true">
+            <use href="#i-arrow-left-right" /></svg
+        ></span>
+        Ubah
+      </a>
+    </nav>
+  </body>
+</html>
