@@ -36,7 +36,7 @@
   "fontHeading": "Fonts",
   "fontBody": "Javanese script: nyk Ngayogyan Jejeg, Typeface © Apri Nugroho 2018–2020. From the Kongres Aksara Jawa font study, Language and Literature Section, Dinas Kebudayaan (Kundha Kabudayan) Daerah Istimewa Yogyakarta, 2020; developed by Apri Nugroho and Arif Budiarto. Latin text: MPLUS Rounded 1c (SIL Open Font License 1.1). License notes in licenses/.",
   "corpusHeading": "Word corpus",
-  "corpusBody": "Base words from Wiktionary (CC BY-SA 4.0, attributed per word in content/v1/words.json) and native-speaker review. See docs/references/wordlist-licensing.md.",
+  "corpusBody": "Base words from Wiktionary (CC BY-SA 4.0, attributed per word in content/v1/words.json) and native-speaker review.",
   "teacherTitle": "For teachers",
   "deviationTitle": "How this differs from the traditional order",
   "deviationBody": "The traditional order finishes all 20 nglegena letters before introducing any sandhangan. Without sandhangan every syllable sounds as a consonant + /a/, and a pupil can read only about a dozen words. This app pulls wulu (i) and suku (u) forward, straight after the first row ha na ca ra ka, so the vocabulary widens at once. Source: Kongres Aksara Jawa I Yogyakarta 2021; see the About page.",

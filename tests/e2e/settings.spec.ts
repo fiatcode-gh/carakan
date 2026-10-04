@@ -142,6 +142,22 @@ test("[W09] the licence and corpus links resolve on the server", async ({
   }
 });
 
+test("[W09] every file path the corpus copy names is served", async ({
+  page,
+}) => {
+  for (const catalog of [id, en]) {
+    const paths = catalog["corpusBody"]!.match(/[\w-]+(?:\/[\w.-]+)+/g) ?? [];
+    expect(paths.length).toBeGreaterThan(0);
+    for (const path of paths) {
+      const response = await page.request.get(`/${path}`);
+      expect(response.status(), path).toBe(200);
+      expect(response.headers()["content-type"], path).not.toContain(
+        "text/html",
+      );
+    }
+  }
+});
+
 test("[P-T06] the report keeps its text, copies the Indonesian report and confirms", async ({
   page,
 }) => {

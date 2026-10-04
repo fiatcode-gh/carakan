@@ -36,7 +36,7 @@
   "fontHeading": "Font",
   "fontBody": "Aksara Jawa: nyk Ngayogyan Jejeg, Typeface © Apri Nugroho 2018–2020. Hasil Kajian Fonta Tim Kongres Aksara Jawa, Seksi Bahasa dan Sastra, Dinas Kebudayaan (Kundha Kabudayan) Daerah Istimewa Yogyakarta, 2020; dikembangkan oleh Apri Nugroho dan Arif Budiarto. Huruf Latin: MPLUS Rounded 1c (SIL Open Font License 1.1). Keterangan lisensi di licenses/.",
   "corpusHeading": "Korpus kata",
-  "corpusBody": "Kata dasar dari Wiktionary (CC BY-SA 4.0, dengan atribusi per kata di content/v1/words.json) dan peninjauan penutur asli. Lihat docs/references/wordlist-licensing.md.",
+  "corpusBody": "Kata dasar dari Wiktionary (CC BY-SA 4.0, dengan atribusi per kata di content/v1/words.json) dan peninjauan penutur asli.",
   "teacherTitle": "Untuk Guru",
   "deviationTitle": "Perbedaan urutan dari urutan tradisional",
   "deviationBody": "Urutan tradisional menyelesaikan semua 20 aksara nglegena sebelum mengenalkan sandhangan. Tanpa sandhangan, setiap suku kata berbunyi konsonan + /a/, dan kosakata yang bisa dibaca murid hanya sekitar belasan kata. Aplikasi ini menarik wulu (i) dan suku (u) ke depan, langsung setelah baris pertama ha na ca ra ka, sehingga kosakata langsung meluas. Sumber: Kongres Aksara Jawa I Yogyakarta 2021; lihat halaman Tentang.",
