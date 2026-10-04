@@ -36,15 +36,27 @@
   let description = $state("");
   let reportOpen = $state(false);
   let toastVisible = $state(false);
+  let copyFailed = $state(false);
+
+  /** False when the clipboard refused (permission, insecure context). */
+  async function writeReport(): Promise<boolean> {
+    try {
+      await navigator.clipboard.writeText(
+        buildFeedbackReport({
+          description,
+          appVersion,
+          rulesetId: aksaraEngineRulesetId,
+        }),
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
   async function copyReport(): Promise<void> {
-    await navigator.clipboard.writeText(
-      buildFeedbackReport({
-        description,
-        appVersion,
-        rulesetId: aksaraEngineRulesetId,
-      }),
-    );
+    copyFailed = !(await writeReport());
+    if (copyFailed) return;
     reportOpen = false;
     toastVisible = true;
   }
@@ -115,8 +127,12 @@
 {#if reportOpen}
   <ReportDialog
     bind:description
+    failed={copyFailed}
     oncopy={copyReport}
-    onclose={() => (reportOpen = false)}
+    onclose={() => {
+      reportOpen = false;
+      copyFailed = false;
+    }}
   />
 {/if}
 {#if toastVisible}

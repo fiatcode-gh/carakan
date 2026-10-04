@@ -28,6 +28,7 @@
   "cancelButton": "Cancel",
   "copyReportButton": "Copy report",
   "reportCopied": "Report copied — paste it into an email to send.",
+  "reportCopyFailed": "The report could not be copied. Check the clipboard permission and try again.",
   "versionLabel": "Version {version}",
   "rulesetHeading": "Ruleset",
   "ruleSourceHeading": "Rule source",

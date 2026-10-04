@@ -172,6 +172,30 @@ test("[P-T06] the report keeps its text, copies the Indonesian report and confir
   );
 });
 
+test("[P-T06] a failed copy keeps the dialog open with a visible error, and copying again works", async ({
+  page,
+}) => {
+  await gotoRoute(page, "#/settings");
+  await page.getByRole("button", { name: id["reportButton"]! }).click();
+  const dialog = reportDialog(page);
+  await dialog.getByRole("textbox").fill("saté salah");
+  await page.evaluate(() => {
+    navigator.clipboard.writeText = () => Promise.reject(new Error("denied"));
+  });
+  await dialog.getByRole("button", { name: id["copyReportButton"]! }).click();
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("alert")).toHaveText(id["reportCopyFailed"]!);
+  await expect(page.getByText(id["reportCopied"]!)).toHaveCount(0);
+  await expect(dialog.getByRole("textbox")).toHaveValue("saté salah");
+
+  await page.evaluate(() => {
+    delete (navigator.clipboard as { writeText?: unknown }).writeText;
+  });
+  await dialog.getByRole("button", { name: id["copyReportButton"]! }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole("status")).toHaveText(id["reportCopied"]!);
+});
+
 test.describe("English browser", () => {
   test.use({ locale: "en-US" });
 

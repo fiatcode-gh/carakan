@@ -28,6 +28,7 @@
   "cancelButton": "Batal",
   "copyReportButton": "Salin laporan",
   "reportCopied": "Laporan disalin — tempel ke email untuk mengirim.",
+  "reportCopyFailed": "Laporan tidak bisa disalin. Periksa izin papan klip, lalu coba lagi.",
   "versionLabel": "Versi {version}",
   "rulesetHeading": "Aturan (ruleset)",
   "ruleSourceHeading": "Sumber aturan",
