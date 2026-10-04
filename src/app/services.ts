@@ -2,7 +2,6 @@ import { getContext, setContext } from "svelte";
 import type { Readable } from "svelte/store";
 import type { ContentData } from "../content/content-repository.ts";
 import type { GlyphInfoTable } from "../content/glyph-info-table.ts";
-import type { CarakanDb } from "../core/db/database.ts";
 import type { MistakeLogRepository } from "../core/db/mistake-log-repository.ts";
 import type { UnitCompletionRepository } from "../core/db/unit-completion-repository.ts";
 import type { LocaleController } from "../core/locale/locale-controller.ts";
@@ -11,7 +10,6 @@ import type { createI18n } from "../l10n/i18n.ts";
 import type { TabId } from "./router.ts";
 
 export interface Services {
-  readonly db: CarakanDb;
   readonly completions: UnitCompletionRepository;
   readonly mistakes: MistakeLogRepository;
   readonly reviewQueue: ReviewQueue;

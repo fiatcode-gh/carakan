@@ -45,15 +45,15 @@ test("[P-B03] first launch: only unit 1 is ready", () => {
   expect(statusesOf([])).toEqual(["ready", "locked", "locked"]);
 });
 
-test("[P-B03] completing unit 1 unlocks unit 2 and teaches its glyph bits", () => {
+test("[P-B03] completing unit 1 unlocks unit 2 and teaches its glyphs", () => {
   const ladder = computeLadder(units, new Set(["u1"]));
   expect(ladder.statuses.map((e) => e.status)).toEqual([
     "completed",
     "ready",
     "locked",
   ]);
-  expect(ladder.taughtGlyphBits).not.toBe(0n);
-  expect(ladder.taughtGlyphBits).toBe(units[0]!.glyphBits);
+  expect(units[0]!.glyphs.length).toBeGreaterThan(0);
+  expect(ladder.taughtGlyphIds).toEqual(new Set(units[0]!.glyphs));
 });
 
 test("[P-B03] a unit stays completed while a later one is still locked", () => {

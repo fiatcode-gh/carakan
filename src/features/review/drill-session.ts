@@ -1,4 +1,4 @@
-import { readonly, writable, type Readable } from "svelte/store";
+import { get, readonly, writable, type Readable } from "svelte/store";
 import type { Services } from "../../app/services.ts";
 import type { ConfusionPair } from "../../content/confusion-pair.ts";
 import type { GlyphInfoTable } from "../../content/glyph-info-table.ts";
@@ -46,7 +46,7 @@ export class DrillSession {
     // lesson must still surface. An active drill is left alone: its own
     // answers already update the plan.
     deps.mistakes.changes.subscribe(() => {
-      if (this.#current().kind === "empty") void this.refresh();
+      if (get(this.#state).kind === "empty") void this.refresh();
     });
   }
 
@@ -88,7 +88,7 @@ export class DrillSession {
   }
 
   async answer(exerciseIndex: number, selectedIndex: number): Promise<void> {
-    const current = this.#current();
+    const current = get(this.#state);
     if (current.kind !== "ready") return;
     const exercise = current.exercises[exerciseIndex];
     if (exercise === undefined) return;
@@ -97,7 +97,7 @@ export class DrillSession {
     if (correct) await mistakes.recover(current.pairKey, now());
     else await mistakes.record(current.pairKey, now());
     // Another answer or a refresh may have landed during the write.
-    const latest = this.#current();
+    const latest = get(this.#state);
     if (latest.kind !== "ready" || latest.exercises !== current.exercises) {
       return;
     }
@@ -105,12 +105,6 @@ export class DrillSession {
       ...latest,
       answered: new Map(latest.answered).set(exerciseIndex, correct),
     });
-  }
-
-  #current(): DrillState {
-    let value: DrillState = { kind: "empty" };
-    this.#state.subscribe((s) => (value = s))();
-    return value;
   }
 }
 

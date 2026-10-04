@@ -8,9 +8,6 @@ export type UnitStatus = "locked" | "ready" | "completed";
 
 export interface ComputedLadder {
   readonly statuses: readonly { unit: Unit; status: UnitStatus }[];
-  /** Bits taught by completed units: the exercise pool gate (spec 7). */
-  readonly taughtGlyphBits: bigint;
-  readonly taughtCapBits: bigint;
   /** Glyph ids of completed units; the lessons' taught pool (W06). */
   readonly taughtGlyphIds: ReadonlySet<string>;
 }
@@ -26,14 +23,10 @@ export function computeLadder(
   units: readonly Unit[],
   completedIds: ReadonlySet<string>,
 ): ComputedLadder {
-  let taughtGlyphBits = 0n;
-  let taughtCapBits = 0n;
   const taughtGlyphIds = new Set<string>();
   const statuses = units.map((unit, i) => {
     const done = completedIds.has(unit.id);
     if (done) {
-      taughtGlyphBits |= unit.glyphBits;
-      taughtCapBits |= unit.capBits;
       for (const g of unit.glyphs) taughtGlyphIds.add(g);
     }
     const previous = units[i - 1];
@@ -45,7 +38,7 @@ export function computeLadder(
         : "locked";
     return { unit, status };
   });
-  return { statuses, taughtGlyphBits, taughtCapBits, taughtGlyphIds };
+  return { statuses, taughtGlyphIds };
 }
 
 /** First five non-empty glyph chars of the unit, joined by a space. */

@@ -93,7 +93,6 @@ export function createBootstrap(
     }
     const activeTab = writable<TabId>("ladder");
     const services: Services = {
-      db,
       completions: new UnitCompletionRepository(db),
       mistakes: new MistakeLogRepository(db),
       reviewQueue: new ReviewQueue(db),

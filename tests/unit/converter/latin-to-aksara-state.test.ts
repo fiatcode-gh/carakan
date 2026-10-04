@@ -18,7 +18,6 @@ describe("LatinToAksaraConverter", () => {
     expect(get(c.state)).toEqual({
       kind: "idle",
       output: ak("KA CA"),
-      lockedFromAmbiguity: false,
     });
   });
 
@@ -37,7 +36,6 @@ describe("LatinToAksaraConverter", () => {
     if (state.kind !== "ambiguous") return;
     expect(state.candidates).toHaveLength(2);
     expect(state.reason).not.toBe("");
-    expect(state.input).toBe("prelu");
   });
 
   test("[P-U05] reports an explicit error with an index (unsupported cluster)", () => {
@@ -68,7 +66,6 @@ describe("LatinToAksaraConverter", () => {
     expect(get(c.state)).toEqual({
       kind: "idle",
       output: ambiguous.candidates[1],
-      lockedFromAmbiguity: true,
     });
   });
 

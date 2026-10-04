@@ -1,4 +1,4 @@
-import { readonly, writable, type Readable } from "svelte/store";
+import { get, readonly, writable, type Readable } from "svelte/store";
 import type { ConfusionPair } from "../../content/confusion-pair.ts";
 import type {
   GlyphInfo,
@@ -94,7 +94,7 @@ export class LessonSession {
 
   async meetNext(): Promise<void> {
     const unit = this.#unit;
-    const current = this.#current();
+    const current = get(this.#state);
     if (unit === null || current.kind !== "meet" || this.#busy) return;
     if (this.#meetIndex + 1 < unit.glyphs.length) {
       this.#meetIndex += 1;
@@ -108,7 +108,7 @@ export class LessonSession {
 
   async answer(index: number): Promise<void> {
     const unit = this.#unit;
-    const current = this.#current();
+    const current = get(this.#state);
     if (unit === null || current.kind !== "question" || this.#busy) return;
     const { exercise } = current;
     const correct = index === exercise.answerIndex;
@@ -133,7 +133,7 @@ export class LessonSession {
   /** After the last question's feedback (W05) this completes the unit. */
   async continueAfterFeedback(): Promise<void> {
     const unit = this.#unit;
-    if (unit === null || this.#current().kind !== "feedback" || this.#busy) {
+    if (unit === null || get(this.#state).kind !== "feedback" || this.#busy) {
       return;
     }
     if (this.#questionIndex === this.#plan.length - 1) {
@@ -142,12 +142,6 @@ export class LessonSession {
     }
     this.#questionIndex += 1;
     this.#emitQuestion(unit);
-  }
-
-  #current(): LessonState {
-    let value: LessonState = { kind: "initial" };
-    this.#state.subscribe((s) => (value = s))();
-    return value;
   }
 
   #emitMeet(unit: Unit): void {
