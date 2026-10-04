@@ -10,7 +10,7 @@ Run the full gate on the tree you intend to ship (`docs/spec.md` section 10): `n
 
 A push to `main` runs `.github/workflows/build.yml` (`build-image`), which builds the image with `CARAKAN_BUILD_ID` set to the short commit SHA and pushes `ghcr.io/fiatcode-gh/carakan:latest` and `ghcr.io/fiatcode-gh/carakan:<short-sha>`. Pull requests build only and never push.
 
-Integrate into `main` by fast-forward or merge commit. Do not squash or rebase: `docs/decisions/0001-ui-rework.md` names a prototype commit that must stay reachable.
+Changes reach `main` through a pull request. The `main` ruleset blocks deletion and force pushes, requires linear history, and allows only squash merges. It also requires the `lint-and-test` and `build` checks to pass, and repository admins can bypass it. The web-port history, including the prototype commit `bf8eac8` named in `docs/decisions/0001-ui-rework.md`, is already on `main`, so squash-merging later pull requests keeps it reachable.
 
 Wait for the run (`gh run watch <id> --exit-status`), then check that the server can pull the image anonymously (it holds no registry credentials):
 
