@@ -10,7 +10,11 @@ const SRC = new URL("../../../src/", import.meta.url);
 
 /** feedback-report output is a bug report for the maintainer, not learner UI. */
 const EXEMPT_PREFIXES = ["l10n/", "engine/"];
-const EXEMPT_FILES = ["features/settings/feedback-report.ts"];
+/** engine-messages.ts holds the engine's own English text as match keys (W15). */
+const EXEMPT_FILES = [
+  "features/settings/feedback-report.ts",
+  "features/converter/engine-messages.ts",
+];
 
 function scannedFiles(): string[] {
   return (readdirSync(SRC, { recursive: true }) as string[])
