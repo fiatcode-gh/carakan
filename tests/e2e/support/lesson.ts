@@ -8,8 +8,8 @@ export const id = JSON.parse(
   readFileSync("src/l10n/id.json", "utf8"),
 ) as Record<string, string>;
 
-const continueButton = (page: Page) =>
-  page.getByRole("button", { name: id["continueButton"]! });
+const continueButton = (page: Page, messages: Record<string, string> = id) =>
+  page.getByRole("button", { name: messages["continueButton"]! });
 
 interface Question {
   number: number;
@@ -38,12 +38,16 @@ async function readQuestion(page: Page): Promise<Question> {
 }
 
 /** Walks the meet-the-glyphs cards of a lesson, one Continue each. */
-export async function walkMeet(page: Page, glyphs: number): Promise<void> {
+export async function walkMeet(
+  page: Page,
+  glyphs: number,
+  messages: Record<string, string> = id,
+): Promise<void> {
   for (let i = 0; i < glyphs; i++) {
     await expect(page.locator(".lesson .chip--count")).toHaveText(
       `${i + 1}/${glyphs}`,
     );
-    await continueButton(page).click();
+    await continueButton(page, messages).click();
   }
 }
 
@@ -64,15 +68,16 @@ export async function completeLesson(
   page: Page,
   solver: Solver,
   unitId: string,
+  messages: Record<string, string> = id,
 ): Promise<void> {
   await gotoRoute(page, `#/lesson/${unitId}`);
   await expect(page.locator(".lesson")).toBeVisible();
   const unit = solver.content.units.find((u) => u.id === unitId);
   if (unit === undefined) throw new Error(`no unit ${unitId}`);
-  await walkMeet(page, unit.glyphs.length);
+  await walkMeet(page, unit.glyphs.length, messages);
   for (;;) {
     const q = await answerCurrentQuestion(page, solver);
-    await continueButton(page).click();
+    await continueButton(page, messages).click();
     if (q.number === q.total) break;
   }
   await expect(page.locator(".trophy")).toBeVisible();
