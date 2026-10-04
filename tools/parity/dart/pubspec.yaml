@@ -1,0 +1,10 @@
+name: carakan_parity
+description: Dumps the Dart aksara_engine (aksara-app @ ebc7cb5) results for the differential test.
+publish_to: none
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  aksara_engine:
+    path: ../../../.cache/parity/src/packages/aksara_engine
