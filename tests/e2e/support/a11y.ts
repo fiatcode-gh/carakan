@@ -1,7 +1,14 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page } from "@playwright/test";
 
+/** axe reads colors mid-fade otherwise: wait for every entrance animation. */
+export const settle = (page: Page) =>
+  page.evaluate(() =>
+    Promise.all(document.getAnimations().map((a) => a.finished)),
+  );
+
 export async function expectAccessible(page: Page): Promise<void> {
+  await settle(page);
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();
