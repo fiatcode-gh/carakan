@@ -8,7 +8,8 @@ import { describe, expect, it } from "vitest";
 const carried: ReadonlyArray<readonly [string, string]> = [
   [
     "docs/references/CITATIONS.md",
-    "a34166576ccba6fb23a59c44b2f0983126d0aaa0c7878cc1fce3c10dd4ac09c8",
+    // updated for carakan paths (Task 18)
+    "f437997c8b00599355e847421720feeaaa41bd745011cdfde08d73c216a45679",
   ],
   [
     "docs/references/unicode-javanese-block.txt",
@@ -24,7 +25,8 @@ const carried: ReadonlyArray<readonly [string, string]> = [
   ],
   [
     "docs/content/corpus-guide.md",
-    "88c0c5defc2d44306591f6774a9f3b12f34bfc80bc6f9b85112c812d861fc1fb",
+    // updated for carakan paths (Task 18)
+    "bdb1d861a289eb3c75cf50d14e818b0a728722fa046a63cdc72dc52efec27e3c",
   ],
   [
     "public/content/v1/aksara.json",
@@ -68,7 +70,8 @@ const carried: ReadonlyArray<readonly [string, string]> = [
   ],
   [
     "public/licenses/NOTICE-fonts.txt",
-    "09d64c2b5247f086d966200df908c07c0d30c90d0659162f2bbe38a9750d2f60",
+    // updated for the Carakan deploy note (Task 18)
+    "f255809fdb90951a6ecabf9dc164eba84251bbb1195252af776a4c4d8befcdc6",
   ],
   [
     "public/licenses/ofl-mplus.txt",

@@ -83,7 +83,7 @@ Behavior changes, each documented above where the rule is decided:
   panjing, then the vowel: `saté` = SA TA TALING, `toko` = TA TALING TARUNG KA
   TALING TARUNG. `toLatin` reads Unicode order only; old-order text reads as
   written (SA TALING TA is "séta"). This supersedes the v2 "UTN47 §6.2" claims.
-  Guard: `app/tool/shaping` (HarfBuzz check, see docs/content/corpus-guide.md).
+  Guard: `tools/shaping` (HarfBuzz check, see docs/content/corpus-guide.md).
 - Joined writing (KAJ I p.24, p.126). Words are written without spaces, so a
   word-final pangkon links to the next word as pasangan (`bapak lunga`; the
   three-stacks of p.126 8.e fall out of plain concatenation). A comma after a

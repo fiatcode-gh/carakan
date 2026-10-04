@@ -11,3 +11,8 @@ Fonts bundled with Carakan:
   for local builds only: public distribution (Play Store or sideload) is
   blocked until written permission from the rights holder is recorded in
   this directory.
+
+2026-10-04 — Carakan web app: Jejeg is served unmodified on
+carakan.fiatcode.dev while the rights holder's written permission is still
+pending; the maintainer accepted this risk. Record the permission in this
+directory when it arrives.

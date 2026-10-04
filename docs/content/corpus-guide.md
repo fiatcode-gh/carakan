@@ -1,6 +1,6 @@
 # Corpus guide — adding words
 
-Every word entry in app/assets/content/v1/words.json:
+Every word entry in public/content/v1/words.json:
 
 - `id`: lowercase Latin slug, ASCII, unique.
 - `canonical`: JGST form that round-trips through the engine. Conventions
@@ -21,8 +21,8 @@ Every word entry in app/assets/content/v1/words.json:
   corrections. An override equal to the derived form is a test failure.
 - `requiredGlyphs` / `requiredCaps`: NEVER hand-computed. Derive them from
   the engine output and let the round-trip test verify:
-  `AksaraEngine.toAksara(canonical)` → walk the output with
-  GlyphDerivation.derive (app/lib/features/content/glyph_derivation.dart).
+  `toAksara(canonical)` → walk the output with
+  `derive` (src/content/glyph-derivation.ts).
 - `gloss`: Indonesian, short, kid-appropriate.
 - `source`: `wiktionary:<word>` (section verified) or `author`.
 - Still excluded by engine v2 limitations (do not add): the separate-
@@ -31,26 +31,26 @@ Every word entry in app/assets/content/v1/words.json:
   O+TARUNG `au` spellings, `z`/`q`/`x` rekan, `lega`-class nga-lelet
   collapses (pa cerek/nga lelet are display-only), `rawon`-style words
   are FIXED (add freely).
-- Every addition must pass `flutter test test/features/content/corpus_round_trip_test.dart`.
+- Every addition must pass `npm test -- tests/content/corpus-round-trip.test.ts`.
 
 ## Shaping check
 
 Mandatory after any engine or font change. It shapes every corpus canonical
 plus sentence and taling-intent cases with HarfBuzz and exits non-zero on a
 dotted circle, a taling not drawn before its owner base, or a violated intent
-expectation (HarfBuzz is not reachable from `flutter test`):
+expectation (HarfBuzz is not reachable from `npm test`):
 
 ```sh
-cd app && dart run tool/shaping/dump_cases.dart > /tmp/cases.tsv && uv run --quiet --with uharfbuzz python tool/shaping/shape_check.py /tmp/cases.tsv
+npm run shaping
 ```
 
 ## Chart examples
 
 The chart's detail sheet shows teacher-curated example words per glyph, from
-`app/assets/content/v1/chart_examples.json`
+`public/content/v1/chart_examples.json`
 (`{"version": 1, "examples": {"<glyphId>": ["<wordId>", ...]}}`, keys in
 `GlyphUniverse` order, word ids in display order, resolved against
-`words.json` at load; an unknown glyph or word id is a `FormatException`).
+`words.json` at load; an unknown glyph or word id is a `ContentFormatError`).
 Each row shows the word's aksara and its school-spelling reading, never the
 gloss (glosses stay in `words.json` for the review drill).
 
@@ -59,7 +59,7 @@ gloss (glosses stay in `words.json` for the review drill).
 - Word rules (reviewed, not tested): actual ngoko Javanese words only (rekan
   keys excepted); prefer distinctly Javanese spellings over same-as-Indonesian
   ones; no krama-only, sastra, compound-only or obscure entries.
-- Enforced by `chart_examples_test.dart`: the key's glyph is visible in the
+- Enforced by `tests/content/chart-examples.test.ts`: the key's glyph is visible in the
   word's aksara (`visibleGlyphs`), and the word has no pasangan
   (`hasPasangan`).
 - Changes go through a teacher review sheet, never a direct edit.
