@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "pairs": [
+    {"members": ["da", "dha"], "label": "da – dha"},
+    {"members": ["ta", "tha"], "label": "ta – tha"},
+    {"members": ["la", "ra"], "label": "la – ra"},
+    {"members": ["ba", "pa"], "label": "ba – pa"},
+    {"members": ["na", "nya"], "label": "na – nya"},
+    {"members": ["suku", "wulu"], "label": "u – i (suku – wulu)"}
+  ]
+}

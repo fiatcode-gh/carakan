@@ -1,0 +1,11 @@
+dist/
+.cache/
+package-lock.json
+public/content/
+docs/references/
+src/engine/codepoints.ts
+tests/engine/fixtures/
+fonts/
+test-results/
+playwright-report/
+.flow/

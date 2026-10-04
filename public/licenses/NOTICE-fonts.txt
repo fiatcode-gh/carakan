@@ -1,0 +1,13 @@
+Fonts bundled with Carakan:
+
+- MPLUS Rounded 1c, "Copyright 2016 The Rounded M+ Project Authors",
+  SIL Open Font License 1.1 (license text: ofl-mplus.txt;
+  https://scripts.sil.org/OFL).
+- nyk Ngayogyan Jejeg, "Typeface © (Aprinugroho). 2018-2020. All Rights
+  Reserved" (font name table). Result of the Kajian Fonta Tim Kongres
+  Aksara Jawa, Seksi Bahasa dan Sastra, Dinas Kebudayaan (Kundha
+  Kabudayan) Daerah Istimewa Yogyakarta, 2020; developed by Apri Nugroho
+  and Arif Budiarto. No license text ships with the font. It is bundled
+  for local builds only: public distribution (Play Store or sideload) is
+  blocked until written permission from the rights holder is recorded in
+  this directory.

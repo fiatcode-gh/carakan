@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "units": [
+    {"id": "u1", "name": "Baris pertama: ha na ca ra ka", "glyphs": ["ha", "na", "ca", "ra", "ka"]},
+    {"id": "u2", "name": "Wulu dan suku", "glyphs": ["wulu", "suku"]},
+    {"id": "u3", "name": "Baris kedua: da ta sa wa la", "glyphs": ["da", "ta", "sa", "wa", "la"]},
+    {"id": "u4", "name": "Baris ketiga: pa dha ja ya nya", "glyphs": ["pa", "dha", "ja", "ya", "nya"]},
+    {"id": "u5", "name": "Baris keempat: ma ga ba tha nga", "glyphs": ["ma", "ga", "ba", "tha", "nga"]},
+    {"id": "u6", "name": "Sandhangan lain", "glyphs": ["taling", "tarung", "pepet", "layar", "cecak", "wignyan", "pangkon", "cakra", "keret", "pengkal"]},
+    {"id": "u7", "name": "Pasangan", "glyphs": ["pasangan-ha", "pasangan-na", "pasangan-ca", "pasangan-ra", "pasangan-ka", "pasangan-da", "pasangan-ta", "pasangan-sa", "pasangan-wa", "pasangan-la", "pasangan-pa", "pasangan-dha", "pasangan-ja", "pasangan-ya", "pasangan-nya", "pasangan-ma", "pasangan-ga", "pasangan-ba", "pasangan-tha", "pasangan-nga"], "caps": ["pasangan"]},
+    {"id": "u8", "name": "Sayap lanjutan: murda dan swara", "glyphs": ["naMurda", "kaMurda", "taMurda", "saMurda", "paMurda", "nyaMurda", "gaMurda", "baMurda", "caMurda", "jaMurda", "raAgung", "a", "i", "u", "e", "o", "paCerek", "ngaLelet"]}
+  ]
+}

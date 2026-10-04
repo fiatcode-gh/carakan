@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "wulu",
+      "name": "wulu (i)",
+      "unicodeName": "JAVANESE VOWEL SIGN WULU",
+      "function": "vowelChanging",
+      "latinPujl": "i",
+      "latinJgst": "i",
+      "audioKey": "wulu"
+    },
+    {
+      "id": "suku",
+      "name": "suku (u)",
+      "unicodeName": "JAVANESE VOWEL SIGN SUKU",
+      "function": "vowelChanging",
+      "latinPujl": "u",
+      "latinJgst": "u",
+      "audioKey": "suku"
+    },
+    {
+      "id": "taling",
+      "name": "taling (é)",
+      "unicodeName": "JAVANESE VOWEL SIGN TALING",
+      "function": "vowelChanging",
+      "latinPujl": "é",
+      "latinJgst": "é",
+      "audioKey": "taling"
+    },
+    {
+      "id": "tarung",
+      "name": "tarung (panjang)",
+      "unicodeName": "JAVANESE VOWEL SIGN TARUNG",
+      "function": "vowelChanging",
+      "latinPujl": "aa",
+      "latinJgst": "ā",
+      "audioKey": "tarung"
+    },
+    {
+      "id": "pepet",
+      "name": "pepet (e)",
+      "unicodeName": "JAVANESE VOWEL SIGN PEPET",
+      "function": "vowelChanging",
+      "latinPujl": "e",
+      "latinJgst": "ě",
+      "audioKey": "pepet"
+    },
+    {
+      "id": "layar",
+      "name": "layar (-r)",
+      "unicodeName": "JAVANESE SIGN LAYAR",
+      "function": "syllableClosing",
+      "latinPujl": "r",
+      "latinJgst": "ṙ",
+      "audioKey": "layar"
+    },
+    {
+      "id": "cecak",
+      "name": "cecak (-ng)",
+      "unicodeName": "JAVANESE SIGN CECAK",
+      "function": "syllableClosing",
+      "latinPujl": "ng",
+      "latinJgst": "ŋ",
+      "audioKey": "cecak"
+    },
+    {
+      "id": "wignyan",
+      "name": "wignyan (-h)",
+      "unicodeName": "JAVANESE SIGN WIGNYAN",
+      "function": "syllableClosing",
+      "latinPujl": "h",
+      "latinJgst": "ḥ",
+      "audioKey": "wignyan"
+    },
+    {
+      "id": "pangkon",
+      "name": "pangkon (pemati)",
+      "unicodeName": "JAVANESE PANGKON",
+      "function": "vowelKiller",
+      "latinPujl": "",
+      "latinJgst": "",
+      "audioKey": "pangkon"
+    },
+    {
+      "id": "cakra",
+      "name": "cakra (-r-)",
+      "unicodeName": "JAVANESE CONSONANT SIGN CAKRA",
+      "function": "consonantModifying",
+      "latinPujl": "r",
+      "latinJgst": "ŕ",
+      "audioKey": "cakra"
+    },
+    {
+      "id": "keret",
+      "name": "keret (rě)",
+      "unicodeName": "JAVANESE CONSONANT SIGN KERET",
+      "function": "consonantModifying",
+      "latinPujl": "re",
+      "latinJgst": "ṛ",
+      "audioKey": "keret"
+    },
+    {
+      "id": "pengkal",
+      "name": "pengkal (-y-)",
+      "unicodeName": "JAVANESE CONSONANT SIGN PENGKAL",
+      "function": "consonantModifying",
+      "latinPujl": "y",
+      "latinJgst": "ỿ",
+      "audioKey": "pengkal"
+    }
+  ]
+}

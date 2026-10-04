@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.cache/
+test-results/
+playwright-report/
+tools/parity/dart/.dart_tool/
+tools/parity/dart/pubspec.lock

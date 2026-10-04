@@ -1,0 +1,616 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "ha",
+      "name": "ha",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER HA",
+      "latinPujl": "ha",
+      "latinJgst": "ha",
+      "audioKey": "ha"
+    },
+    {
+      "id": "na",
+      "name": "na",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER NA",
+      "latinPujl": "na",
+      "latinJgst": "na",
+      "audioKey": "na"
+    },
+    {
+      "id": "ca",
+      "name": "ca",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER CA",
+      "latinPujl": "ca",
+      "latinJgst": "ca",
+      "audioKey": "ca"
+    },
+    {
+      "id": "ra",
+      "name": "ra",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER RA",
+      "latinPujl": "ra",
+      "latinJgst": "ra",
+      "audioKey": "ra"
+    },
+    {
+      "id": "ka",
+      "name": "ka",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER KA",
+      "latinPujl": "ka",
+      "latinJgst": "ka",
+      "audioKey": "ka"
+    },
+    {
+      "id": "da",
+      "name": "da",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER DA",
+      "latinPujl": "da",
+      "latinJgst": "da",
+      "audioKey": "da"
+    },
+    {
+      "id": "ta",
+      "name": "ta",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER TA",
+      "latinPujl": "ta",
+      "latinJgst": "ta",
+      "audioKey": "ta"
+    },
+    {
+      "id": "sa",
+      "name": "sa",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER SA",
+      "latinPujl": "sa",
+      "latinJgst": "sa",
+      "audioKey": "sa"
+    },
+    {
+      "id": "wa",
+      "name": "wa",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER WA",
+      "latinPujl": "wa",
+      "latinJgst": "wa",
+      "audioKey": "wa"
+    },
+    {
+      "id": "la",
+      "name": "la",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER LA",
+      "latinPujl": "la",
+      "latinJgst": "la",
+      "audioKey": "la"
+    },
+    {
+      "id": "pa",
+      "name": "pa",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER PA",
+      "latinPujl": "pa",
+      "latinJgst": "pa",
+      "audioKey": "pa"
+    },
+    {
+      "id": "dha",
+      "name": "dha",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER DA MAHAPRANA",
+      "latinPujl": "dha",
+      "latinJgst": "ḍa",
+      "audioKey": "dha"
+    },
+    {
+      "id": "ja",
+      "name": "ja",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER JA",
+      "latinPujl": "ja",
+      "latinJgst": "ja",
+      "audioKey": "ja"
+    },
+    {
+      "id": "ya",
+      "name": "ya",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER YA",
+      "latinPujl": "ya",
+      "latinJgst": "ya",
+      "audioKey": "ya"
+    },
+    {
+      "id": "nya",
+      "name": "nya",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER NYA",
+      "latinPujl": "nya",
+      "latinJgst": "ña",
+      "audioKey": "nya"
+    },
+    {
+      "id": "ma",
+      "name": "ma",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER MA",
+      "latinPujl": "ma",
+      "latinJgst": "ma",
+      "audioKey": "ma"
+    },
+    {
+      "id": "ga",
+      "name": "ga",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER GA",
+      "latinPujl": "ga",
+      "latinJgst": "ga",
+      "audioKey": "ga"
+    },
+    {
+      "id": "ba",
+      "name": "ba",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER BA",
+      "latinPujl": "ba",
+      "latinJgst": "ba",
+      "audioKey": "ba"
+    },
+    {
+      "id": "tha",
+      "name": "tha",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER TTA",
+      "latinPujl": "tha",
+      "latinJgst": "ṭa",
+      "audioKey": "tha"
+    },
+    {
+      "id": "nga",
+      "name": "nga",
+      "category": "nglegena",
+      "unicodeName": "JAVANESE LETTER NGA",
+      "latinPujl": "nga",
+      "latinJgst": "ṅa",
+      "audioKey": "nga"
+    },
+    {
+      "id": "naMurda",
+      "name": "na murda",
+      "category": "murda",
+      "unicodeName": "JAVANESE LETTER NA MURDA",
+      "latinPujl": "ṇa",
+      "latinJgst": "ṇa",
+      "audioKey": "naMurda"
+    },
+    {
+      "id": "kaMurda",
+      "name": "ka murda",
+      "category": "murda",
+      "unicodeName": "JAVANESE LETTER KA MURDA",
+      "latinPujl": "ḳa",
+      "latinJgst": "ḳa",
+      "audioKey": "kaMurda"
+    },
+    {
+      "id": "taMurda",
+      "name": "ta murda",
+      "category": "murda",
+      "unicodeName": "JAVANESE LETTER TA MURDA",
+      "latinPujl": "tha",
+      "latinJgst": "ṭha",
+      "audioKey": "taMurda"
+    },
+    {
+      "id": "saMurda",
+      "name": "sa murda",
+      "category": "murda",
+      "unicodeName": "JAVANESE LETTER SA MURDA",
+      "latinPujl": "śa",
+      "latinJgst": "śa",
+      "audioKey": "saMurda"
+    },
+    {
+      "id": "paMurda",
+      "name": "pa murda",
+      "category": "murda",
+      "unicodeName": "JAVANESE LETTER PA MURDA",
+      "latinPujl": "p̣a",
+      "latinJgst": "p̣a",
+      "audioKey": "paMurda"
+    },
+    {
+      "id": "nyaMurda",
+      "name": "nya murda",
+      "category": "murda",
+      "unicodeName": "JAVANESE LETTER NYA MURDA",
+      "latinPujl": "jña",
+      "latinJgst": "jña",
+      "audioKey": "nyaMurda"
+    },
+    {
+      "id": "gaMurda",
+      "name": "ga murda",
+      "category": "murda",
+      "unicodeName": "JAVANESE LETTER GA MURDA",
+      "latinPujl": "g̣a",
+      "latinJgst": "g̣a",
+      "audioKey": "gaMurda"
+    },
+    {
+      "id": "baMurda",
+      "name": "ba murda",
+      "category": "murda",
+      "unicodeName": "JAVANESE LETTER BA MURDA",
+      "latinPujl": "ḅa",
+      "latinJgst": "ḅa",
+      "audioKey": "baMurda"
+    },
+    {
+      "id": "caMurda",
+      "name": "ca murda",
+      "category": "murda",
+      "unicodeName": "JAVANESE LETTER CA MURDA",
+      "latinPujl": "c̣a",
+      "latinJgst": "c̣a",
+      "audioKey": "caMurda"
+    },
+    {
+      "id": "jaMurda",
+      "name": "ja mahaprana",
+      "category": "murda",
+      "unicodeName": "JAVANESE LETTER JA MAHAPRANA",
+      "latinPujl": "j̣a",
+      "latinJgst": "j̣a",
+      "audioKey": "jaMurda"
+    },
+    {
+      "id": "raAgung",
+      "name": "ra agung",
+      "category": "murda",
+      "unicodeName": "JAVANESE LETTER RA AGUNG",
+      "latinPujl": "ṟa",
+      "latinJgst": "ṟa",
+      "audioKey": "raAgung"
+    },
+    {
+      "id": "a",
+      "name": "a",
+      "category": "swara",
+      "unicodeName": "JAVANESE LETTER A",
+      "latinPujl": "a",
+      "latinJgst": "a",
+      "audioKey": "a"
+    },
+    {
+      "id": "i",
+      "name": "i",
+      "category": "swara",
+      "unicodeName": "JAVANESE LETTER I",
+      "latinPujl": "i",
+      "latinJgst": "i",
+      "audioKey": "i"
+    },
+    {
+      "id": "u",
+      "name": "u",
+      "category": "swara",
+      "unicodeName": "JAVANESE LETTER U",
+      "latinPujl": "u",
+      "latinJgst": "u",
+      "audioKey": "u"
+    },
+    {
+      "id": "e",
+      "name": "é",
+      "category": "swara",
+      "unicodeName": "JAVANESE LETTER E",
+      "latinPujl": "é",
+      "latinJgst": "é",
+      "audioKey": "e"
+    },
+    {
+      "id": "o",
+      "name": "o",
+      "category": "swara",
+      "unicodeName": "JAVANESE LETTER O",
+      "latinPujl": "o",
+      "latinJgst": "o",
+      "audioKey": "o"
+    },
+    {
+      "id": "paCerek",
+      "name": "pa cerek (rě)",
+      "category": "swara",
+      "unicodeName": "JAVANESE LETTER PA CEREK",
+      "latinPujl": "re",
+      "latinJgst": "ṛ",
+      "audioKey": "paCerek"
+    },
+    {
+      "id": "ngaLelet",
+      "name": "nga lelet (lě)",
+      "category": "swara",
+      "unicodeName": "JAVANESE LETTER NGA LELET",
+      "latinPujl": "le",
+      "latinJgst": "ḷ",
+      "audioKey": "ngaLelet"
+    },
+    {
+      "id": "iKawi",
+      "name": "i kawi",
+      "category": "swara",
+      "unicodeName": "JAVANESE LETTER I KAWI",
+      "latinPujl": "i",
+      "latinJgst": "i",
+      "audioKey": "iKawi"
+    },
+    {
+      "id": "ii",
+      "name": "ii",
+      "category": "swara",
+      "unicodeName": "JAVANESE LETTER II",
+      "latinPujl": "i",
+      "latinJgst": "ī",
+      "audioKey": "ii"
+    },
+    {
+      "id": "ngaLeletRaswadi",
+      "name": "nga lelet raswadi",
+      "category": "swara",
+      "unicodeName": "JAVANESE LETTER NGA LELET RASWADI",
+      "latinPujl": "leu",
+      "latinJgst": "ḷě",
+      "audioKey": "ngaLeletRaswadi"
+    },
+    {
+      "id": "ai",
+      "name": "ai",
+      "category": "swara",
+      "unicodeName": "JAVANESE LETTER AI",
+      "latinPujl": "ai",
+      "latinJgst": "ai",
+      "audioKey": "ai"
+    },
+    {
+      "id": "fa",
+      "name": "fa",
+      "category": "rekan",
+      "latinPujl": "fa",
+      "latinJgst": "fa",
+      "audioKey": "fa"
+    },
+    {
+      "id": "va",
+      "name": "va",
+      "category": "rekan",
+      "latinPujl": "va",
+      "latinJgst": "va",
+      "audioKey": "va"
+    },
+    {
+      "id": "le",
+      "name": "le",
+      "category": "rekan",
+      "latinPujl": "le",
+      "latinJgst": "ḷ",
+      "audioKey": "le"
+    },
+    {
+      "id": "ai",
+      "name": "ai",
+      "category": "rekan",
+      "latinPujl": "ai",
+      "latinJgst": "ai",
+      "audioKey": "ai"
+    },
+    {
+      "id": "au",
+      "name": "au",
+      "category": "rekan",
+      "latinPujl": "au",
+      "latinJgst": "au",
+      "audioKey": "au"
+    },
+    {
+      "id": "reu",
+      "name": "reu",
+      "category": "rekan",
+      "latinPujl": "reu",
+      "latinJgst": "ṛě",
+      "audioKey": "reu"
+    },
+    {
+      "id": "leu",
+      "name": "leu",
+      "category": "rekan",
+      "latinPujl": "leu",
+      "latinJgst": "ḷě",
+      "audioKey": "leu"
+    },
+    {
+      "id": "angka-0",
+      "name": "angka 0",
+      "category": "angka",
+      "digit": 0,
+      "audioKey": "angka-0"
+    },
+    {
+      "id": "angka-1",
+      "name": "angka 1",
+      "category": "angka",
+      "digit": 1,
+      "audioKey": "angka-1"
+    },
+    {
+      "id": "angka-2",
+      "name": "angka 2",
+      "category": "angka",
+      "digit": 2,
+      "audioKey": "angka-2"
+    },
+    {
+      "id": "angka-3",
+      "name": "angka 3",
+      "category": "angka",
+      "digit": 3,
+      "audioKey": "angka-3"
+    },
+    {
+      "id": "angka-4",
+      "name": "angka 4",
+      "category": "angka",
+      "digit": 4,
+      "audioKey": "angka-4"
+    },
+    {
+      "id": "angka-5",
+      "name": "angka 5",
+      "category": "angka",
+      "digit": 5,
+      "audioKey": "angka-5"
+    },
+    {
+      "id": "angka-6",
+      "name": "angka 6",
+      "category": "angka",
+      "digit": 6,
+      "audioKey": "angka-6"
+    },
+    {
+      "id": "angka-7",
+      "name": "angka 7",
+      "category": "angka",
+      "digit": 7,
+      "audioKey": "angka-7"
+    },
+    {
+      "id": "angka-8",
+      "name": "angka 8",
+      "category": "angka",
+      "digit": 8,
+      "audioKey": "angka-8"
+    },
+    {
+      "id": "angka-9",
+      "name": "angka 9",
+      "category": "angka",
+      "digit": 9,
+      "audioKey": "angka-9"
+    },
+    {
+      "id": "lingsa",
+      "name": "pada lingsa (,)",
+      "category": "pada",
+      "unicodeName": "JAVANESE PADA LINGSA",
+      "latinPujl": ",",
+      "audioKey": "lingsa"
+    },
+    {
+      "id": "lungsi",
+      "name": "pada lungsi (.)",
+      "category": "pada",
+      "unicodeName": "JAVANESE PADA LUNGSI",
+      "latinPujl": ".",
+      "audioKey": "lungsi"
+    },
+    {
+      "id": "adeg",
+      "name": "pada adeg",
+      "category": "pada",
+      "unicodeName": "JAVANESE PADA ADEG",
+      "audioKey": "adeg"
+    },
+    {
+      "id": "adegAdeg",
+      "name": "pada adeg-adeg",
+      "category": "pada",
+      "unicodeName": "JAVANESE PADA ADEG ADEG",
+      "audioKey": "adegAdeg"
+    },
+    {
+      "id": "windu",
+      "name": "pada windu",
+      "category": "pada",
+      "unicodeName": "JAVANESE PADA WINDU",
+      "audioKey": "windu"
+    },
+    {
+      "id": "rerengganKiwa",
+      "name": "rerenggan kiri",
+      "category": "pada",
+      "unicodeName": "JAVANESE LEFT RERENGGAN",
+      "audioKey": "rerengganKiwa"
+    },
+    {
+      "id": "rerengganTengen",
+      "name": "rerenggan kanan",
+      "category": "pada",
+      "unicodeName": "JAVANESE RIGHT RERENGGAN",
+      "audioKey": "rerengganTengen"
+    },
+    {
+      "id": "andap",
+      "name": "pada andap",
+      "category": "pada",
+      "unicodeName": "JAVANESE PADA ANDAP",
+      "audioKey": "andap"
+    },
+    {
+      "id": "madya",
+      "name": "pada madya",
+      "category": "pada",
+      "unicodeName": "JAVANESE PADA MADYA",
+      "audioKey": "madya"
+    },
+    {
+      "id": "luhur",
+      "name": "pada luhur",
+      "category": "pada",
+      "unicodeName": "JAVANESE PADA LUHUR",
+      "audioKey": "luhur"
+    },
+    {
+      "id": "piseleh",
+      "name": "pada piseleh",
+      "category": "pada",
+      "unicodeName": "JAVANESE PADA PISELEH",
+      "audioKey": "piseleh"
+    },
+    {
+      "id": "turnedPiseleh",
+      "name": "pada piseleh terbalik",
+      "category": "pada",
+      "unicodeName": "JAVANESE TURNED PADA PISELEH",
+      "audioKey": "turnedPiseleh"
+    },
+    {
+      "id": "pangrangkep",
+      "name": "pangrangkep",
+      "category": "pada",
+      "unicodeName": "JAVANESE PANGRANGKEP",
+      "audioKey": "pangrangkep"
+    },
+    {
+      "id": "tirtaTumetes",
+      "name": "pada tirta tumetes",
+      "category": "pada",
+      "unicodeName": "JAVANESE PADA TIRTA TUMETES",
+      "audioKey": "tirtaTumetes"
+    },
+    {
+      "id": "isenIsen",
+      "name": "pada isen-isen",
+      "category": "pada",
+      "unicodeName": "JAVANESE PADA ISEN-ISEN",
+      "audioKey": "isenIsen"
+    }
+  ]
+}
