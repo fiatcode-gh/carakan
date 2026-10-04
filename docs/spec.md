@@ -95,7 +95,7 @@ Content `v1` is carried over byte for byte in `public/content/v1/`: `aksara.json
 - Cache policy (`sws.config.toml`): `**` gets `no-cache`; `/assets/**` (Vite's content-hashed output) gets `public, max-age=31536000, immutable`. HTML, `sw.js`, `workbox-*.js`, the manifest and every unhashed file (content JSON, fonts, icons, licenses) must revalidate: the service worker's install and update fetches must never be answered from a stale HTTP cache, or an update would never arrive (contract risk, section 8). Compression is on.
 - CI: `.github/workflows/build.yml` builds on pull requests and, on push to `main`, pushes `ghcr.io/fiatcode-gh/carakan:{latest,<sha>}`.
 - Production routing: a `carakan.container` quadlet unit and a Traefik router with a TLS certificate live in `fiatcode-infra`, not in this repository.
-- Production runbook and publication steps: `docs/deploy.md` (added by Task 20).
+- Production runbook: [`docs/deploy.md`](deploy.md) covers the release path from the full gate to the image, the server rollout, the post-publish checks and rollback.
 - Local proof: `npm run served:up` builds the production image and runs it behind a Traefik configured like production at `http://localhost:8090/`. `served:headers` checks content types, cache headers, compression and no SPA rewrite. HSTS is asserted only for https base URLs, because Traefik sets it only over TLS; production proof of HSTS and the certificate belongs to the production acceptance (Task 21).
 
 ## 10. Testing and gates
