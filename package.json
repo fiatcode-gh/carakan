@@ -13,7 +13,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "parity:dump": "sh tools/parity/dump-dart.sh",
-    "shaping": "sh tools/shaping/run.sh"
+    "shaping": "sh tools/shaping/run.sh",
+    "gen:content": "node tools/gen-content.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
