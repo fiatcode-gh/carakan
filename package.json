@@ -25,6 +25,7 @@
     "served:down": "sh tools/served/down.sh",
     "served:headers": "node tools/served/check-headers.ts",
     "served:measure": "node tools/served/measure-served.ts",
+    "device:check": "node tools/device/check.ts",
     "measure": "node tools/measure-transfer.ts",
     "lighthouse": "node tools/lighthouse.ts",
     "parity:coverage": "node tools/parity-coverage.ts",
