@@ -61,7 +61,13 @@ function compare(
   const mismatches: Mismatch[] = [];
   for (const [input, opt, dart] of rows) {
     const ts = toRec(input, () => run(input, opt as never));
-    if (JSON.stringify(ts) !== JSON.stringify(dart)) {
+    // Contract section 3.1: where the Dart engine threw (["x"]), the TS engine
+    // must return an error result instead. A TS throw is always a mismatch.
+    const same =
+      dart[0] === "x"
+        ? ts[0] === "e"
+        : JSON.stringify(ts) === JSON.stringify(dart);
+    if (!same) {
       mismatches.push({ call: label(input, opt), dart, ts });
     }
   }
@@ -74,6 +80,15 @@ describe("[P-D02] differential: Dart engine @ebc7cb5 vs TS engine", () => {
       "ebc7cb524ca7ddea8a3adca8b21939cd3da09bca",
     );
     expect(fixture.source.rulesetId).toBe(aksaraEngineRulesetId);
+  });
+
+  // Pins the section 3.1 exception: a regenerated fixture cannot widen it
+  // without this count changing.
+  test('the fixture records exactly 8 Dart throws ["x"]', () => {
+    const thrown = [...fixture.toAksara, ...fixture.toLatin].filter(
+      ([, , rec]) => rec[0] === "x",
+    );
+    expect(thrown).toHaveLength(8);
   });
 
   test("toAksara matches the Dart engine for every recorded input", () => {

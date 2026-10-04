@@ -156,5 +156,11 @@ function maybeCoda(
   ) {
     return null; // next syllable onset cluster (C+r / C+y)
   }
+  if (t.isCakraR || t.isPengkalY || t.isCerekR) {
+    throw new LatinParseError(
+      t.sourceIndex,
+      "Cluster marker cannot close a syllable",
+    );
+  }
   return t;
 }
