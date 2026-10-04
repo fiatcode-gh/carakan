@@ -14,6 +14,7 @@
     "format:check": "prettier --check .",
     "parity:dump": "sh tools/parity/dump-dart.sh",
     "shaping": "sh tools/shaping/run.sh",
+    "fonts": "sh tools/fonts/subset.sh",
     "gen:content": "node tools/gen-content.ts",
     "prototype": "vite --config prototype/vite.config.ts --port 5180 --strictPort",
     "prototype:capture": "node prototype/capture.ts"
