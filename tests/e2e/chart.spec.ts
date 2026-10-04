@@ -13,6 +13,7 @@ import {
   expectAccessible,
   expectNoHorizontalOverflow,
   expectTouchTargets,
+  settle,
 } from "./support/a11y.ts";
 import { gotoRoute, seedLocale } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
@@ -52,12 +53,6 @@ const sectionsFor = (c: Record<string, string>): ChartSection[] =>
     strings: stringsFor(c),
   });
 const sections = sectionsFor(id);
-
-/** axe reads colors mid-fade otherwise: wait for every entrance animation. */
-const settle = (page: Page) =>
-  page.evaluate(() =>
-    Promise.all(document.getAnimations().map((a) => a.finished)),
-  );
 
 const shoot = async (page: Page, name: string) => {
   await settle(page);
@@ -259,14 +254,12 @@ test("[P-C03] every tile opens its own glyph's detail", async ({ page }) => {
 test("chart and sheet pass axe, touch targets and fit the viewport", async ({
   page,
 }) => {
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
   await shoot(page, "chart");
 
   await tile(page, "ka").click();
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
 });

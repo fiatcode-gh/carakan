@@ -19,12 +19,6 @@ const { version } = JSON.parse(readFileSync("package.json", "utf8")) as {
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 
-/** axe reads colors mid-fade otherwise: wait for every entrance animation. */
-const settle = (page: Page) =>
-  page.evaluate(() =>
-    Promise.all(document.getAnimations().map((a) => a.finished)),
-  );
-
 const shoot = (page: Page, name: string) =>
   page.screenshot({ path: `test-results/settings-${name}.png` });
 
@@ -165,7 +159,6 @@ test("[P-T06] the report keeps its text, copies the Indonesian report and confir
   await page.getByRole("button", { name: id["reportButton"]! }).click();
   const dialog = reportDialog(page);
   await expect(dialog).toBeVisible();
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await shoot(page, "report-dialog");
@@ -237,20 +230,17 @@ test("[P-L04] English settings and report dialog are accessible", async ({
   await expect(
     page.getByRole("heading", { name: en["aboutSectionHeading"]! }),
   ).toBeVisible();
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await shoot(page, "en");
   await page.getByRole("button", { name: en["reportButton"]! }).click();
   await expect(reportDialog(page, en)).toBeVisible();
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
 });
 
 test("settings page is accessible in Indonesian", async ({ page }) => {
   await gotoRoute(page, "#/settings");
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await shoot(page, "id");

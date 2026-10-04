@@ -48,12 +48,6 @@ const unit = (unitId: string): Unit => {
   return found;
 };
 
-/** axe reads colors mid-fade otherwise: wait for every entrance animation. */
-const settle = (page: Page) =>
-  page.evaluate(() =>
-    Promise.all(document.getAnimations().map((a) => a.finished)),
-  );
-
 const shoot = (page: Page, name: string) =>
   page.screenshot({ path: `test-results/belajar-${name}.png` });
 
@@ -156,7 +150,6 @@ test("[P-B01] the ladder lists the 8 units in order with numbered medallions and
     );
     await expect(row(page, i + 1).locator(".unit__name")).toContainText(u.name);
   }
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
@@ -230,7 +223,6 @@ test("[P-B06][P-B07] the teacher button opens the teacher page with both cards",
   expect(await list.evaluate((el) => (el as HTMLElement).innerText)).toBe(
     id["unitOrderBody"]!,
   );
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
@@ -253,7 +245,6 @@ test("[P-B08] the meet phase walks every glyph of unit 1", async ({ page }) => {
       `${id["soundLabel"]!} · ${info.pujl}`,
     );
     if (i === 0) {
-      await settle(page);
       await expectAccessible(page);
       await expectTouchTargets(page);
       await expectNoHorizontalOverflow(page);
@@ -281,7 +272,6 @@ test("[P-B11] the question view shows the progress, a prompt card and one button
   // Unit 1 starts with the first question as glyph to sound.
   expect(q.prompt).toHaveProperty("glyph");
   await expect(page.locator(".options")).not.toHaveClass(/options--grid/);
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
@@ -296,7 +286,6 @@ test("[P-B11] the question view shows the progress, a prompt card and one button
   expect(second.prompt).toHaveProperty("sound");
   await expect(page.locator(".options")).toHaveClass(/options--grid/);
   expect(second.options).toHaveLength(4);
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await shoot(page, "question-sound");
@@ -320,7 +309,6 @@ test("[P-B12] feedback shows right and wrong answers; the last question gets fee
   await expect(page.locator(".options button.is-correct")).toHaveText(
     q.options[right]!,
   );
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await shoot(page, "feedback-correct");
@@ -340,7 +328,6 @@ test("[P-B12] feedback shows right and wrong answers; the last question gets fee
   await expect(page.locator(".options button.is-correct")).toHaveText(
     q.options[correct]!,
   );
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
@@ -376,7 +363,6 @@ test("[P-B14] the done view reports the score and Back returns to the ladder; th
       name: fmt(id["lessonDone"]!, { correct: 5, total: 5 }),
     }),
   ).toBeVisible();
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
@@ -541,7 +527,6 @@ test.describe("English interface", () => {
         u.name,
       );
     }
-    await settle(page);
     await expectAccessible(page);
 
     await page.getByRole("link", { name: en["teacherTitle"]! }).click();
@@ -562,7 +547,6 @@ test.describe("English interface", () => {
       ),
     ).toBeVisible();
     await page.getByRole("button", { name: en["continueButton"]! }).click();
-    await settle(page);
     await expectAccessible(page);
   });
 });

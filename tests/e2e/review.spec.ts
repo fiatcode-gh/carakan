@@ -39,11 +39,6 @@ test.beforeAll(async () => {
   solver = await createSolver();
 });
 
-const settle = (page: Page) =>
-  page.evaluate(() =>
-    Promise.all(document.getAnimations().map((a) => a.finished)),
-  );
-
 const shoot = (page: Page, name: string) =>
   page.screenshot({ path: `test-results/ulangi-${name}.png` });
 
@@ -183,7 +178,6 @@ test("[P-R01][P-R12] the help button opens the help page with both slips and fou
       els.map((el) => getComputedStyle(el).backgroundColor),
     );
   expect(new Set(dots).size, "one color per grade").toBe(4);
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
@@ -195,7 +189,6 @@ test("[P-R06] a fresh profile shows the empty state", async ({ page }) => {
   await expect(page.getByText(id["reviewEmpty"]!)).toBeVisible();
   await expect(cards(page)).toHaveCount(0);
   await expect(page.locator("#tab-review .drill")).toHaveCount(0);
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
@@ -220,7 +213,6 @@ test("[P-R04][P-R03] fresh and due cards sit under their headers; revealing show
   await expect(cards(page).nth(1).locator(".aksara")).toHaveText(
     info("ha").char,
   );
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
@@ -234,7 +226,6 @@ test("[P-R04][P-R03] fresh and due cards sit under their headers; revealing show
       await expect(gradeButton(card, id[key]!)).toBeVisible();
     }
   }
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
@@ -411,7 +402,6 @@ test("[P-R09] a stored da-dha mistake count shows the drill with da and dha ques
   }
   expect(targets.flat().sort()).toEqual(["da", "dha"]);
   await expect(page.getByText(id["reviewEmpty"]!)).toBeVisible();
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
@@ -455,7 +445,6 @@ test("[P-R10] a right drill answer lowers the stored count, a wrong one raises i
     second.options[secondRight]!,
   );
   await expect.poll(count).toBe(2);
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
@@ -572,7 +561,6 @@ test.describe("English interface", () => {
     for (const key of ["gradeAgain", "gradeHard", "gradeGood", "gradeEasy"]) {
       await expect(gradeButton(page, en[key]!)).toBeVisible();
     }
-    await settle(page);
     await expectAccessible(page);
   });
 });

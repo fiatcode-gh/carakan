@@ -6,6 +6,7 @@ import {
   expectAccessible,
   expectNoHorizontalOverflow,
   expectTouchTargets,
+  settle,
 } from "./support/a11y.ts";
 import { gotoRoute } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
@@ -32,12 +33,6 @@ const successOutput = (latin: string): string => {
   if (result.kind !== "success") throw new Error(`not convertible: ${latin}`);
   return result.output;
 };
-
-/** axe reads colors mid-fade otherwise: wait for every entrance animation. */
-const settle = (page: Page) =>
-  page.evaluate(() =>
-    Promise.all(document.getAnimations().map((a) => a.finished)),
-  );
 
 const shoot = (page: Page, name: string) =>
   page.screenshot({ path: `test-results/ubah-${name}.png` });
@@ -129,7 +124,6 @@ test("[P-U05] [P-U09] an unknown character shows the localized message, never th
   await expect(alert).toContainText(shown(id, 'Unknown character "q"'));
   await expect(alert).not.toContainText("Unknown character");
   await expect(alert.locator("mark")).toHaveText("q");
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await shoot(page, "error-id");
@@ -147,7 +141,6 @@ test.describe("English UI", () => {
     await expect(alert).toContainText(en["errorTitle"]!);
     await expect(alert).toContainText(shown(en, 'Unknown character "q"'));
     await expect(alert.locator("mark")).toHaveText("q");
-    await settle(page);
     await expectAccessible(page);
     await shoot(page, "error-en");
   });
@@ -185,7 +178,6 @@ test("[P-U09] aksara panel: a lone vowel sign shows the localized message", asyn
   await expect(alert).toContainText(id["errorTitle"]!);
   await expect(alert).toContainText(id["engineErrorSandhanganWithoutBase"]!);
   await expect(alert).not.toContainText("Sandhangan without");
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await shoot(page, "aksara-error");
@@ -245,7 +237,6 @@ test("[P-U07] picker inserts ha then na; the scheme toggle changes the output", 
   await group.getByRole("radio", { name: "JGST" }).check();
   await expect(group.getByRole("radio", { name: "JGST" })).toBeChecked();
   await expect(outputOf(page).locator(".latin")).toHaveText(latin("jgst"));
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
@@ -283,7 +274,6 @@ test("[P-U08] [W11] [W12] [W13] the picker is a modal sheet with stacked section
   await expect(
     sheet.getByRole("button", { name: "ha", exact: true }),
   ).toBeVisible();
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await shoot(page, "picker");
@@ -354,7 +344,6 @@ test("[P-U03] the Latin panel at 360 px has no horizontal overflow", async ({
 }) => {
   await gotoRoute(page, "#/converter");
   await latinInput(page).fill("hanacaraka");
-  await settle(page);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);

@@ -13,7 +13,7 @@
  */
 import { chromium, expect, type Page } from "@playwright/test";
 import { execFileSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { auditRoutes, href } from "../../src/app/router.ts";
 import {
@@ -104,10 +104,23 @@ async function lesson(page: Page, unitId: string) {
   const solver = await createSolver();
   const unit = solver.content.units.find((u) => u.id === unitId);
   if (unit === undefined) throw new Error(`no unit ${unitId}`);
+
+  // Read the page's locale to determine which language file to use
+  const locale = await page.evaluate(() => document.documentElement.lang);
+
+  // Load the appropriate localization file based on the page's locale
+  let messages: Record<string, string>;
+  if (locale === "en") {
+    messages = JSON.parse(readFileSync("src/l10n/en.json", "utf8"));
+  } else {
+    // Default to Indonesian for any other locale (including "id")
+    messages = id;
+  }
+
   await goto(page, `#/lesson/${unitId}`);
   await expect(page.locator(".lesson")).toBeVisible();
-  await walkMeet(page, unit.glyphs.length);
-  const next = page.getByRole("button", { name: id["continueButton"]! });
+  await walkMeet(page, unit.glyphs.length, messages);
+  const next = page.getByRole("button", { name: messages["continueButton"]! });
   for (;;) {
     const q = await answerCurrentQuestion(page, solver);
     await next.click();
