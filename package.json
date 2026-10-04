@@ -12,7 +12,8 @@
     "check": "tsc -p src/engine/tsconfig.json --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "parity:dump": "sh tools/parity/dump-dart.sh"
+    "parity:dump": "sh tools/parity/dump-dart.sh",
+    "shaping": "sh tools/shaping/run.sh"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
