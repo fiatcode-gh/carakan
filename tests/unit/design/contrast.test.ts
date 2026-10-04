@@ -1,9 +1,22 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 
-// Task 10 moves the design system to src/styles; change these two constants.
-const TOKENS_PATH = "prototype/tokens.css";
-const COMPONENTS_PATH = "prototype/components.css";
+const TOKENS_PATH = "src/styles/tokens.css";
+const BASE_PATH = "src/styles/base.css";
+
+/** Every component rule: base.css plus the `<style>` block of each Svelte file. */
+function componentCss(): string {
+  const styles = (readdirSync("src", { recursive: true }) as string[])
+    .filter((p) => p.endsWith(".svelte"))
+    .flatMap((p) =>
+      [
+        ...readFileSync(`src/${p}`, "utf8").matchAll(
+          /<style[^>]*>([\s\S]*?)<\/style>/g,
+        ),
+      ].map((m) => m[1] ?? ""),
+    );
+  return [readFileSync(BASE_PATH, "utf8"), ...styles].join("\n");
+}
 
 /** `--name: value;` declarations of every `:root` block, in file order. */
 function parseTokens(css: string): Map<string, string> {
@@ -140,10 +153,7 @@ describe("design tokens", () => {
   });
 
   test("components use semantic and scale tokens only, no colour literals", () => {
-    const css = readFileSync(COMPONENTS_PATH, "utf8").replace(
-      /\/\*[\s\S]*?\*\//g,
-      "",
-    );
+    const css = componentCss().replace(/\/\*[\s\S]*?\*\//g, "");
     const primitive =
       /var\(--(?:paper|soga|indigo|terracotta|gold)-\d+\)|var\(--(?:paper|soga|indigo|terracotta|gold)\)/;
     expect(primitive.exec(css)?.[0]).toBeUndefined();

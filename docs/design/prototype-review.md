@@ -4,25 +4,24 @@ Design gate for the web port (contract §3.5). The prototype is hand-written HTM
 `prototype/tokens.css` and the component rules in `prototype/components.css` are promoted to the app by Task 10.
 No feature UI is built before this is approved.
 
-## How to run
+## Where the prototype lives now
+
+Task 10 promoted the prototype and deleted `prototype/`. The approved artifact is commit `bf8eac8`; everything below
+describes it as reviewed.
 
 ```sh
-npm run prototype            # http://localhost:5180 (Vite dev server, strict port)
-npm run prototype:capture    # writes every PNG below into docs/design/screens/
-npx vitest run tests/unit/design/contrast.test.ts   # token contrast proof
+git show bf8eac8:prototype/tokens.css      # promoted verbatim to src/styles/tokens.css
+git show bf8eac8:prototype/components.css  # now the scoped styles of src/ui/*.svelte and src/styles/base.css
+git archive bf8eac8 prototype | tar -x -C /tmp/carakan-prototype   # run it: npm i && npx vite there
+npx vitest run tests/unit/design/contrast.test.ts                   # token contrast proof, on src/styles/tokens.css
 ```
 
-- `capture` uses a running `npm run prototype` on :5180 when there is one, otherwise starts its own Vite server for the
-  run. It fails if any 360 px screen scrolls sideways.
-- Navigation is by hash: `#ladder`, `#chart`, `#review`, `#converter-l2a` are the tab roots (the fake tab bar switches
-  them). `#section+sheet-id` / `#section+toast-id` open a sheet or toast on arrival, for example `#chart+sheet-na`,
-  `#converter-a2l+sheet-picker`, `#settings+sheet-report`, `#converter-l2a+toast-copy`.
-- Aksara is never typed: `prototype.ts` fills it at runtime from `src/engine/index.ts` (`data-latin`, `data-glyph`,
-  `data-carrier`) and from content ids through `loadContent` + `GlyphInfoTable` (`data-id`, `data-unit-name`,
-  `data-unit-preview`). The converter error and ambiguity variants run the real engine. `prototype/` contains no
-  U+A980–A9DF character (guard: `tests/engine/no-aksara-literals.test.ts`).
-- `prototype/icon.html` is the icon source for Task 16: `#icon-any` (rounded plate) and `#icon-maskable` (full-bleed,
-  mark inside the centred 80 % circle, `?guide` draws the circle). Glyph = Jejeg `ca` from the engine.
+- The prototype navigated by hash (`#ladder`, `#chart`, `#review`, `#converter-l2a` as tab roots; `#section+sheet-id` /
+  `#section+toast-id` opened a sheet or toast on arrival). The screenshots in `docs/design/screens/` are its captures.
+- Aksara was never typed: `prototype.ts` filled it at runtime from `src/engine/index.ts` and from content ids through
+  `loadContent` + `GlyphInfoTable`.
+- `prototype/icon.html` (at `bf8eac8`) is the icon source for Task 16: `#icon-any` (rounded plate) and `#icon-maskable`
+  (full-bleed, mark inside the centred 80 % circle, `?guide` draws the circle). Glyph = Jejeg `ca` from the engine.
 
 ## Design summary
 

@@ -30,9 +30,9 @@ test("[P-L01] every value is non-empty", () => {
   }
 });
 
-test("[P-L01] message files hold 105 keys (90 ARB + 15 web)", () => {
-  expect(Object.keys(id)).toHaveLength(105);
-  expect(Object.keys(en)).toHaveLength(105);
+test("[P-L01] message files hold 121 keys (90 ARB + 15 W10 + 1 W14 + 15 W15)", () => {
+  expect(Object.keys(id)).toHaveLength(121);
+  expect(Object.keys(en)).toHaveLength(121);
 });
 
 test("[P-L01] no ICU syntax beyond simple {name} placeholders", () => {

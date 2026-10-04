@@ -7,7 +7,6 @@ const roots: ReadonlyArray<{ dir: string; ext: RegExp }> = [
   { dir: "src", ext: /\.(ts|svelte)$/ },
   { dir: "tests", ext: /\.ts$/ },
   { dir: "tools", ext: /\.(ts|py|sh)$/ },
-  { dir: "prototype", ext: /\.(ts|html|css)$/ },
 ];
 
 const javanese = /[\u{A980}-\u{A9DF}]/u;
@@ -28,7 +27,7 @@ function* walk(dir: string): Generator<string> {
 }
 
 describe("[P-D05] no aksara literals", () => {
-  test("no U+A980-U+A9DF code point in source, tests, tools or prototype", () => {
+  test("no U+A980-U+A9DF code point in source, tests or tools", () => {
     const offenders: string[] = [];
     for (const { dir, ext } of roots) {
       for (const file of walk(dir)) {
