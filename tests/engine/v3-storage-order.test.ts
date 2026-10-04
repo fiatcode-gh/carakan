@@ -53,7 +53,7 @@ describe("[P-D01] v3-storage-order", () => {
       for (let i = 0; i < runes.length; i++) {
         if (runes[i] !== 0xa9ba) continue;
         expect(i, `${why}: taling first`).toBeGreaterThan(0);
-        const prev = runes[i - 1];
+        const prev = runes[i - 1]!;
         expect(prev, `${why}: taling after pangkon`).not.toBe(0xa9c0);
         expect(prev, `${why}: taling after ZWNJ`).not.toBe(0x200c);
         expect(isVowelSign(prev), `${why}: after vowel sign`).toBe(false);
