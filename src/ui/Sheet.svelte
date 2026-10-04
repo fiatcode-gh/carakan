@@ -18,8 +18,19 @@
   const titleId = `sheet-${uid}`;
   let dialog: HTMLDialogElement;
   let heading: HTMLHeadingElement;
+  let body: HTMLDivElement;
+  // A scrolling region must be reachable by keyboard (WCAG 2.1.1).
+  let scrolls = $state(false);
 
   // Mount = open. Rendering the component inside `{#if}` is the open state.
+  $effect(() => {
+    const measure = () => (scrolls = body.scrollHeight > body.clientHeight);
+    const observer = new ResizeObserver(measure);
+    observer.observe(body);
+    for (const child of body.children) observer.observe(child);
+    return () => observer.disconnect();
+  });
+
   $effect(() => {
     dialog.showModal();
     heading.focus();
@@ -41,7 +52,16 @@
       onclick={() => dialog.close()}
     />
   </div>
-  <div class="sheet__body">{@render children()}</div>
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+  <div
+    class="sheet__body"
+    bind:this={body}
+    tabindex={scrolls ? 0 : undefined}
+    role={scrolls ? "region" : undefined}
+    aria-labelledby={scrolls ? titleId : undefined}
+  >
+    {@render children()}
+  </div>
   {#if footer}
     <div class="sheet__foot">{@render footer()}</div>
   {/if}
