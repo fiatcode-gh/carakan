@@ -1,10 +1,15 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import type { HTMLAttributes } from "svelte/elements";
+  import Icon from "./Icon.svelte";
 
   interface Props extends Omit<HTMLAttributes<HTMLElement>, "children"> {
     href?: string;
-    variant?: "primary" | "secondary" | "quiet" | "icon";
+    /** `option` and `aksara-option` are full-width answer choices. */
+    variant?:
+      "primary" | "secondary" | "quiet" | "icon" | "option" | "aksara-option";
+    /** Answer state of an option: icon + border, never hue alone. */
+    mark?: "correct" | "wrong";
     block?: boolean;
     disabled?: boolean;
     type?: "button" | "submit";
@@ -13,6 +18,7 @@
 
   let {
     variant = "secondary",
+    mark,
     block = false,
     disabled = false,
     type = "button",
@@ -36,9 +42,21 @@
     {...rest}
     {type}
     {disabled}
-    class={["btn", `btn--${variant}`, block && "btn--block", className]}
+    class={[
+      "btn",
+      `btn--${variant}`,
+      block && "btn--block",
+      mark && `is-${mark}`,
+      className,
+    ]}
   >
     {@render children()}
+    {#if mark}
+      <Icon
+        name={mark === "correct" ? "check" : "circle-x"}
+        class="btn__mark"
+      />
+    {/if}
   </button>
 {/if}
 
@@ -111,5 +129,60 @@
 
   .btn--icon:active {
     background: var(--color-surface-sunken);
+  }
+
+  /* Answer options: full-width, thumb-sized, state carried by icon + border. */
+  .btn--option,
+  .btn--aksara-option {
+    position: relative;
+    width: 100%;
+    min-height: 3.5rem;
+    background: var(--color-surface-raised);
+    border-color: var(--color-border-strong);
+    box-shadow: var(--shadow-slip);
+    font-size: var(--text-lg);
+  }
+
+  .btn--option {
+    justify-content: flex-start;
+    padding-inline: var(--space-5);
+    text-align: start;
+  }
+
+  .btn--aksara-option {
+    min-height: 5rem;
+    background: var(--color-surface);
+    font-family: var(--font-aksara);
+    font-size: var(--aksara-lg);
+    font-weight: var(--weight-regular);
+    line-height: var(--aksara-leading);
+  }
+
+  .btn :global(.btn__mark) {
+    margin-inline-start: auto;
+  }
+
+  .btn--aksara-option :global(.btn__mark) {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+  }
+
+  .btn.is-correct {
+    background: var(--color-success-soft);
+    border-color: var(--color-success);
+    color: var(--color-success);
+  }
+
+  .btn.is-wrong {
+    background: var(--color-danger-soft);
+    border-color: var(--color-danger);
+    border-style: dashed;
+    color: var(--color-danger);
+  }
+
+  .btn--option:disabled:not(.is-correct, .is-wrong),
+  .btn--aksara-option:disabled:not(.is-correct, .is-wrong) {
+    box-shadow: none;
   }
 </style>

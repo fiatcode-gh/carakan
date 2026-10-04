@@ -1,3 +1,7 @@
+<script lang="ts">
+  // Decorative: no props.
+</script>
+
 <div class="ornament" aria-hidden="true">
   <span class="ornament__lozenge"></span>
 </div>
