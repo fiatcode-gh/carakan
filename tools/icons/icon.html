@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Carakan icon</title>
+    <!--TOKENS-->
+    <!--FONTS-->
+    <style>
+      /*
+       * App icon source (tools/icons/render.ts renders PNGs from #icon-any and
+       * #icon-maskable at 512x512). The glyph is the Jejeg "ca" the renderer
+       * fills in from the engine (data-latin). Maskable: full-bleed
+       * square, everything that matters inside the centred 80% circle
+       * (diameter 409.6px). Add class "guide" to body to overlay the safe zone.
+       */
+      body {
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-6);
+        padding: var(--space-6);
+        background: var(--color-surface-sunken);
+      }
+      .icon-tile {
+        position: relative;
+        display: grid;
+        place-items: center;
+        flex: none;
+        width: 512px;
+        height: 512px;
+        overflow: hidden;
+        background: var(--color-accent);
+        color: var(--color-on-accent);
+      }
+      /* "any": rounded plate on transparent corners. */
+      .icon-tile--any {
+        border-radius: 112px;
+      }
+      /* manuscript frame, echoing the lesson flashcard */
+      .icon-tile::before {
+        content: "";
+        position: absolute;
+        inset: 72px;
+        border: 6px solid var(--color-reward-fill);
+        border-radius: 56px;
+      }
+      .icon-tile--maskable::before {
+        inset: 112px;
+        border-radius: 48px;
+      }
+      .icon-glyph {
+        font-family: var(--font-aksara);
+        font-size: 270px;
+        line-height: 1;
+        translate: 0 -14px;
+      }
+      .icon-tile--maskable .icon-glyph {
+        font-size: 206px;
+      }
+      .icon-lozenge {
+        position: absolute;
+        left: 50%;
+        bottom: 108px;
+        width: 30px;
+        height: 30px;
+        border-radius: 4px;
+        background: var(--color-reward-fill);
+        rotate: 45deg;
+        translate: -50% 0;
+      }
+      .icon-tile--maskable .icon-lozenge {
+        bottom: 130px;
+        width: 24px;
+        height: 24px;
+      }
+      .guide .icon-tile--maskable::after {
+        content: "";
+        position: absolute;
+        width: 409.6px;
+        height: 409.6px;
+        border: 3px dashed var(--color-on-accent);
+        border-radius: 50%;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      class="icon-tile icon-tile--any"
+      id="icon-any"
+      role="img"
+      aria-label="Carakan"
+    >
+      <span class="icon-glyph" data-latin="ca"></span>
+      <span class="icon-lozenge"></span>
+    </div>
+    <div
+      class="icon-tile icon-tile--maskable"
+      id="icon-maskable"
+      role="img"
+      aria-label="Carakan"
+    >
+      <span class="icon-glyph" data-latin="ca"></span>
+      <span class="icon-lozenge"></span>
+    </div>
+  </body>
+</html>

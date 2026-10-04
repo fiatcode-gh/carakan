@@ -3,6 +3,7 @@
   import { setI18n } from "../l10n/context.ts";
   import StateView from "../ui/StateView.svelte";
   import AppReady from "./AppReady.svelte";
+  import UpdateBanner from "./UpdateBanner.svelte";
   import type { BootResult, LocaleRuntime } from "./bootstrap.ts";
 
   interface Props {
@@ -65,3 +66,5 @@
     page
   />
 {/if}
+
+<UpdateBanner />

@@ -52,6 +52,23 @@ const fetchText = async (path: string): Promise<string> => {
 };
 
 /**
+ * Asks the browser to keep this origin's storage through eviction. The answer
+ * is not surfaced: no UI, no telemetry.
+ */
+async function requestPersistentStorage(): Promise<void> {
+  try {
+    if (
+      navigator.storage?.persisted &&
+      !(await navigator.storage.persisted())
+    ) {
+      await navigator.storage.persist?.();
+    }
+  } catch {
+    // best effort only
+  }
+}
+
+/**
  * The returned function opens storage and loads content. The database stays
  * open across calls, so a retry after `content-error` re-runs content loading
  * only; a retry after `storage-error` tries to open storage again.
@@ -90,6 +107,7 @@ export function createBootstrap(
       seedSource: () => Math.floor(Math.random() * 0x7fffffff),
       singleton: createSingletons(),
     };
+    void requestPersistentStorage();
     return { kind: "ready", services };
   };
 }
