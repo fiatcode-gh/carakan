@@ -49,3 +49,7 @@ Every item is accepted. Each replaces the source behavior named in `.flow/plans/
 - Task 10 promotes the tokens and components and applies decisions 3 and 6 to `src/l10n/*.json`.
 - W14 changes the Ulangi card flow (Task 13). W15 adds message keys and a mapping module used by the converter (Task 14). The plan amendment of 2026-10-04 adds both.
 - `prototype/` is deleted by Task 10 after promotion. This record and the screenshots stay.
+
+## Addendum (Task 11, 2026-10-04)
+
+Found while implementing W06. With more glyphs taught, the source showed raw engine ids (`suku`, `wulu`, `naMurda`) as glyph-to-sound answer options, and it could show the same text twice. It could also show a wrong option that sounds the same as the prompt (`taMurda` and `tha` both read "tha"). The web app shows each option's PUJL reading (or its character for sound-to-glyph), never repeats a displayed option, and never offers a wrong option that reads the same as the prompt. Main accepted this as a direct consequence of W06 and reported it to the user.
