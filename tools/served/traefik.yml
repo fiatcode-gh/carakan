@@ -1,0 +1,9 @@
+entryPoints:
+  web:
+    address: ":8090"
+providers:
+  file:
+    directory: /config/dynamic
+    watch: false
+log:
+  level: INFO

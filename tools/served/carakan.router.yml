@@ -1,0 +1,14 @@
+http:
+  routers:
+    carakan:
+      rule: "Host(`carakan.fiatcode.dev`)"
+      entryPoints: [web-secure]
+      service: carakan
+      middlewares: [security-headers]
+      tls:
+        certResolver: defaultResolver
+  services:
+    carakan:
+      loadBalancer:
+        servers:
+          - url: "http://carakan:80"

@@ -1,0 +1,25 @@
+[general]
+host = "::"
+port = 80
+root = "/public"
+log-level = "info"
+compression = true
+compression-level = "default"
+cache-control-headers = false  # disable default cache headers, we define our own below
+
+[advanced]
+
+# Everything revalidates by default: index.html, sw.js, workbox-*.js, the manifest,
+# content JSON, fonts, icons and licenses have no content hash, and the service
+# worker's install and update fetches must never be answered from a stale HTTP cache.
+[[advanced.headers]]
+source = "**"
+[advanced.headers.headers]
+Cache-Control = "no-cache"
+
+# Vite's content-hashed build output never changes under the same URL — cache forever.
+# Declared after the rule above: a later matching rule overwrites the header.
+[[advanced.headers]]
+source = "/assets/**"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=31536000, immutable"

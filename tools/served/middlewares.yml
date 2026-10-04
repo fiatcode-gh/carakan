@@ -1,0 +1,9 @@
+# Copied from fiatcode-infra stack/traefik/traefik-conf/dynamic/middlewares.yml @ 60fee94
+# (only security-headers; the router here uses no authelia or strip-www).
+http:
+  middlewares:
+    security-headers:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: false
+        stsPreload: false
