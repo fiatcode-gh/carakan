@@ -96,25 +96,40 @@ describe("ClusterPartTable.partsOf", () => {
     ]);
   });
 
-  test("[P-U10] subjoined rekan and its taling-tarung split", () => {
+  test("[P-U10] subjoined rekan and its taling tarung o", () => {
     const p = parts("bapak foto", 2);
     expect(p.map(row)).toEqual([
       KA,
       ["fa", "fa", "fa", true],
-      ["taling (é)", expect.any(String), "taling", false],
-      ["tarung (panjang)", expect.any(String), "tarung", false],
+      ["taling tarung", "o", null, false],
     ]);
     expect(p[1]!.char).toBe(ak("KA PANGKON PA CECAK_TELU"));
+    expect(p[2]!.char).toBe(ak("HA TALING TARUNG"));
   });
 
   test("[P-U10] foto #0 begins with an unsubjoined rekan", () => {
     const p = parts("foto", 0);
     expect(p.map(row)).toEqual([
       ["fa", "fa", "fa", false],
-      ["taling (é)", expect.any(String), "taling", false],
-      ["tarung (panjang)", expect.any(String), "tarung", false],
+      ["taling tarung", "o", null, false],
     ]);
     expect(p[0]!.char).toBe(ak("PA CECAK_TELU"));
+  });
+
+  test("[P-U10] a lone tarung after a base keeps its long-a reading", () => {
+    expect(table.partsOf(ak("KA TARUNG")).map(row)).toEqual([
+      KA,
+      ["tarung (panjang)", "aa", "tarung", false],
+    ]);
+  });
+
+  test("[P-U10] a swara au (letter o + tarung) is the au rekan", () => {
+    const r = success("ka Aula");
+    const c = r.clusters.find((cl) => clusterText(r, cl).startsWith(ak("O")));
+    expect(c).toBeDefined();
+    const p = table.partsOf(clusterText(r, c!));
+    expect(p.map(row)[0]).toEqual(["au", "au", "au", false]);
+    expect(p[0]!.char).toBe(ak("O TARUNG"));
   });
 
   test("[P-U10] a final pangkon is the pangkon sandhangan", () => {
@@ -151,14 +166,23 @@ describe("ClusterPartTable.partsOf", () => {
     expect(p[0]!.char).toBe(ak("LINGSA"));
   });
 
-  test("[P-U10] dirga mure is a fallback on a ha carrier", () => {
+  test("[P-U10] dirga mure alone reads ai, on a ha carrier", () => {
     const p = parts("pantai", 1);
     expect(p.map(row)).toEqual([
       ["na", "na", "na", false],
       ["ta", "ta", "ta", true],
-      ["dirga mure", "", null, false],
+      ["dirga mure", "ai", null, false],
     ]);
     expect(p[2]!.char).toBe(ak("HA DIRGA_MURE"));
+  });
+
+  test("[P-U10] dirga mure with tarung is one au part, not tarung's aa", () => {
+    const p = parts("sinau", 1);
+    expect(p.map(row)).toEqual([
+      ["na", "na", "na", false],
+      ["dirga mure tarung", "au", null, false],
+    ]);
+    expect(p[1]!.char).toBe(ak("HA DIRGA_MURE TARUNG"));
   });
 
   test("[P-U10] wulu melik is a fallback on a ha carrier", () => {
