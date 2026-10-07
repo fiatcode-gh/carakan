@@ -15,6 +15,7 @@ import {
 } from "./support/a11y.ts";
 import { gotoRoute } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
+import { writeRows } from "./support/lesson.ts";
 import {
   createSolver,
   type QuestionPrompt,
@@ -59,30 +60,6 @@ const reviewed = (itemId: string, dueAt: number): SrsItemRow => ({
   dueAt,
   lastReviewedAt: dueAt - DAY,
 });
-
-async function writeRows(
-  page: Page,
-  store: string,
-  rows: readonly object[],
-): Promise<void> {
-  await page.evaluate(
-    async ({ name, storeName, values }) => {
-      const db = await new Promise<IDBDatabase>((resolve, reject) => {
-        const request = indexedDB.open(name);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-      await new Promise<void>((resolve, reject) => {
-        const tx = db.transaction(storeName, "readwrite");
-        for (const value of values) tx.objectStore(storeName).put(value);
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-      });
-      db.close();
-    },
-    { name: DB_NAME, storeName: store, values: rows },
-  );
-}
 
 async function readStore<T>(page: Page, store: string): Promise<T[]> {
   return page.evaluate(
@@ -454,24 +431,22 @@ test("[P-R10] a right drill answer lowers the stored count, a wrong one raises i
 test("[P-R11] a mistake made in a lesson surfaces the drill without a reload", async ({
   page,
 }) => {
-  const u1Glyphs = new Set(
-    solver.content.units.find((u) => u.id === "u1")!.glyphs,
-  );
-  const u2 = solver.content.units.find((u) => u.id === "u2")!;
-  // Pin the lesson seed to one whose plan puts the partner among the options.
+  const units = solver.content.units;
+  const firstGlyphs = new Set(units[0]!.glyphs);
+  const wuluSuku = units[1]!;
+  // Pin the lesson seed to one whose plan puts the partner among the aksara
+  // options. Sound options cannot log: a partner's sound ("u") resolves to
+  // the swara entry before it reaches the sandhangan one.
   const pinned = Array.from({ length: 500 }, (_, i) => i / 500).find((r) =>
     generateExercises({
-      unit: u2,
-      taughtGlyphs: u1Glyphs,
+      unit: wuluSuku,
+      taughtGlyphs: firstGlyphs,
       corpus: solver.content.words,
       seed: Math.floor(r * 0x7fffffff),
       glyphInfo: solver.table,
     }).some((e) => {
-      if (e.kind === "wordReading" || e.glyphId !== "wulu") return false;
-      const suku = info("suku");
-      return e.options.includes(
-        e.kind === "glyphToSound" ? suku.pujl : suku.char,
-      );
+      if (e.kind !== "soundToGlyph" || e.glyphId !== "wulu") return false;
+      return e.options.includes(info("suku").char);
     }),
   );
   expect(pinned).toBeDefined();
@@ -512,7 +487,7 @@ test("[P-R11] a mistake made in a lesson surfaces the drill without a reload", a
         ? solver.optionFor("suku", prompt, texts)
         : -1;
       let index = solver.correctIndex(prompt, texts);
-      if (wrongOnWulu && !logged && sukuIndex >= 0) {
+      if (wrongOnWulu && !logged && "sound" in prompt && sukuIndex >= 0) {
         index = sukuIndex;
         logged = true;
       }
@@ -531,9 +506,9 @@ test("[P-R11] a mistake made in a lesson surfaces the drill without a reload", a
     await page.locator(".lesson__foot").getByRole("button").click();
   };
 
-  await play("u1", 5, false);
+  await play(units[0]!.id, units[0]!.glyphs.length, false);
   await backFromDone();
-  await play("u2", 2, true);
+  await play(units[1]!.id, units[1]!.glyphs.length, true);
   await backFromDone();
   await page.getByRole("link", { name: id["navReview"]! }).click();
   await expect(

@@ -61,3 +61,30 @@ export class Unit {
     });
   }
 }
+
+/**
+ * A unit id that left the ladder, with the glyphs it taught. Completions
+ * stored under it map to current units by letters learned (LadderModel).
+ * Ids are never reused: a regroup gives changed units new ids and lists the
+ * old ones here.
+ */
+export class RetiredUnit {
+  readonly id: string;
+  readonly glyphs: readonly string[];
+
+  constructor(init: { id: string; glyphs: readonly string[] }) {
+    this.id = init.id;
+    this.glyphs = init.glyphs;
+  }
+
+  static fromJson(json: JsonObject): RetiredUnit {
+    const { id } = json;
+    if (typeof id !== "string") {
+      throw new ContentFormatError(
+        `retired unit needs id: ${JSON.stringify(json)}`,
+      );
+    }
+    asArray(json["glyphs"], "glyphs");
+    return new RetiredUnit({ id, glyphs: stringList(json, "glyphs") });
+  }
+}

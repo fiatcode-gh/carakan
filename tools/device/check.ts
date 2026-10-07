@@ -3,7 +3,9 @@
  *
  *   npm run device:check -- <command> [args] [--url-prefix <prefix>]
  *
- * Commands: status | tour | reload | lesson <unitId> | screenshot <file>.
+ * Commands: status | tour | reload | lesson <unitId> | seed-completions <unitId...> |
+ * screenshot <file>. seed-completions writes completion rows (for example old
+ * row ids), reloads, and prints the status.
  * Results print as JSON; a failed check exits non-zero.
  *
  * It forwards Chrome's DevTools socket with
@@ -20,12 +22,14 @@ import {
   MISTAKE_LOGS,
   SRS_ITEMS,
   UNIT_COMPLETIONS,
+  type UnitCompletionRow,
 } from "../../src/core/db/schema.ts";
 import {
   answerCurrentQuestion,
   id,
   readStore,
   walkMeet,
+  writeRows,
 } from "../../tests/e2e/support/lesson.ts";
 import { createSolver } from "../../tests/e2e/support/solver.ts";
 
@@ -39,9 +43,10 @@ const { values, positionals } = parseArgs({
 });
 const prefix = values["url-prefix"]!;
 const [command, arg] = positionals;
+const seedIds = positionals.slice(1);
 
 const usage =
-  "usage: device:check <status|tour|reload|lesson <unitId>|screenshot <file>> [--url-prefix <prefix>]";
+  "usage: device:check <status|tour|reload|lesson <unitId>|seed-completions <unitId...>|screenshot <file>> [--url-prefix <prefix>]";
 
 function forward(): void {
   execFileSync("adb", [
@@ -67,8 +72,14 @@ async function status(page: Page) {
   }));
   const count = async (store: string) =>
     (await readStore<unknown>(page, store)).length;
+  const completedUnitIds = (
+    await readStore<UnitCompletionRow>(page, UNIT_COMPLETIONS)
+  )
+    .map((row) => row.unitId)
+    .sort();
   return {
     ...info,
+    completedUnitIds,
     counts: {
       srsItems: await count(SRS_ITEMS),
       unitCompletions: await count(UNIT_COMPLETIONS),
@@ -132,10 +143,39 @@ async function lesson(page: Page, unitId: string) {
   return { unitId, completed: true };
 }
 
+async function seedCompletions(page: Page, unitIds: readonly string[]) {
+  await writeRows(
+    page,
+    UNIT_COMPLETIONS,
+    unitIds.map((unitId) => ({ unitId, completedAt: Date.now() })),
+  );
+  await page.reload();
+  await ready(page);
+  // The ladder writes its migration after mount; wait until the store stops changing.
+  let previous = "";
+  const deadline = Date.now() + 10_000;
+  for (;;) {
+    const rows = await readStore<UnitCompletionRow>(page, UNIT_COMPLETIONS);
+    const key = JSON.stringify(rows.map((r) => r.unitId).sort());
+    if (key === previous || Date.now() > deadline) break;
+    previous = key;
+    await page.waitForTimeout(500);
+  }
+  return status(page);
+}
+
 async function main(): Promise<void> {
   if (
     command === undefined ||
-    !["status", "tour", "reload", "lesson", "screenshot"].includes(command) ||
+    ![
+      "status",
+      "tour",
+      "reload",
+      "lesson",
+      "seed-completions",
+      "screenshot",
+    ].includes(command) ||
+    (command === "seed-completions" && seedIds.length === 0) ||
     (command === "lesson" && arg === undefined) ||
     (command === "screenshot" && arg === undefined)
   ) {
@@ -169,6 +209,8 @@ async function main(): Promise<void> {
       await page.reload();
       await ready(page);
       result = await status(page);
+    } else if (command === "seed-completions") {
+      result = await seedCompletions(page, seedIds);
     } else result = await lesson(page, arg!);
     console.log(JSON.stringify(result, null, 2));
   } finally {

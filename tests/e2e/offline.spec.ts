@@ -11,7 +11,13 @@ import {
 } from "../../src/core/db/schema.ts";
 import { gotoRoute } from "./support/app.ts";
 import { expect, test, trackForeignRequests } from "./support/fixtures.ts";
-import { completeLesson, id, ladderRow, readStore } from "./support/lesson.ts";
+import {
+  completeLesson,
+  id,
+  ladderRow,
+  readStore,
+  writeRows,
+} from "./support/lesson.ts";
 import { createSolver, type Solver } from "./support/solver.ts";
 
 let solver: Solver;
@@ -76,7 +82,7 @@ test("[P-S05] unit 1 can be completed offline", async ({ page, context }) => {
   await installAndControl(page);
   await context.setOffline(true);
   await page.reload();
-  await completeLesson(page, solver, "u1");
+  await completeLesson(page, solver, solver.content.units[0]!.id);
   await page.locator(".lesson__foot").getByRole("button").click();
   await expect(ladderRow(page, 1)).toContainText(id["unitStatusCompleted"]!);
   await expect(ladderRow(page, 2)).toContainText(id["unitStatusReady"]!);
@@ -98,7 +104,7 @@ test("[P-S09] progress and a graded review card survive closing the browser, off
     const firstPage = first.pages()[0] ?? (await first.newPage());
     const foreign = trackForeignRequests(firstPage, origin);
     await installAndControl(firstPage);
-    await completeLesson(firstPage, solver, "u1");
+    await completeLesson(firstPage, solver, solver.content.units[0]!.id);
     await gotoRoute(firstPage, "#/review");
     const card = firstPage.locator("#tab-review .card").first();
     await card.getByRole("button", { name: id["revealAnswerButton"]! }).click();
@@ -163,4 +169,29 @@ test("persistent storage is requested once on a fresh profile", async ({
       ),
     )
     .toBe(1);
+});
+
+test("[P-B17][P-S09] mapped progress shows offline", async ({
+  page,
+  context,
+}) => {
+  await installAndControl(page);
+  await writeRows(
+    page,
+    UNIT_COMPLETIONS,
+    ["u1", "u2", "u3", "u4", "u5"].map((unitId) => ({
+      unitId,
+      completedAt: 1,
+    })),
+  );
+  await context.setOffline(true);
+  await page.reload();
+  await page.locator('#app[data-boot="ready"]').waitFor();
+  for (let n = 1; n <= 6; n++) {
+    await expect(ladderRow(page, n)).toContainText(id["unitStatusCompleted"]!);
+  }
+  await expect(ladderRow(page, 7)).toContainText(id["unitStatusReady"]!);
+  for (const n of [8, 9]) {
+    await expect(ladderRow(page, n)).toContainText(id["unitStatusLocked"]!);
+  }
 });

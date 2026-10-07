@@ -1,13 +1,14 @@
 import { get } from "svelte/store";
-import { expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { loadContent } from "../../../src/content/content-repository.ts";
 import { GlyphInfoTable } from "../../../src/content/glyph-info-table.ts";
-import { Unit } from "../../../src/content/unit.ts";
+import { RetiredUnit, Unit } from "../../../src/content/unit.ts";
 import { UnitCompletionRepository } from "../../../src/core/db/unit-completion-repository.ts";
 import {
   computeLadder,
   LadderModel,
   ladderPreview,
+  unitsCompletedByRetired,
 } from "../../../src/features/lessons/ladder.ts";
 import { loadFromPublic } from "../../support/content-files.ts";
 import { openFreshDb } from "../core/db-helpers.ts";
@@ -62,7 +63,12 @@ test("[P-B03] a unit stays completed while a later one is still locked", () => {
 
 test("[P-B05] LadderModel starts loading, becomes ready on refresh and follows completions", async () => {
   const completions = new UnitCompletionRepository(await openFreshDb());
-  const model = new LadderModel({ units, completions });
+  const model = new LadderModel({
+    units,
+    retiredUnits: [],
+    completions,
+    now: () => 1,
+  });
   expect(get(model.state)).toEqual({ kind: "loading" });
   await model.refresh();
   const first = get(model.state);
@@ -128,9 +134,9 @@ test("[P-B02] unit 2 sandhangan preview carries each sign on a base", async () =
 
 test("[P-B02] preview is the first five non-empty glyph chars joined by a space", async () => {
   const { loaded, table } = await content();
-  const u1 = loaded.units.find((u) => u.id === "u1")!;
-  expect(ladderPreview(u1, table)).toBe(
-    u1.glyphs.map((g) => table.byId.get(g)!.char).join(" "),
+  const firstUnit = loaded.units[0]!;
+  expect(ladderPreview(firstUnit, table)).toBe(
+    firstUnit.glyphs.map((g) => table.byId.get(g)!.char).join(" "),
   );
   const long = loaded.units.find((u) => u.glyphs.length > 5)!;
   expect(ladderPreview(long, table).split(" ")).toHaveLength(5);
@@ -145,7 +151,12 @@ test("[P-B02] preview is the first five non-empty glyph chars joined by a space"
 
 test("[P-S10] a rejected completions read leaves an error state that a retry clears", async () => {
   const completions = new UnitCompletionRepository(await openFreshDb());
-  const model = new LadderModel({ units, completions });
+  const model = new LadderModel({
+    units,
+    retiredUnits: [],
+    completions,
+    now: () => 1,
+  });
   const failing = vi
     .spyOn(completions, "completedUnitIds")
     .mockRejectedValueOnce(new Error("idb closed"));
@@ -154,4 +165,136 @@ test("[P-S10] a rejected completions read leaves an error state that a retry cle
   failing.mockRestore();
   await model.refresh();
   expect(get(model.state).kind).toBe("ready");
+});
+
+describe("[P-B17] unitsCompletedByRetired", () => {
+  const ids = async (completed: string[]) => {
+    const { loaded } = await content();
+    return unitsCompletedByRetired(
+      loaded.units,
+      loaded.retiredUnits,
+      new Set(completed),
+    );
+  };
+
+  test("nothing completed maps nothing", async () => {
+    expect(await ids([])).toEqual([]);
+  });
+
+  test("old u1 and u2 cover no shape group (contract example 5)", async () => {
+    expect(await ids(["u1", "u2"])).toEqual([]);
+  });
+
+  test("u1-u4 cover the groups whose letters they all taught", async () => {
+    expect(await ids(["u1", "u2", "u3", "u4"])).toEqual(["g1", "g3", "g4"]);
+  });
+
+  test("all four old rows cover every shape group", async () => {
+    expect(await ids(["u1", "u3", "u4", "u5"])).toEqual([
+      "g1",
+      "g2",
+      "g3",
+      "g4",
+      "g5",
+    ]);
+  });
+
+  test("an already completed unit is not returned again", async () => {
+    expect(await ids(["u1", "u3", "u4", "u5", "g1"])).toEqual([
+      "g2",
+      "g3",
+      "g4",
+      "g5",
+    ]);
+  });
+
+  test("unknown ids are ignored", async () => {
+    expect(await ids(["zz"])).toEqual([]);
+  });
+
+  test("pasangan items are never covered vacuously", () => {
+    const p = new Unit({
+      id: "p",
+      name: "p",
+      glyphs: ["pasangan-ha"],
+      unlock: "previous",
+    });
+    const r = new RetiredUnit({ id: "r", glyphs: ["ha"] });
+    expect(unitsCompletedByRetired([p], [r], new Set(["r"]))).toEqual([]);
+  });
+
+  test("a unit without glyphs is never returned", () => {
+    const empty = new Unit({
+      id: "e",
+      name: "e",
+      glyphs: [],
+      unlock: "previous",
+    });
+    const r = new RetiredUnit({ id: "r", glyphs: ["ha"] });
+    expect(unitsCompletedByRetired([empty], [r], new Set(["r"]))).toEqual([]);
+  });
+});
+
+describe("[P-B17] LadderModel migration", () => {
+  const a = new Unit({
+    id: "a",
+    name: "a",
+    glyphs: ["ha"],
+    unlock: "previous",
+  });
+  const b = new Unit({
+    id: "b",
+    name: "b",
+    glyphs: ["na", "ca"],
+    unlock: "previous",
+  });
+  const retired = [new RetiredUnit({ id: "r", glyphs: ["ha", "na"] })];
+
+  test("writes once and keeps the retired record", async () => {
+    const db = await openFreshDb();
+    const completions = new UnitCompletionRepository(db);
+    await completions.complete("r", 1);
+    const spy = vi.spyOn(completions, "completeAll");
+    const model = new LadderModel({
+      units: [a, b],
+      retiredUnits: retired,
+      completions,
+      now: () => 42,
+    });
+    await model.refresh();
+    const state = get(model.state);
+    expect(state.kind).toBe("ready");
+    if (state.kind !== "ready") return;
+    expect(state.statuses.map((e) => e.status)).toEqual(["completed", "ready"]);
+    const first = await db.getAll("unitCompletions");
+    expect(first.map((r) => r.unitId).sort()).toEqual(["a", "r"]);
+    expect(first.find((r) => r.unitId === "a")!.completedAt).toBe(42);
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await model.refresh();
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(await db.getAll("unitCompletions")).toEqual(first);
+  });
+
+  test("a failed migration write is an error state that a retry heals", async () => {
+    const completions = new UnitCompletionRepository(await openFreshDb());
+    await completions.complete("r", 1);
+    const model = new LadderModel({
+      units: [a, b],
+      retiredUnits: retired,
+      completions,
+      now: () => 5,
+    });
+    const failing = vi
+      .spyOn(completions, "completeAll")
+      .mockRejectedValueOnce(new Error("idb closed"));
+    await model.refresh();
+    expect(get(model.state)).toEqual({ kind: "error" });
+    failing.mockRestore();
+    await model.refresh();
+    const state = get(model.state);
+    expect(state.kind).toBe("ready");
+    if (state.kind !== "ready") return;
+    expect(state.statuses[0]!.status).toBe("completed");
+  });
 });

@@ -1,13 +1,20 @@
 {
   "version": 1,
   "units": [
-    {"id": "u1", "name": "Baris pertama: ha na ca ra ka", "glyphs": ["ha", "na", "ca", "ra", "ka"]},
+    {"id": "g1", "name": "Kelompok 1: pa ha ya", "glyphs": ["pa", "ha", "ya"]},
     {"id": "u2", "name": "Wulu dan suku", "glyphs": ["wulu", "suku"]},
-    {"id": "u3", "name": "Baris kedua: da ta sa wa la", "glyphs": ["da", "ta", "sa", "wa", "la"]},
-    {"id": "u4", "name": "Baris ketiga: pa dha ja ya nya", "glyphs": ["pa", "dha", "ja", "ya", "nya"]},
-    {"id": "u5", "name": "Baris keempat: ma ga ba tha nga", "glyphs": ["ma", "ga", "ba", "tha", "nga"]},
+    {"id": "g2", "name": "Kelompok 2: ra ga la", "glyphs": ["ra", "ga", "la"]},
+    {"id": "g3", "name": "Kelompok 3: na ka ca sa", "glyphs": ["na", "ka", "ca", "sa"]},
+    {"id": "g4", "name": "Kelompok 4: da dha ja ta wa", "glyphs": ["da", "dha", "ja", "ta", "wa"]},
+    {"id": "g5", "name": "Kelompok 5: ba nga tha nya ma", "glyphs": ["ba", "nga", "tha", "nya", "ma"]},
     {"id": "u6", "name": "Sandhangan lain", "glyphs": ["taling", "tarung", "pepet", "layar", "cecak", "wignyan", "pangkon", "cakra", "keret", "pengkal"]},
     {"id": "u7", "name": "Pasangan", "glyphs": ["pasangan-ha", "pasangan-na", "pasangan-ca", "pasangan-ra", "pasangan-ka", "pasangan-da", "pasangan-ta", "pasangan-sa", "pasangan-wa", "pasangan-la", "pasangan-pa", "pasangan-dha", "pasangan-ja", "pasangan-ya", "pasangan-nya", "pasangan-ma", "pasangan-ga", "pasangan-ba", "pasangan-tha", "pasangan-nga"], "caps": ["pasangan"]},
     {"id": "u8", "name": "Sayap lanjutan: murda dan swara", "glyphs": ["naMurda", "kaMurda", "taMurda", "saMurda", "paMurda", "nyaMurda", "gaMurda", "baMurda", "caMurda", "jaMurda", "raAgung", "a", "i", "u", "e", "o", "paCerek", "ngaLelet"]}
+  ],
+  "retiredUnits": [
+    {"id": "u1", "glyphs": ["ha", "na", "ca", "ra", "ka"]},
+    {"id": "u3", "glyphs": ["da", "ta", "sa", "wa", "la"]},
+    {"id": "u4", "glyphs": ["pa", "dha", "ja", "ya", "nya"]},
+    {"id": "u5", "glyphs": ["ma", "ga", "ba", "tha", "nga"]}
   ]
 }

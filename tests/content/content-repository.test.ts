@@ -55,4 +55,38 @@ describe("[P-D04] content repository", () => {
       await expect(loadContent(load)).rejects.toThrow(ContentFormatError);
     });
   });
+
+  describe("retired units", () => {
+    function patchedUnits(patch: (data: Record<string, unknown>) => void) {
+      return async (path: string): Promise<string> => {
+        const raw = await loadFromPublic(path);
+        if (!path.endsWith("units.json")) return raw;
+        const data = JSON.parse(raw) as Record<string, unknown>;
+        patch(data);
+        return JSON.stringify(data);
+      };
+    }
+
+    test("the loaded content lists the retired row units", async () => {
+      const content = await loadContent(loadFromPublic);
+      expect(content.retiredUnits.map((r) => r.id)).toEqual([
+        "u1",
+        "u3",
+        "u4",
+        "u5",
+      ]);
+    });
+
+    test("a units.json without retiredUnits is a ContentFormatError", async () => {
+      const load = patchedUnits((data) => delete data["retiredUnits"]);
+      await expect(loadContent(load)).rejects.toThrow(ContentFormatError);
+    });
+
+    test("a retired entry without id is a ContentFormatError", async () => {
+      const load = patchedUnits(
+        (data) => (data["retiredUnits"] = [{ glyphs: ["ha"] }]),
+      );
+      await expect(loadContent(load)).rejects.toThrow(ContentFormatError);
+    });
+  });
 });
