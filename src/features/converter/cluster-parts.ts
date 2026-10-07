@@ -8,6 +8,9 @@ import {
   javaneseCodepoints,
   rekanById,
   sandhanganPangkon,
+  sandhanganTaling,
+  sandhanganTarung,
+  toLatin,
   zeroWidthNonJoiner,
   type AksaraCluster,
 } from "../../engine/index.ts";
@@ -37,6 +40,19 @@ const nameOfCodepoint: ReadonlyMap<number, string> = new Map(
 const letterPrefix = "JAVANESE LETTER ";
 const signPrefixes = ["VOWEL SIGN ", "CONSONANT SIGN ", "SIGN "];
 const shortNamePrefixes = [...signPrefixes, "LETTER ", "DIGIT "];
+const haCarrier = javaneseChar(`${letterPrefix}HA`);
+const dirgaMure = codepointOf("JAVANESE VOWEL SIGN DIRGA MURE");
+
+/**
+ * PUJL reading of vowel signs written on the ha carrier, without the
+ * carrier's h; "" when the engine cannot read them.
+ */
+function signSound(signs: string): string {
+  const r = toLatin(haCarrier + signs, { scheme: "pujl" });
+  return r.kind === "success" && r.output.startsWith("h")
+    ? r.output.slice(1)
+    : "";
+}
 
 /** Unicode short name and display char of a code point with no content item. */
 function fallbackPart(cp: number, subjoined: boolean): ClusterPart {
@@ -58,9 +74,9 @@ function fallbackPart(cp: number, subjoined: boolean): ClusterPart {
   ).toLowerCase();
   const isSign = signPrefixes.some((p) => bare.startsWith(p));
   return {
-    char: isSign ? javaneseChar(`${letterPrefix}HA`) + char : char,
+    char: isSign ? haCarrier + char : char,
     name,
-    sound: "",
+    sound: bare.startsWith("VOWEL SIGN ") ? signSound(char) : "",
     chartId: null,
     subjoined,
   };
@@ -73,18 +89,19 @@ function fallbackPart(cp: number, subjoined: boolean): ClusterPart {
 export class ClusterPartTable {
   private readonly aksaraByCodepoint: ReadonlyMap<number, AksaraItem>;
   private readonly angkaByDigit: ReadonlyMap<number, AksaraItem>;
-  private readonly rekanByBase: ReadonlyMap<number, AksaraItem>;
+  /** Two-codepoint rekan (letter + cecak telu, letter + tarung), keyed "a,b". */
+  private readonly rekanByPair: ReadonlyMap<string, AksaraItem>;
   private readonly sandhanganByCodepoint: ReadonlyMap<number, SandhanganItem>;
 
   private constructor(init: {
     aksaraByCodepoint: ReadonlyMap<number, AksaraItem>;
     angkaByDigit: ReadonlyMap<number, AksaraItem>;
-    rekanByBase: ReadonlyMap<number, AksaraItem>;
+    rekanByPair: ReadonlyMap<string, AksaraItem>;
     sandhanganByCodepoint: ReadonlyMap<number, SandhanganItem>;
   }) {
     this.aksaraByCodepoint = init.aksaraByCodepoint;
     this.angkaByDigit = init.angkaByDigit;
-    this.rekanByBase = init.rekanByBase;
+    this.rekanByPair = init.rekanByPair;
     this.sandhanganByCodepoint = init.sandhanganByCodepoint;
   }
 
@@ -94,7 +111,7 @@ export class ClusterPartTable {
   }): ClusterPartTable {
     const aksaraByCodepoint = new Map<number, AksaraItem>();
     const angkaByDigit = new Map<number, AksaraItem>();
-    const rekanByBase = new Map<number, AksaraItem>();
+    const rekanByPair = new Map<string, AksaraItem>();
     for (const item of content.aksara) {
       if (item.digit !== null) {
         if (!angkaByDigit.has(item.digit)) angkaByDigit.set(item.digit, item);
@@ -105,10 +122,14 @@ export class ClusterPartTable {
         if (!aksaraByCodepoint.has(cp)) aksaraByCodepoint.set(cp, item);
         continue;
       }
-      const base = rekanById(item.id)?.baseUnicodeName;
-      if (base !== null && base !== undefined) {
-        rekanByBase.set(codepointOf(base), item);
-      }
+      const entry = rekanById(item.id);
+      const pair =
+        entry?.baseUnicodeName != null
+          ? [codepointOf(entry.baseUnicodeName), cecakTelu.codepoint]
+          : entry?.composition?.length === 2
+            ? entry.composition.map(codepointOf)
+            : null;
+      if (pair !== null) rekanByPair.set(pair.join(","), item);
     }
     const sandhanganByCodepoint = new Map<number, SandhanganItem>();
     for (const item of content.sandhangan) {
@@ -117,7 +138,7 @@ export class ClusterPartTable {
     return new ClusterPartTable({
       aksaraByCodepoint,
       angkaByDigit,
-      rekanByBase,
+      rekanByPair,
       sandhanganByCodepoint,
     });
   }
@@ -142,24 +163,49 @@ export class ClusterPartTable {
       }
       const subjoined = isLetter === true && subjoinNext;
       if (isLetter === true) subjoinNext = false;
-      if (isLetter === true && cps[i + 1] === cecakTelu.codepoint) {
-        const rekanItem = this.rekanByBase.get(cp);
-        if (rekanItem !== undefined) {
-          const char = rekanChar(rekanItem.id);
-          parts.push({
-            char: subjoined ? subjoinedForm(char) : char,
-            name: rekanItem.name,
-            sound: rekanItem.latinPujl ?? "",
-            chartId: rekanItem.id,
-            subjoined,
-          });
-          i++;
-          continue;
-        }
+      const rekanItem =
+        isLetter === true && i + 1 < cps.length
+          ? this.rekanByPair.get(`${cp},${cps[i + 1]}`)
+          : undefined;
+      if (rekanItem !== undefined) {
+        const char = rekanChar(rekanItem.id);
+        parts.push({
+          char: subjoined ? subjoinedForm(char) : char,
+          name: rekanItem.name,
+          sound: rekanItem.latinPujl ?? "",
+          chartId: rekanItem.id,
+          subjoined,
+        });
+        i++;
+        continue;
+      }
+      // Tarung after taling or dirga mure is part of one vowel (o, au),
+      // not its own long a.
+      if (
+        (cp === sandhanganTaling.codepoint || cp === dirgaMure) &&
+        cps[i + 1] === sandhanganTarung.codepoint
+      ) {
+        parts.push(this.tarungPairPart(cp));
+        i++;
+        continue;
       }
       parts.push(this.partOf(cp, subjoined));
     }
     return parts;
+  }
+
+  private tarungPairPart(first: number): ClusterPart {
+    const signs = String.fromCodePoint(first, sandhanganTarung.codepoint);
+    const firstName =
+      this.sandhanganByCodepoint.get(first)?.id ??
+      fallbackPart(first, false).name;
+    return {
+      char: haCarrier + signs,
+      name: `${firstName} ${sandhanganTarung.id}`,
+      sound: signSound(signs),
+      chartId: null,
+      subjoined: false,
+    };
   }
 
   private partOf(cp: number, subjoined: boolean): ClusterPart {

@@ -28,3 +28,7 @@ Out of scope: the aksara → Latin direction (its aksara is an editable field, w
 
 - In a dense digit or pada run (`1945`), a narrow cluster's own tap area is under 48 px, because the rendering may not change. Taps go to the nearest glyph.
 - In a result with more than one line, tapping the lowest tip of a pasangan tail selects the cluster on the line below. Marks on top of the next line (wulu, layar, cecak) reach into the same band, so geometry alone cannot settle it.
+
+### Open question
+
+- `sinau` converts to na + dirga mure + tarung (the diphthong au), because the ruleset reads every `ai` and `au` as a diphthong. School writes it with a ha between the vowels (`sinahu`). KAJ 8.i panglancar ha is not implemented, and the engine cannot tell native words from loans like `santai`. This is a ruleset question for the teacher. Typing `sinahu` gives the school spelling today. The breakdown shows dirga mure tarung as one `au` part (and taling tarung as `o`), so it no longer suggests a long a.
