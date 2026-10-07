@@ -1,8 +1,14 @@
 import { get } from "svelte/store";
 import { describe, expect, test } from "vitest";
+import { toAksara, type ToAksaraSuccess } from "../../../src/engine/index.ts";
 import { LatinToAksaraConverter } from "../../../src/features/converter/latin-to-aksara-state.ts";
 import { ak } from "../../engine/support/aksara-builder.ts";
 
+const expectSuccess = (text: string): ToAksaraSuccess => {
+  const result = toAksara(text);
+  if (result.kind !== "success") throw new Error("not a success");
+  return result;
+};
 const clipboardSpy = () => {
   const written: string[] = [];
   return {
@@ -17,7 +23,10 @@ describe("LatinToAksaraConverter", () => {
     c.input("kaca");
     expect(get(c.state)).toEqual({
       kind: "idle",
+      input: "kaca",
       output: ak("KA CA"),
+      clusters: expectSuccess("kaca").clusters,
+      selected: null,
     });
   });
 
@@ -65,7 +74,10 @@ describe("LatinToAksaraConverter", () => {
     c.choose(1);
     expect(get(c.state)).toEqual({
       kind: "idle",
-      output: ambiguous.candidates[1],
+      input: "prelu",
+      output: ambiguous.candidates[1]!.output,
+      clusters: ambiguous.candidates[1]!.clusters,
+      selected: null,
     });
   });
 
@@ -112,5 +124,73 @@ describe("LatinToAksaraConverter", () => {
     const c = new LatinToAksaraConverter();
     c.input("Kaca");
     expect(get(c.state)).toMatchObject({ output: ak("KA CA") });
+  });
+
+  test("[P-U10] input stores the trimmed text and clusters index into it", () => {
+    const c = new LatinToAksaraConverter();
+    c.input("  kita ");
+    const state = get(c.state);
+    if (state.kind !== "idle") throw new Error("not idle");
+    expect(state.input).toBe("kita");
+    expect(state.clusters[0]!.sources).toEqual([{ start: 0, end: 2 }]);
+  });
+
+  test("[P-U10] select moves the selection", () => {
+    const c = new LatinToAksaraConverter();
+    c.input("kita");
+    c.select(1);
+    expect(get(c.state)).toMatchObject({ selected: 1 });
+    c.select(0);
+    expect(get(c.state)).toMatchObject({ selected: 0 });
+  });
+
+  test("[P-U10] selecting the same cluster again keeps the identical state", () => {
+    const c = new LatinToAksaraConverter();
+    c.input("kita");
+    c.select(0);
+    const before = get(c.state);
+    c.select(0);
+    expect(get(c.state)).toBe(before);
+  });
+
+  test("[P-U10] an invalid index is a no-op", () => {
+    const c = new LatinToAksaraConverter();
+    c.input("kita");
+    const before = get(c.state);
+    c.select(-1);
+    c.select(2);
+    c.select(0.5);
+    expect(get(c.state)).toBe(before);
+  });
+
+  test.each([
+    ["initial", ""],
+    ["ambiguous", "prelu"],
+    ["error", "qa"],
+  ])("[P-U10] select is a no-op in the %s state", (_kind, text) => {
+    const c = new LatinToAksaraConverter();
+    c.input(text);
+    const before = get(c.state);
+    c.select(0);
+    expect(get(c.state)).toBe(before);
+  });
+
+  test("[P-U10] input clears the selection, even for unchanged text", () => {
+    const c = new LatinToAksaraConverter();
+    c.input("kita");
+    c.select(1);
+    c.input("kita");
+    expect(get(c.state)).toMatchObject({ selected: null });
+  });
+
+  test("[P-U10] copy after a selection writes exactly the output", async () => {
+    const c = new LatinToAksaraConverter();
+    const clipboard = clipboardSpy();
+    c.input("kita");
+    c.select(0);
+    const before = get(c.state);
+    await expect(c.copy(clipboard.writeText)).resolves.toBe(true);
+    expect(clipboard.written).toEqual([expectSuccess("kita").output]);
+    expect(get(c.state)).toBe(before);
   });
 });

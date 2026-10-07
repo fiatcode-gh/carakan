@@ -15,6 +15,8 @@ export interface Syllable {
   readonly cerek: boolean;
   /** Word-final or pre-cluster coda. */
   readonly coda: LatinToken | null;
+  /** The ṛ token of a pa cerek syllable; null otherwise. */
+  readonly cerekToken: LatinToken | null;
 }
 
 export function syllable(init: {
@@ -23,6 +25,7 @@ export function syllable(init: {
   keret?: boolean;
   cerek?: boolean;
   coda?: LatinToken | null;
+  cerekToken?: LatinToken | null;
 }): Syllable {
   return {
     onset: init.onset,
@@ -30,6 +33,7 @@ export function syllable(init: {
     keret: init.keret ?? false,
     cerek: init.cerek ?? false,
     coda: init.coda ?? null,
+    cerekToken: init.cerekToken ?? null,
   };
 }
 
@@ -52,6 +56,7 @@ export function syllabify(tokens: readonly LatinToken[]): Syllable[] {
     const onset: LatinToken[] = [];
     let keret = false;
     let cerek = false;
+    let cerekToken: LatinToken | null = null;
 
     // Onset collection.
     while (i < tokens.length && tokens[i]!.kind === "consonant") {
@@ -60,6 +65,7 @@ export function syllabify(tokens: readonly LatinToken[]): Syllable[] {
       if (t.isCerekR) {
         if (onset.length === 0) {
           cerek = true; // pa cerek syllable: ṛ carries its own vowel
+          cerekToken = t;
           i++;
         } else {
           onset.push(t); // keret: C + r + implicit pepet
@@ -92,7 +98,7 @@ export function syllabify(tokens: readonly LatinToken[]): Syllable[] {
     if (cerek) {
       const coda = maybeCoda(tokens, i);
       if (coda !== null) i++;
-      sylls.push(syllable({ onset: [], cerek: true, coda }));
+      sylls.push(syllable({ onset: [], cerek: true, coda, cerekToken }));
       continue;
     }
 

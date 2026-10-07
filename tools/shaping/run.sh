@@ -1,7 +1,8 @@
 #!/bin/sh
 # Shaping gate: the TS engine's case dump must be byte-identical to the Dart
-# dumper at ebc7cb5, and every case must shape cleanly in HarfBuzz against the
-# exact Jejeg TTF the app serves.
+# dumper at ebc7cb5, every case must shape cleanly in HarfBuzz against the
+# exact Jejeg TTF the app serves, and no HarfBuzz glyph cluster may straddle
+# an engine cluster boundary (the tap-to-explain segmentation).
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
@@ -18,3 +19,6 @@ node tools/shaping/dump-cases.ts > .cache/shaping/ts.tsv
 cmp .cache/shaping/dart.tsv .cache/shaping/ts.tsv
 
 uv run --quiet --with uharfbuzz python tools/shaping/shape_check.py .cache/shaping/ts.tsv
+
+node tools/shaping/dump-cases.ts --clusters > .cache/shaping/ts-clusters.tsv
+uv run --quiet --with uharfbuzz python tools/shaping/shape_check.py --clusters .cache/shaping/ts-clusters.tsv
