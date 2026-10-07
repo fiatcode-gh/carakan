@@ -28,3 +28,34 @@ export interface ConvertError {
   readonly index: number;
   readonly message: string;
 }
+
+/** Half-open range [start, end) in UTF-16 code units. */
+export interface TextSpan {
+  readonly start: number;
+  readonly end: number;
+}
+
+/** One written cluster of a Latin -> aksara output. */
+export interface AksaraCluster {
+  /** Range of `output` the cluster occupies. */
+  readonly output: TextSpan;
+  /**
+   * Ranges of the input that produced the cluster: ascending, disjoint,
+   * non-adjacent and non-empty. Offsets are into the exact string passed to
+   * `toAksara`.
+   */
+  readonly sources: readonly TextSpan[];
+}
+
+/** A Latin -> aksara success: `output` split into its written clusters. */
+export interface ToAksaraSuccess extends ConvertSuccess {
+  /** Cover `output` in order; empty when `output` is empty. */
+  readonly clusters: readonly AksaraCluster[];
+}
+
+/** Ambiguous Latin -> aksara input; every candidate carries its clusters. */
+export interface ToAksaraAmbiguous extends ConvertAmbiguous {
+  readonly candidates: readonly ToAksaraSuccess[];
+}
+
+export type ToAksaraResult = ToAksaraSuccess | ToAksaraAmbiguous | ConvertError;

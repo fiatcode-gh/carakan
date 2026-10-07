@@ -5,9 +5,11 @@ import { SandhanganItem } from "../../../src/content/sandhangan-item.ts";
 import {
   angkaFlanked,
   buildChartSections,
+  findChartEntry,
   murdaVariant,
   pasanganString,
   rekanChar,
+  subjoinedForm,
   type ChartStrings,
 } from "../../../src/features/chart/chart-catalog.ts";
 import { ak } from "../../engine/support/aksara-builder.ts";
@@ -86,6 +88,29 @@ describe("chart helpers", () => {
 
   test("[P-C01] angka char flanked by pada pangkat", () => {
     expect(angkaFlanked(3)).toBe(ak("PADA_PANGKAT DIGIT_THREE PADA_PANGKAT"));
+  });
+});
+
+describe("chart lookups for the converter", () => {
+  test("[P-U10] subjoinedForm is the UTN47 carrier + pangkon + letter", () => {
+    expect(subjoinedForm(ak("LA"))).toBe(ak("KA PANGKON LA"));
+  });
+
+  test("[P-U10] findChartEntry resolves real content ids in section order", async () => {
+    const content = await loadContent(loadFromPublic);
+    const real = buildChartSections({
+      aksara: content.aksara,
+      sandhangan: content.sandhangan,
+      strings,
+    });
+    expect(findChartEntry(real, "wulu")?.id).toBe("wulu");
+    expect(findChartEntry(real, "angka-1")?.id).toBe("angka-1");
+    expect(findChartEntry(real, "paCerek")?.id).toBe("paCerek");
+    const firstAi = real
+      .flatMap((s) => s.entries)
+      .find((entry) => entry.id === "ai");
+    expect(findChartEntry(real, "ai")).toBe(firstAi);
+    expect(findChartEntry(real, "nope")).toBeNull();
   });
 });
 

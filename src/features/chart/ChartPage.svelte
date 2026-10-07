@@ -6,6 +6,7 @@
   import Page from "../../ui/Page.svelte";
   import ChartDetailSheet from "./ChartDetailSheet.svelte";
   import { buildChartSections, type ChartEntry } from "./chart-catalog.ts";
+  import { chartStrings } from "./chart-strings.ts";
 
   const { t } = getI18n();
   const { content } = getServices();
@@ -16,21 +17,7 @@
     buildChartSections({
       aksara: content.aksara,
       sandhangan: content.sandhangan,
-      strings: {
-        carakan: $t("sectionCarakan"),
-        sandhanganVowel: $t("sectionSandhanganVowel"),
-        sandhanganClosing: $t("sectionSandhanganClosing"),
-        sandhanganConsonant: $t("sectionSandhanganConsonant"),
-        sandhanganKiller: $t("sectionSandhanganKiller"),
-        murda: $t("sectionMurda"),
-        swara: $t("sectionSwara"),
-        rekan: $t("sectionRekan"),
-        angka: $t("sectionAngka"),
-        pada: $t("sectionPada"),
-        murdaHint: $t("murdaHint"),
-        writtenAs: (form) => $t("writtenAs", { form }),
-        longFormName: (name) => $t("longFormName", { name }),
-      },
+      strings: chartStrings($t),
     }),
   );
 

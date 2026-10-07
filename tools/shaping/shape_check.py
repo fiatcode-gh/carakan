@@ -6,6 +6,8 @@ Usage (from the repo root; `npm run shaping` does all of this):
       [--font public/fonts/nykNgayogyanJejeg-Regular.ttf]
 
 <cases.tsv>: one case per line, "label<TAB>aksara[<TAB>expected-visual]".
+With --clusters the third column is instead the engine cluster starts
+("0,3,..." UTF-16 offsets, from `dump-cases.ts --clusters`).
 Lines starting with '#' are reported (errors/ambiguities from the dump) but
 not shaped.
 
@@ -21,6 +23,10 @@ Checks per case, any failure -> exit status 1:
      letters (U+A984..U+A9B2, any glyph variant) and TALING. This is the
      intent check: SA TALING TA (old engine order) draws "TALING SA TA",
      which fails the saté expectation "SA TALING TA".
+
+With --clusters, only one check runs: no HarfBuzz glyph cluster of the whole
+shaped string may straddle an engine cluster boundary (`FAIL:straddle`); the
+starts must also be strictly increasing and begin at 0.
 """
 import re
 import sys
@@ -79,6 +85,9 @@ def owners(text):
 
 
 args = sys.argv[1:]
+cluster_mode = "--clusters" in args
+if cluster_mode:
+    args.remove("--clusters")
 font_path = "public/fonts/nykNgayogyanJejeg-Regular.ttf"
 if "--font" in args:
     i = args.index("--font")
@@ -86,6 +95,22 @@ if "--font" in args:
     del args[i : i + 2]
 if len(args) != 1:
     sys.exit(__doc__)
+
+
+def straddles(text, starts, hb_clusters):
+    """Problems of engine cluster starts against HarfBuzz cluster bounds."""
+    problems = []
+    if text and (not starts or starts[0] != 0):
+        problems.append("first-start-not-0")
+    if any(a >= b for a, b in zip(starts, starts[1:])):
+        problems.append("starts-not-increasing")
+    bounds = hb_clusters + [len(text)]
+    for a, b in zip(bounds, bounds[1:]):
+        if any(a < s < b for s in starts):
+            problems.append("straddle")
+            break
+    return problems
+
 
 font = hb.Font(hb.Face(hb.Blob.from_file_path(font_path)))
 uni = re.compile(r"^uni([0-9A-F]{4})")
@@ -99,11 +124,19 @@ for line in open(args[0], encoding="utf-8"):
         continue
     parts = line.split("\t")
     label, text = parts[0], parts[1]
-    expect = parts[2] if len(parts) > 2 and parts[2] else None
     buf = hb.Buffer()
     buf.add_str(text)
     buf.guess_segment_properties()
     hb.shape(font, buf, {})
+    if cluster_mode:
+        starts = [int(s) for s in parts[2].split(",")] if len(parts) > 2 and parts[2] else []
+        problems = straddles(text, starts, sorted({i.cluster for i in buf.glyph_infos}))
+        status = "FAIL:" + ",".join(problems) if problems else "ok"
+        if problems:
+            bad += 1
+        print(f"{status}\t{label}\tstarts={','.join(map(str, starts))}")
+        continue
+    expect = parts[2] if len(parts) > 2 and parts[2] else None
     names = [font.glyph_to_string(g.codepoint) for g in buf.glyph_infos]
     cps = []
     for n in names:

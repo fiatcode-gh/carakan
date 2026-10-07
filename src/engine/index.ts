@@ -4,7 +4,7 @@
 // Tata Tulis Simplified; transliteration per JGST (canonical) and PUJL
 // (user-facing). See docs/references/CITATIONS.md.
 import { aksaraToLatin, type LatinScheme } from "./aksara-to-latin.ts";
-import type { ConvertResult } from "./convert-result.ts";
+import type { ConvertResult, ToAksaraResult } from "./convert-result.ts";
 import { latinToAksara } from "./latin-to-aksara.ts";
 
 export * from "./aksara-char.ts";
@@ -37,6 +37,6 @@ export function toLatin(
 export function toAksara(
   latin: string,
   { useMurda = false }: { useMurda?: boolean } = {},
-): ConvertResult {
+): ToAksaraResult {
   return latinToAksara(latin, useMurda);
 }

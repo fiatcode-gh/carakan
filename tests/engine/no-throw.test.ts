@@ -4,6 +4,7 @@ import {
   toAksara,
   toLatin,
 } from "../../src/engine/index.ts";
+import { lcg, randomStrings } from "./support/random-input.ts";
 
 const MESSAGE = "Cluster marker cannot close a syllable";
 
@@ -22,31 +23,6 @@ const markerCodas: [input: string, marker: string][] = [
   ["Eṛ", "ṛ"],
   ["tieỿ", "ỿ"],
 ];
-
-function lcg(seed: number): () => number {
-  let s = seed >>> 0;
-  return () => {
-    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
-    return s / 0x100000000;
-  };
-}
-
-function randomStrings(
-  rand: () => number,
-  alphabet: readonly string[],
-  count: number,
-): string[] {
-  const out: string[] = [];
-  for (let n = 0; n < count; n++) {
-    const len = 1 + Math.floor(rand() * 8);
-    let s = "";
-    for (let k = 0; k < len; k++) {
-      s += alphabet[Math.floor(rand() * alphabet.length)]!;
-    }
-    out.push(s);
-  }
-  return out;
-}
 
 describe("[P-D02] engine never throws", () => {
   describe.each([false, true])("useMurda %s", (useMurda) => {

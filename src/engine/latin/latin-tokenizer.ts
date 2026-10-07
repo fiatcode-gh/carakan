@@ -55,12 +55,15 @@ export interface LatinToken {
   /** Source letter was uppercase (drives the murda opt-in). */
   readonly capitalized: boolean;
   readonly sourceIndex: number;
+  /** Exclusive end of the token's source, a rune index within the word. */
+  readonly sourceEnd: number;
 }
 
 export function latinToken(init: {
   kind: TokenKind;
   text: string;
   sourceIndex: number;
+  sourceEnd?: number;
   aksaraUnicodeName?: string | null;
   vowel?: Vowel | null;
   isCerekR?: boolean;
@@ -74,6 +77,7 @@ export function latinToken(init: {
     kind: init.kind,
     text: init.text,
     sourceIndex: init.sourceIndex,
+    sourceEnd: init.sourceEnd ?? init.sourceIndex,
     aksaraUnicodeName: init.aksaraUnicodeName ?? null,
     vowel: init.vowel ?? null,
     isCerekR: init.isCerekR ?? false,
@@ -353,5 +357,9 @@ export function tokenize(word: string): LatinToken[] {
 
     throw new LatinParseError(start, `Unknown character "${ch}"`);
   }
-  return tokens;
+  // Tokens are contiguous: each one ends where the next begins.
+  return tokens.map((t, k) => ({
+    ...t,
+    sourceEnd: tokens[k + 1]?.sourceIndex ?? runes.length,
+  }));
 }

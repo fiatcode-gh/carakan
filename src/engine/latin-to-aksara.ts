@@ -1,6 +1,12 @@
+import { ClusterWriter } from "./aksara-clusters.ts";
 import { angkaDigitToChar, angkaFlanker } from "./angka.ts";
 import { javaneseChar } from "./codepoints.ts";
-import type { ConvertResult, ConvertSuccess } from "./convert-result.ts";
+import type {
+  TextSpan,
+  ToAksaraAmbiguous,
+  ToAksaraResult,
+  ToAksaraSuccess,
+} from "./convert-result.ts";
 import {
   LatinParseError,
   latinToken,
@@ -38,8 +44,24 @@ interface Chunk {
   readonly start: number;
 }
 
-/** A tokenized word, or a non-word chunk passed through to the renderer. */
-type Item = LatinToken[] | Chunk;
+/** A tokenized word with its offset in the input, or a non-word chunk. */
+type Item = { readonly tokens: LatinToken[]; readonly start: number } | Chunk;
+
+/** Absolute input spans of `tokens`; synthetic (empty) tokens add nothing. */
+function spansOf(
+  wordStart: number,
+  ...tokens: readonly (LatinToken | null)[]
+): TextSpan[] {
+  const spans: TextSpan[] = [];
+  for (const t of tokens) {
+    if (t === null || t.sourceEnd <= t.sourceIndex) continue;
+    spans.push({
+      start: wordStart + t.sourceIndex,
+      end: wordStart + t.sourceEnd,
+    });
+  }
+  return spans;
+}
 
 const isAsciiDigit = (ch: string): boolean => /^[0-9]$/.test(ch);
 
@@ -50,7 +72,10 @@ const isAsciiDigit = (ch: string): boolean => /^[0-9]$/.test(ch);
  * p.5 3.b, p.124 8.b); only a capitalized vowel-initial word inside a
  * sentence keeps its swara letter.
  */
-export function latinToAksara(input: string, useMurda: boolean): ConvertResult {
+export function latinToAksara(
+  input: string,
+  useMurda: boolean,
+): ToAksaraResult {
   try {
     const chunks = splitChunks(input);
     // Phase 1: tokenize every word so lexical errors surface before any
@@ -61,7 +86,7 @@ export function latinToAksara(input: string, useMurda: boolean): ConvertResult {
       if (chunk.kind === "word") {
         try {
           const tokens = tokenize(chunk.text);
-          tokenized.push(tokens);
+          tokenized.push({ tokens, start: chunk.start });
           if (tokens.some((t) => t.vowel === "eBare")) bareE = true;
         } catch (e) {
           if (e instanceof LatinParseError) {
@@ -83,10 +108,7 @@ export function latinToAksara(input: string, useMurda: boolean): ConvertResult {
       return ambiguous(input, tokenized, useMurda);
     }
 
-    return {
-      kind: "success",
-      output: renderSentence(tokenized, useMurda, null),
-    };
+    return renderSentence(tokenized, useMurda, null);
   } catch (e) {
     if (e instanceof LatinParseError) {
       return { kind: "error", input, index: e.index, message: e.message };
@@ -106,35 +128,36 @@ function renderSentence(
   items: readonly Item[],
   useMurda: boolean,
   eSubstitution: Vowel | null,
-): string {
-  let out = "";
+): ToAksaraSuccess {
+  const w = new ClusterWriter();
   let pangkonOpen = false; // output ends with PANGKON (ignoring a ZWNJ)
   let breakPending = false; // previous word ended with an explicit `/`
   let endsWithZwnj = false;
   let sentenceStart = true; // input start or right after a full stop
-
-  const write = (s: string): void => {
-    out += s;
-    endsWithZwnj = false;
-  };
+  const zwnj = String.fromCodePoint(zeroWidthNonJoiner);
 
   for (const item of items) {
-    if (Array.isArray(item)) {
+    if ("tokens" in item) {
       const tokens =
-        eSubstitution === null ? item : substituteE(item, eSubstitution);
+        eSubstitution === null
+          ? item.tokens
+          : substituteE(item.tokens, eSubstitution);
       if (breakPending) {
-        out += String.fromCodePoint(zeroWidthNonJoiner);
+        w.write(zwnj, []);
         endsWithZwnj = true;
       }
-      const word = renderWord(tokens, useMurda, sentenceStart);
+      const before = w.text.length;
+      renderWord(tokens, useMurda, sentenceStart, item.start, w);
       sentenceStart = false;
-      write(word);
-      pangkonOpen = word.endsWith(sandhanganPangkon.char);
+      endsWithZwnj = false;
+      pangkonOpen =
+        w.text.length > before && w.text.endsWith(sandhanganPangkon.char);
       breakPending =
         pangkonOpen && tokens[tokens.length - 1]!.kind === "pangkon";
       continue;
     }
-    const chunk = item as Chunk;
+    const chunk = item;
+    const here = [{ start: chunk.start, end: chunk.start + 1 }];
     switch (chunk.kind) {
       case "space":
         break;
@@ -142,31 +165,41 @@ function renderSentence(
         breakPending = false;
         if (pangkonOpen) {
           if (!endsWithZwnj) {
-            out += String.fromCodePoint(zeroWidthNonJoiner);
+            w.write(zwnj, here);
             endsWithZwnj = true;
+          } else {
+            w.attribute(here);
           }
         } else {
-          write(javaneseChar("JAVANESE PADA LINGSA"));
+          w.write(javaneseChar("JAVANESE PADA LINGSA"), here);
+          endsWithZwnj = false;
         }
         break;
       case "period":
         sentenceStart = true;
         breakPending = false;
-        write(
+        w.write(
           javaneseChar(
             pangkonOpen ? "JAVANESE PADA LINGSA" : "JAVANESE PADA LUNGSI",
           ),
+          here,
         );
+        endsWithZwnj = false;
         pangkonOpen = false;
         break;
       case "digits": {
         breakPending = false;
-        let b = angkaFlanker.char;
-        for (const d of chunk.text) {
-          b += angkaDigitToChar(Number(d));
+        const run = [
+          { start: chunk.start, end: chunk.start + chunk.text.length },
+        ];
+        w.write(angkaFlanker.char, run);
+        let d = chunk.start;
+        for (const digit of chunk.text) {
+          w.write(angkaDigitToChar(Number(digit)), [{ start: d, end: d + 1 }]);
+          d++;
         }
-        b += angkaFlanker.char;
-        write(b);
+        w.write(angkaFlanker.char, run);
+        endsWithZwnj = false;
         pangkonOpen = false;
         break;
       }
@@ -174,14 +207,17 @@ function renderSentence(
         throw new Error("word chunks must be tokenized before rendering");
     }
   }
-  return endsWithZwnj ? out.substring(0, out.length - 1) : out;
+  if (endsWithZwnj) w.dropLast();
+  return { kind: "success", ...w.finish() };
 }
 
 function renderWord(
   tokens: readonly LatinToken[],
   useMurda: boolean,
   sentenceStart: boolean,
-): string {
+  wordStart: number,
+  w: ClusterWriter,
+): void {
   const effective = useMurda ? applyMurda(tokens) : tokens;
   const first = effective[0]!;
   const isVowel = first.kind === "vowel";
@@ -199,7 +235,9 @@ function renderWord(
           ...effective,
         ]
       : effective;
-  return render(withGlides(syllabify(carried)));
+  render(withGlides(syllabify(carried)), w, wordStart);
+  const last = tokens[tokens.length - 1]!;
+  if (last.kind === "pangkon") w.attribute(spansOf(wordStart, last));
 }
 
 /**
@@ -298,13 +336,10 @@ function ambiguous(
   input: string,
   tokenized: readonly Item[],
   useMurda: boolean,
-): ConvertResult {
-  const candidates: ConvertSuccess[] = [];
+): ToAksaraAmbiguous {
+  const candidates: ToAksaraSuccess[] = [];
   for (const substitution of ["ePepet", "eTaling"] as const) {
-    candidates.push({
-      kind: "success",
-      output: renderSentence(tokenized, useMurda, substitution),
-    });
+    candidates.push(renderSentence(tokenized, useMurda, substitution));
   }
   return {
     kind: "ambiguous",
@@ -349,6 +384,8 @@ function substituteE(
           kind: r.kind,
           text: r.text,
           sourceIndex: r.sourceIndex,
+          // The dropped e stays attributed to the keret cluster.
+          sourceEnd: t.sourceEnd,
           aksaraUnicodeName: r.aksaraUnicodeName,
           isCerekR: true,
           capitalized: r.capitalized,
@@ -363,6 +400,7 @@ function substituteE(
           vowel: substitution,
           capitalized: t.capitalized,
           sourceIndex: t.sourceIndex,
+          sourceEnd: t.sourceEnd,
         }),
       );
     }
@@ -370,14 +408,28 @@ function substituteE(
   return result;
 }
 
-function render(sylls: readonly Syllable[]): string {
-  let buf = "";
+function writeCoda(
+  w: ClusterWriter,
+  coda: LatinToken | null,
+  wordStart: number,
+): void {
+  if (coda !== null) w.write(codaText(coda), spansOf(wordStart, coda));
+}
+
+function render(
+  sylls: readonly Syllable[],
+  w: ClusterWriter,
+  wordStart: number,
+): void {
   for (let s = 0; s < sylls.length; s++) {
     const syll = sylls[s]!;
 
     if (syll.cerek) {
-      buf += javaneseChar("JAVANESE LETTER PA CEREK");
-      buf += codaText(syll.coda);
+      w.write(
+        javaneseChar("JAVANESE LETTER PA CEREK"),
+        spansOf(wordStart, syll.cerekToken),
+      );
+      writeCoda(w, syll.coda, wordStart);
       continue;
     }
 
@@ -395,13 +447,16 @@ function render(sylls: readonly Syllable[]): string {
           );
         }
       }
-      buf += swaraFor(syll.vowelToken);
-      buf += codaText(syll.coda);
+      w.write(swaraFor(syll.vowelToken), spansOf(wordStart, syll.vowelToken));
+      writeCoda(w, syll.coda, wordStart);
       continue;
     }
 
     const v = syll.vowelToken?.vowel ?? null;
     const first = syll.onset[0]!;
+    let buf = "";
+    let vowelSpans = spansOf(wordStart, syll.vowelToken);
+    let tail: { text: string; spans: TextSpan[] } | null = null;
 
     // KAJ I Bab I A.5.b: re/le syllables never take pepet — ra+ě becomes
     // pa cerek, la+ě becomes nga lelet (single onset only; clusters use
@@ -475,12 +530,24 @@ function render(sylls: readonly Syllable[]): string {
         buf += sandhanganTaling.char;
         buf += sandhanganTarung.char;
         break;
-      case "aa":
+      case "aa": {
         // KAJ Kata Asing: a ganda (double a, pronounced separately) is
-        // the swara A — maaf, taat. (The word-initial long-ā stays in
-        // swaraFor, unchanged.)
-        buf += javaneseChar("JAVANESE LETTER A");
+        // the swara A — maaf, taat. The first a belongs to the base letter,
+        // the second to the swara. A lone ā has no first a: when its onset
+        // is a real consonant it belongs wholly to the swara; when the onset
+        // is synthetic (ha carrier or glide, nothing in the text) the base
+        // letter and the swara both point at the ā.
+        const span = vowelSpans[0];
+        const text = javaneseChar("JAVANESE LETTER A");
+        if (span !== undefined && span.end - span.start >= 2) {
+          vowelSpans = [{ start: span.start, end: span.start + 1 }];
+          tail = { text, spans: [{ start: span.start + 1, end: span.end }] };
+        } else {
+          if (spansOf(wordStart, ...syll.onset).length > 0) vowelSpans = [];
+          tail = { text, spans: span === undefined ? [] : [span] };
+        }
         break;
+      }
       case "ii":
         buf += javaneseChar("JAVANESE VOWEL SIGN WULU MELIK");
         break;
@@ -502,9 +569,10 @@ function render(sylls: readonly Syllable[]): string {
         );
     }
 
-    buf += codaText(syll.coda);
+    w.write(buf, [...spansOf(wordStart, ...syll.onset), ...vowelSpans]);
+    if (tail !== null) w.write(tail.text, tail.spans);
+    writeCoda(w, syll.coda, wordStart);
   }
-  return buf;
 }
 
 /**

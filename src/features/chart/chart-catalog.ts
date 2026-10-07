@@ -57,15 +57,30 @@ export interface ChartStrings {
 }
 
 /**
- * Subjoined form: killed ka carrier + the base letter (UTN47: pasangan =
- * base + pangkon + consonant; the font subjoins it).
+ * Subjoined form of a letter: killed ka carrier + the letter (UTN47: pasangan
+ * = base + pangkon + consonant; the font subjoins it).
  */
+export function subjoinedForm(char: string): string {
+  return javaneseChar("JAVANESE LETTER KA") + sandhanganPangkon.char + char;
+}
+
 export function pasanganString(baseId: string): string {
   const base = nglegenaById(baseId);
   if (base === null) throw new RangeError(`unknown nglegena: ${baseId}`);
-  return (
-    javaneseChar("JAVANESE LETTER KA") + sandhanganPangkon.char + base.char
-  );
+  return subjoinedForm(base.char);
+}
+
+/** The first entry with `id` in section order, or null. */
+export function findChartEntry(
+  sections: readonly ChartSection[],
+  id: string,
+): ChartEntry | null {
+  for (const section of sections) {
+    for (const entry of section.entries) {
+      if (entry.id === id) return entry;
+    }
+  }
+  return null;
 }
 
 export function murdaVariant(baseId: string): string | null {
