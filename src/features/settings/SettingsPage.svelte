@@ -5,16 +5,19 @@
   import type { LocaleSetting } from "../../core/locale/locale-controller.ts";
   import { aksaraEngineRulesetId } from "../../engine/index.ts";
   import { getI18n } from "../../l10n/context.ts";
+  import type { MessageKey } from "../../l10n/i18n.ts";
   import Button from "../../ui/Button.svelte";
+  import Icon from "../../ui/Icon.svelte";
   import Page from "../../ui/Page.svelte";
   import Slip from "../../ui/Slip.svelte";
   import Toast from "../../ui/Toast.svelte";
   import { CORPUS_LINKS, FONT_LINKS, fileName } from "./about-links.ts";
   import { buildFeedbackReport } from "./feedback-report.ts";
   import ReportDialog from "./ReportDialog.svelte";
+  import ResetDialog from "./ResetDialog.svelte";
 
   const { t } = getI18n();
-  const { locale } = getServices();
+  const { locale, progress } = getServices();
   const setting = locale.setting;
 
   const options = $derived<readonly { value: LocaleSetting; label: string }[]>([
@@ -35,7 +38,7 @@
   // dropped when the page is left.
   let description = $state("");
   let reportOpen = $state(false);
-  let toastVisible = $state(false);
+  let toast = $state<MessageKey | null>(null);
   let copyFailed = $state(false);
 
   /** False when the clipboard refused (permission, insecure context). */
@@ -58,7 +61,42 @@
     copyFailed = !(await writeReport());
     if (copyFailed) return;
     reportOpen = false;
-    toastVisible = true;
+    showToast("reportCopied");
+  }
+
+  let resetOpen = $state(false);
+  let resetFailed = $state(false);
+  /** Ignores a second confirm while one erase is in flight. */
+  let erasing = false;
+  /** Restarts the toast timer when the same message shows twice in a row. */
+  let toastCount = $state(0);
+
+  function showToast(message: MessageKey): void {
+    toast = message;
+    toastCount += 1;
+  }
+
+  function openReset(): void {
+    resetFailed = false;
+    resetOpen = true;
+  }
+
+  async function eraseProgress(): Promise<void> {
+    if (erasing) return;
+    erasing = true;
+    // Cleared first so a repeated failure mounts the alert again and is
+    // announced again.
+    resetFailed = false;
+    try {
+      await progress.erase();
+    } catch {
+      resetFailed = true;
+      return;
+    } finally {
+      erasing = false;
+    }
+    resetOpen = false;
+    showToast("resetDone");
   }
 </script>
 
@@ -121,6 +159,16 @@
     <Button variant="secondary" block onclick={() => (reportOpen = true)}>
       {$t("reportButton")}
     </Button>
+
+    <section class="reset" aria-labelledby="reset-heading">
+      <h2 id="reset-heading" class="reset__heading">
+        <Icon name="triangle-alert" />{$t("resetHeading")}
+      </h2>
+      <p>{$t("resetBody")}</p>
+      <Button variant="danger" block onclick={openReset}>
+        {$t("resetButton")}
+      </Button>
+    </section>
   </div>
 </Page>
 
@@ -135,13 +183,38 @@
     }}
   />
 {/if}
-{#if toastVisible}
-  <Toast onclose={() => (toastVisible = false)}>{$t("reportCopied")}</Toast>
+{#if resetOpen}
+  <ResetDialog
+    failed={resetFailed}
+    onconfirm={eraseProgress}
+    onclose={() => (resetOpen = false)}
+  />
+{/if}
+{#if toast !== null}
+  {#key toastCount}
+    <Toast onclose={() => (toast = null)}>{$t(toast)}</Toast>
+  {/key}
 {/if}
 
 <style>
   .stack--loose {
     gap: var(--space-6);
+  }
+
+  .reset {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 2px dashed var(--color-danger);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+  }
+
+  .reset__heading {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-danger);
   }
 
   .language {

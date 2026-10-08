@@ -16,7 +16,7 @@ const roundTrips: [string, Route][] = [
   ["#/settings", { kind: "settings" }],
   ["#/teacher", { kind: "teacher" }],
   ["#/review-help", { kind: "reviewHelp" }],
-  ["#/lesson/u1", { kind: "lesson", unitId: "u1" }],
+  ["#/lesson/g1", { kind: "lesson", unitId: "g1" }],
 ];
 
 describe("[P-S05] hash routes", () => {
@@ -42,7 +42,7 @@ describe("[P-S05] hash routes", () => {
     expect(parseHash(href(route))).toEqual(route);
   });
 
-  test("auditRoutes lists all eight routes with lesson = u1", () => {
+  test("auditRoutes lists all eight routes with lesson = g1", () => {
     expect(auditRoutes.map(href)).toEqual(roundTrips.map(([hash]) => hash));
   });
 });

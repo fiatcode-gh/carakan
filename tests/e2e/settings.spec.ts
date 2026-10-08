@@ -1,10 +1,21 @@
 import type { Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import {
+  MISTAKE_LOGS,
+  SRS_ITEMS,
+  UNIT_COMPLETIONS,
+} from "../../src/core/db/schema.ts";
 import { aksaraEngineRulesetId } from "../../src/engine/index.ts";
 import { buildFeedbackReport } from "../../src/features/settings/feedback-report.ts";
-import { expectAccessible, expectTouchTargets } from "./support/a11y.ts";
+import {
+  expectAccessible,
+  expectNoHorizontalOverflow,
+  expectTouchTargets,
+} from "./support/a11y.ts";
 import { gotoRoute, seedLocale } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
+import { ladderRow, readStore, writeRows } from "./support/lesson.ts";
+import { createSolver, type Solver } from "./support/solver.ts";
 
 const messages = (locale: "id" | "en") =>
   JSON.parse(readFileSync(`src/l10n/${locale}.json`, "utf8")) as Record<
@@ -245,3 +256,283 @@ test("settings page is accessible in Indonesian", async ({ page }) => {
   await expectTouchTargets(page);
   await shoot(page, "id");
 });
+
+let solver: Solver;
+test.beforeAll(async () => {
+  solver = await createSolver();
+});
+
+const resetDialog = (page: Page, catalog = id) =>
+  page.getByRole("dialog", { name: catalog["resetConfirmTitle"]! });
+
+const freshCard = (itemId: string) => ({
+  itemId,
+  intervalDays: 0,
+  ease: 2.5,
+  repetitions: 0,
+  dueAt: 0,
+  lastReviewedAt: null,
+});
+
+async function seedProgress(page: Page): Promise<void> {
+  await gotoRoute(page, "#/");
+  const { units } = solver.content;
+  await writeRows(page, UNIT_COMPLETIONS, [
+    { unitId: units[0]!.id, completedAt: 1 },
+    { unitId: units[1]!.id, completedAt: 2 },
+    { unitId: "u1", completedAt: 3 },
+  ]);
+  await writeRows(page, SRS_ITEMS, [freshCard("pa"), freshCard("ha")]);
+  await writeRows(page, MISTAKE_LOGS, [
+    { confusionPair: "da-dha", count: 3, lastAt: 0 },
+  ]);
+  await page.reload();
+  await page.locator('#app[data-boot="ready"]').waitFor();
+}
+
+async function storeCounts(page: Page) {
+  return {
+    completions: (await readStore(page, UNIT_COMPLETIONS)).length,
+    cards: (await readStore(page, SRS_ITEMS)).length,
+    mistakes: (await readStore(page, MISTAKE_LOGS)).length,
+  };
+}
+
+const seededCounts = { completions: 3, cards: 2, mistakes: 1 };
+const emptyCounts = { completions: 0, cards: 0, mistakes: 0 };
+
+/** Puts a retry card, reveal state and an active drill in memory, then lands on Settings. */
+async function buildSessionMemory(page: Page, catalog = id): Promise<void> {
+  await page.getByRole("link", { name: catalog["navReview"]! }).first().click();
+  await page
+    .getByRole("button", { name: catalog["revealAnswerButton"]! })
+    .first()
+    .click();
+  await page
+    .getByRole("button", { name: catalog["gradeAgain"]!, exact: true })
+    .first()
+    .click();
+  await expect(
+    page.getByRole("heading", { level: 2, name: catalog["drillHeading"]! }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: catalog["navLadder"]! }).first().click();
+  await page.getByRole("link", { name: catalog["settingsTitle"]! }).click();
+}
+
+const openSettings = async (page: Page, catalog = id) => {
+  await page.getByRole("link", { name: catalog["settingsTitle"]! }).click();
+  await expect(
+    page.getByRole("heading", { name: catalog["resetHeading"]! }),
+  ).toBeVisible();
+};
+
+const openReset = async (page: Page, catalog = id) => {
+  await page.getByRole("button", { name: catalog["resetButton"]! }).click();
+  await expect(resetDialog(page, catalog)).toBeVisible();
+};
+
+for (const locale of ["id", "en"] as const) {
+  test(`[P-T07] Cancel, the close button and Escape erase nothing (${locale})`, async ({
+    page,
+  }) => {
+    const catalog = locale === "id" ? id : en;
+    await seedLocale(page, locale);
+    await seedProgress(page);
+    await openSettings(page, catalog);
+    await expect(
+      page.getByRole("button", { name: catalog["resetButton"]! }),
+    ).toBeVisible();
+
+    await openReset(page, catalog);
+    const dialog = resetDialog(page, catalog);
+    await expect(
+      dialog.getByRole("button", { name: catalog["cancelButton"]! }),
+    ).toBeFocused();
+    await dialog
+      .getByRole("button", { name: catalog["cancelButton"]! })
+      .click();
+    await expect(dialog).toBeHidden();
+    expect(await storeCounts(page)).toEqual(seededCounts);
+
+    await openReset(page, catalog);
+    await dialog.getByRole("button", { name: catalog["closeButton"]! }).click();
+    await expect(dialog).toBeHidden();
+    expect(await storeCounts(page)).toEqual(seededCounts);
+
+    await openReset(page, catalog);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    expect(await storeCounts(page)).toEqual(seededCounts);
+
+    await page.getByRole("button", { name: catalog["backButton"]! }).click();
+    await expect(ladderRow(page, 1)).toContainText(
+      catalog["unitStatusCompleted"]!,
+    );
+  });
+}
+
+for (const locale of ["id", "en"] as const) {
+  test(`[P-T07][P-L04] confirming erases everything; Belajar and Ulangi are fresh without a reload, and after one (${locale})`, async ({
+    page,
+  }) => {
+    const catalog = locale === "id" ? id : en;
+    await seedLocale(page, locale);
+    await seedProgress(page);
+    await buildSessionMemory(page, catalog);
+    await page.evaluate(() => {
+      (window as unknown as { __carakanErase: number }).__carakanErase = 1;
+    });
+    await openReset(page, catalog);
+    await resetDialog(page, catalog)
+      .getByRole("button", { name: catalog["resetConfirmButton"]! })
+      .click();
+    await expect(resetDialog(page, catalog)).toBeHidden();
+    await expect(page.getByRole("status")).toHaveText(catalog["resetDone"]!);
+    expect(await storeCounts(page)).toEqual(emptyCounts);
+    expect(
+      await page.evaluate(() => localStorage.getItem("carakan.uiLocale")),
+    ).toBe(locale);
+
+    const expectFresh = async () => {
+      await expect(ladderRow(page, 1)).toContainText(
+        catalog["unitStatusReady"]!,
+      );
+      for (let n = 2; n <= solver.content.units.length; n++) {
+        await expect(ladderRow(page, n)).toContainText(
+          catalog["unitStatusLocked"]!,
+        );
+      }
+      await page
+        .getByRole("link", { name: catalog["navReview"]! })
+        .first()
+        .click();
+      await expect(page.getByText(catalog["reviewEmpty"]!)).toBeVisible();
+      await expect(
+        page.getByRole("heading", { level: 2, name: catalog["drillHeading"]! }),
+      ).toHaveCount(0);
+      await expect(page.locator("#tab-review .card")).toHaveCount(0);
+    };
+
+    await page.getByRole("button", { name: catalog["backButton"]! }).click();
+    await expectFresh();
+    expect(
+      await page.evaluate(
+        () => (window as unknown as { __carakanErase?: number }).__carakanErase,
+      ),
+    ).toBe(1);
+
+    await page.reload();
+    await page.locator('#app[data-boot="ready"]').waitFor();
+    await page
+      .getByRole("link", { name: catalog["navLadder"]! })
+      .first()
+      .click();
+    await expectFresh();
+    expect(await storeCounts(page)).toEqual(emptyCounts);
+    await expect(page.locator("html")).toHaveAttribute("lang", locale);
+  });
+}
+
+test("[P-T07] a failed erase keeps everything and the confirm button retries", async ({
+  page,
+}) => {
+  await seedProgress(page);
+  await openSettings(page);
+  await openReset(page);
+  const dialog = resetDialog(page);
+  await page.evaluate(() => {
+    const original = IDBObjectStore.prototype.clear;
+    (window as unknown as { __clear: unknown }).__clear = original;
+    IDBObjectStore.prototype.clear = function (this: IDBObjectStore) {
+      if (this.name === "mistakeLogs") {
+        throw new DOMException("injected", "UnknownError");
+      }
+      return original.call(this);
+    };
+  });
+  const confirm = dialog.getByRole("button", {
+    name: id["resetConfirmButton"]!,
+  });
+  await confirm.click();
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("alert")).toHaveText(id["resetFailed"]!);
+  await expect(page.getByRole("status")).toHaveCount(0);
+  expect(await storeCounts(page)).toEqual(seededCounts);
+
+  // A second failure must be announced again: the alert is a fresh node.
+  await dialog.getByRole("alert").evaluate((el) => {
+    el.setAttribute("data-first", "");
+  });
+  await confirm.click();
+  await expect(dialog.getByRole("alert")).toHaveText(id["resetFailed"]!);
+  await expect(dialog.getByRole("alert")).not.toHaveAttribute("data-first");
+  expect(await storeCounts(page)).toEqual(seededCounts);
+
+  await page.evaluate(() => {
+    IDBObjectStore.prototype.clear = (
+      window as unknown as { __clear: typeof IDBObjectStore.prototype.clear }
+    ).__clear;
+  });
+  await confirm.click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole("status")).toHaveText(id["resetDone"]!);
+  expect(await storeCounts(page)).toEqual(emptyCounts);
+});
+
+test("[P-T07] the reset works by keyboard", async ({ page }) => {
+  await seedProgress(page);
+  await openSettings(page);
+  const section = page.getByRole("button", { name: id["resetButton"]! });
+  for (let i = 0; i < 60; i++) {
+    if (await section.evaluate((el) => el === document.activeElement)) break;
+    await page.keyboard.press("Tab");
+  }
+  await expect(section).toBeFocused();
+  await page.keyboard.press("Enter");
+  const dialog = resetDialog(page);
+  await expect(
+    dialog.getByRole("button", { name: id["cancelButton"]! }),
+  ).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(
+    dialog.getByRole("button", { name: id["resetConfirmButton"]! }),
+  ).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status")).toHaveText(id["resetDone"]!);
+  await expect(section).toBeFocused();
+  expect(await storeCounts(page)).toEqual(emptyCounts);
+});
+
+test("[P-T06] the report dialog focuses its heading on open", async ({
+  page,
+}) => {
+  await gotoRoute(page, "#/settings");
+  await page.getByRole("button", { name: id["reportButton"]! }).click();
+  await expect(
+    page.getByRole("dialog").getByRole("heading", { level: 2 }),
+  ).toBeFocused();
+});
+
+for (const locale of ["id", "en"] as const) {
+  test(`[P-T07][P-L04] Settings and the open confirmation are accessible and fit (${locale})`, async ({
+    page,
+  }) => {
+    const catalog = locale === "id" ? id : en;
+    await seedLocale(page, locale);
+    await gotoRoute(page, "#/settings");
+    await page
+      .getByRole("button", { name: catalog["resetButton"]! })
+      .scrollIntoViewIfNeeded();
+    await expectAccessible(page);
+    await expectTouchTargets(page);
+    await expectNoHorizontalOverflow(page);
+    await shoot(page, `reset-${locale}`);
+    await openReset(page, catalog);
+    await expectAccessible(page);
+    await expectTouchTargets(page);
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({
+      path: `test-results/settings-reset-dialog-${locale}.png`,
+    });
+  });
+}

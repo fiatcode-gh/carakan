@@ -197,7 +197,7 @@ async function answer(
 }
 
 async function startLesson(page: Page, solver: Solver): Promise<void> {
-  const unit = solver.content.units.find((u) => u.id === "u1")!;
+  const unit = solver.content.units.find((u) => u.id === "g1")!;
   await meetAll(page, unit.glyphs.length);
 }
 
@@ -261,7 +261,7 @@ const screens: Screen[] = [
     id: "ladder",
     viewport: PHONE,
     route: "#/",
-    seed: { completedUnits: ["u1"] },
+    seed: { completedUnits: ["g1"] },
     note: "Unit 1 completed, unit 2 ready, the rest locked.",
     captures: [{ stem: "ladder", label: "app", fit: "page", prepare: noop }],
   },
@@ -274,7 +274,7 @@ const screens: Screen[] = [
   {
     id: "lesson-meet",
     viewport: PHONE,
-    route: "#/lesson/u1",
+    route: "#/lesson/g1",
     captures: [
       { stem: "lesson-meet", label: "app", fit: "viewport", prepare: noop },
     ],
@@ -282,8 +282,8 @@ const screens: Screen[] = [
   {
     id: "lesson-q-glyph",
     viewport: PHONE,
-    route: "#/lesson/u1",
-    note: "Lesson u1 advanced to its first glyph→sound question.",
+    route: "#/lesson/g1",
+    note: "Lesson g1 advanced to its first glyph→sound question.",
     captures: [
       {
         stem: "lesson-q-glyph",
@@ -296,8 +296,8 @@ const screens: Screen[] = [
   {
     id: "lesson-q-sound",
     viewport: PHONE,
-    route: "#/lesson/u1",
-    note: "Second question of lesson u1 (sound→glyph) after one right answer.",
+    route: "#/lesson/g1",
+    note: "Second question of lesson g1 (sound→glyph) after one right answer.",
     captures: [
       {
         stem: "lesson-q-sound",
@@ -314,7 +314,7 @@ const screens: Screen[] = [
   {
     id: "lesson-feedback",
     viewport: PHONE,
-    route: "#/lesson/u1",
+    route: "#/lesson/g1",
     note: "The prototype stacks both states on one page; the app shows one at a time.",
     captures: [
       {
@@ -340,7 +340,7 @@ const screens: Screen[] = [
   {
     id: "lesson-done",
     viewport: PHONE,
-    route: "#/lesson/u1",
+    route: "#/lesson/g1",
     captures: [
       {
         stem: "lesson-done",
@@ -539,7 +539,7 @@ const screens: Screen[] = [
     id: "desktop-ladder",
     viewport: DESKTOP,
     route: "#/",
-    seed: { completedUnits: ["u1"] },
+    seed: { completedUnits: ["g1"] },
     captures: [
       {
         stem: "desktop-ladder",

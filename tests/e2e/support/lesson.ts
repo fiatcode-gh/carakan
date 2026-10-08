@@ -89,6 +89,30 @@ export const ladderRow = (page: Page, n: number) =>
     .nth(n - 1)
     .locator("button.unit");
 
+export async function writeRows(
+  page: Page,
+  store: string,
+  rows: readonly object[],
+): Promise<void> {
+  await page.evaluate(
+    async ({ name, storeName, values }) => {
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open(name);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(storeName, "readwrite");
+        for (const value of values) tx.objectStore(storeName).put(value);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+      db.close();
+    },
+    { name: DB_NAME, storeName: store, values: rows },
+  );
+}
+
 export async function readStore<T>(page: Page, store: string): Promise<T[]> {
   return page.evaluate(
     async ({ name, storeName }) => {

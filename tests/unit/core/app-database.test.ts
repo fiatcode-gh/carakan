@@ -63,6 +63,22 @@ test("[P-S09] completing a unit twice upserts and emits after each write", async
   expect(rows).toEqual([{ unitId: "u1", completedAt: 2 }]);
 });
 
+test("[P-S09] completeAll upserts every id in one write and emits once", async () => {
+  const db = await openFreshDb();
+  const repo = new UnitCompletionRepository(db);
+  let emitted = 0;
+  repo.changes.subscribe(() => emitted++);
+  await repo.completeAll(["a", "b"], 7);
+  expect(await db.getAll("unitCompletions")).toEqual([
+    { unitId: "a", completedAt: 7 },
+    { unitId: "b", completedAt: 7 },
+  ]);
+  expect(emitted).toBe(1);
+  await repo.completeAll([], 9);
+  expect(await db.getAll("unitCompletions")).toHaveLength(2);
+  expect(emitted).toBe(1);
+});
+
 test("[P-S09] mistake log upsert accumulates", async () => {
   const db = await openFreshDb();
   const repo = new MistakeLogRepository(db);

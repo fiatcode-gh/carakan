@@ -7,7 +7,13 @@
     href?: string;
     /** `option` and `aksara-option` are full-width answer choices. */
     variant?:
-      "primary" | "secondary" | "quiet" | "icon" | "option" | "aksara-option";
+      | "primary"
+      | "secondary"
+      | "quiet"
+      | "danger"
+      | "icon"
+      | "option"
+      | "aksara-option";
     /** Answer state of an option: icon + border, never hue alone. */
     mark?: "correct" | "wrong";
     block?: boolean;
@@ -109,6 +115,16 @@
   .btn--secondary {
     background: var(--color-surface-raised);
     border-color: var(--color-border-strong);
+  }
+
+  .btn--danger {
+    background: var(--color-surface-raised);
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+  }
+
+  .btn--danger:active:not(:disabled) {
+    background: var(--color-danger-soft);
   }
 
   .btn--quiet {

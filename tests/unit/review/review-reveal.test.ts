@@ -1,5 +1,6 @@
 import { get } from "svelte/store";
 import { expect, test } from "vitest";
+import { LearnerProgress } from "../../../src/core/db/learner-progress.ts";
 import { ReviewQueue } from "../../../src/core/srs/review-queue.ts";
 import { ReviewSession } from "../../../src/features/review/review-session.ts";
 import { openFreshDb } from "../core/db-helpers.ts";
@@ -7,11 +8,17 @@ import { openFreshDb } from "../core/db-helpers.ts";
 const T0 = Date.UTC(2026, 7, 12, 9);
 
 async function setup(items: string[]) {
-  const queue = new ReviewQueue(await openFreshDb());
+  const db = await openFreshDb();
+  const queue = new ReviewQueue(db);
+  const progress = new LearnerProgress(db);
   for (const id of items) await queue.enqueue(id, T0);
-  const session = new ReviewSession({ queue, now: () => T0 });
+  const session = new ReviewSession({
+    queue,
+    erased: progress.erased,
+    now: () => T0,
+  });
   await session.refresh();
-  return { queue, session };
+  return { queue, session, progress };
 }
 
 const shown = (session: ReviewSession) => {
@@ -89,4 +96,14 @@ test("[P-R15] a reveal queued behind a pending grade applies after it", async ()
     ["na", false],
     ["ha", true],
   ]);
+});
+
+test("[P-T07] erased progress forgets revealed cards", async () => {
+  const { queue, session, progress } = await setup(["ha"]);
+  await session.reveal("ha");
+  expect(shown(session)).toEqual([["ha", true]]);
+  await progress.erase();
+  await queue.enqueue("ha", T0);
+  await session.refresh();
+  expect(shown(session)).toEqual([["ha", false]]);
 });

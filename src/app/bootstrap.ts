@@ -2,6 +2,7 @@ import { derived, readable, writable } from "svelte/store";
 import { loadContent } from "../content/content-repository.ts";
 import { GlyphInfoTable } from "../content/glyph-info-table.ts";
 import { openCarakanDb, type CarakanDb } from "../core/db/database.ts";
+import { LearnerProgress } from "../core/db/learner-progress.ts";
 import { MistakeLogRepository } from "../core/db/mistake-log-repository.ts";
 import { UnitCompletionRepository } from "../core/db/unit-completion-repository.ts";
 import { LocaleController } from "../core/locale/locale-controller.ts";
@@ -107,6 +108,7 @@ export function createBootstrap(
     const services: Services = {
       completions: new UnitCompletionRepository(db),
       mistakes: new MistakeLogRepository(db),
+      progress: new LearnerProgress(db),
       reviewQueue: new ReviewQueue(db),
       content,
       glyphInfo: GlyphInfoTable.build(content),

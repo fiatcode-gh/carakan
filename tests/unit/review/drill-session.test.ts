@@ -6,6 +6,7 @@ import { ConfusionPair } from "../../../src/content/confusion-pair.ts";
 import { loadContent } from "../../../src/content/content-repository.ts";
 import { GlyphInfoTable } from "../../../src/content/glyph-info-table.ts";
 import { Word } from "../../../src/content/word.ts";
+import { LearnerProgress } from "../../../src/core/db/learner-progress.ts";
 import { MistakeLogRepository } from "../../../src/core/db/mistake-log-repository.ts";
 import { javaneseChar } from "../../../src/engine/index.ts";
 import {
@@ -47,16 +48,19 @@ async function setup(
     glyphInfo?: GlyphInfoTable;
   } = {},
 ) {
-  const mistakes = new MistakeLogRepository(await openFreshDb());
+  const db = await openFreshDb();
+  const mistakes = new MistakeLogRepository(db);
+  const progress = new LearnerProgress(db);
   const session = new DrillSession({
     pairs: options.pairs ?? pairs,
     corpus: options.corpus ?? corpus,
     glyphInfo: options.glyphInfo ?? new GlyphInfoTable(new Map()),
     mistakes,
+    erased: progress.erased,
     seedSource: () => 42,
     now: () => NOW,
   });
-  return { mistakes, session };
+  return { mistakes, session, progress };
 }
 
 const ready = (session: DrillSession) => {
@@ -223,4 +227,16 @@ test("[P-S10] a rejected answer write reports failure and can be answered again"
   failing.mockRestore();
   expect(await session.answer(0, right)).toBe(true);
   expect(ready(session).answered.get(0)).toBe(true);
+});
+
+test("[P-T07] erased progress removes an active drill", async () => {
+  const { mistakes, session, progress } = await setup();
+  await mistakes.record("da-dha", NOW);
+  await session.refresh();
+  await session.answer(0, ready(session).exercises[0]!.answerIndex);
+  expect(get(session.state).kind).toBe("ready");
+  await progress.erase();
+  await vi.waitFor(() =>
+    expect(get(session.state)).toEqual<DrillState>({ kind: "empty" }),
+  );
 });

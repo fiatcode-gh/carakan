@@ -17,4 +17,15 @@ export class UnitCompletionRepository {
     await this.#db.put("unitCompletions", { unitId, completedAt: now });
     this.changes.emit();
   }
+
+  /** Upserts every id in one transaction, then emits once; an empty list writes and emits nothing. */
+  async completeAll(unitIds: readonly string[], now: number): Promise<void> {
+    if (unitIds.length === 0) return;
+    const tx = this.#db.transaction("unitCompletions", "readwrite");
+    await Promise.all([
+      ...unitIds.map((unitId) => tx.store.put({ unitId, completedAt: now })),
+      tx.done,
+    ]);
+    this.changes.emit();
+  }
 }

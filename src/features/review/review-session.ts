@@ -1,6 +1,7 @@
 import { readonly, writable, type Readable } from "svelte/store";
 import type { Services } from "../../app/services.ts";
 import type { SrsItemRow } from "../../core/db/schema.ts";
+import type { Emitter } from "../../core/emitter.ts";
 import type { ReviewQueue } from "../../core/srs/review-queue.ts";
 import { MINUTE, type ReviewGrade } from "../../core/srs/srs-scheduler.ts";
 
@@ -42,11 +43,27 @@ export class ReviewSession {
   #listed = new Set<string>();
   #tail: Promise<unknown> = Promise.resolve();
 
-  constructor(deps: { queue: ReviewQueue; now: () => number }) {
+  constructor(deps: {
+    queue: ReviewQueue;
+    erased: Emitter;
+    now: () => number;
+  }) {
     this.#queue = deps.queue;
     this.#now = deps.now;
     // Lives for the app's lifetime, so the subscription is never released.
     deps.queue.changes.subscribe(() => void this.refresh());
+    deps.erased.subscribe(() => void this.#forget());
+  }
+
+  /**
+   * Erased progress: drop the in-session retry set, then re-query. `#publish`
+   * drops the reveal state of every card it no longer lists.
+   */
+  #forget(): Promise<void> {
+    return this.#run(() => {
+      this.#retryIds.clear();
+      return this.#publish();
+    });
   }
 
   refresh(): Promise<void> {
@@ -116,11 +133,12 @@ function kindOf(s: SrsItemRow): ReviewItemKind {
 
 /** The app-lifetime review session; the first query runs at creation. */
 export function reviewSession(
-  services: Pick<Services, "singleton" | "reviewQueue" | "now">,
+  services: Pick<Services, "singleton" | "reviewQueue" | "progress" | "now">,
 ): ReviewSession {
   return services.singleton("review", () => {
     const session = new ReviewSession({
       queue: services.reviewQueue,
+      erased: services.progress.erased,
       now: services.now,
     });
     void session.refresh();

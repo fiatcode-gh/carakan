@@ -94,8 +94,8 @@ test("an update never interrupts a lesson, is offered on the ladder, can wait, a
   await installAndControl(page);
 
   // (a) a waiting worker, mid-lesson: no banner, the question stays.
-  await gotoRoute(page, "#/lesson/u1");
-  await walkMeet(page, 5);
+  await gotoRoute(page, `#/lesson/${solver.content.units[0]!.id}`);
+  await walkMeet(page, solver.content.units[0]!.glyphs.length);
   await page.locator(".options button").first().waitFor();
   await publishV2(page);
   await expect(banner(page)).toHaveCount(0);
@@ -166,8 +166,8 @@ test("accepting in one window does not reload another window that is mid-lesson"
   await installAndControl(ladder);
 
   const lesson = await context.newPage();
-  await gotoRoute(lesson, "#/lesson/u1");
-  await walkMeet(lesson, 5);
+  await gotoRoute(lesson, `#/lesson/${solver.content.units[0]!.id}`);
+  await walkMeet(lesson, solver.content.units[0]!.glyphs.length);
   await lesson.locator(".options button").first().waitFor();
   const prompt = await lesson.locator(".lesson").innerHTML();
   await lesson.evaluate(() => {

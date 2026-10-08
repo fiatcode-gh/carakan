@@ -5,13 +5,15 @@
 
   interface Props {
     title: string;
+    /** Id of the element that describes the dialog (`aria-describedby`). */
+    describedby?: string;
     /** Fires once the dialog has closed (button, Esc or Android back). */
     onclose: () => void;
     children: Snippet;
     footer?: Snippet;
   }
 
-  let { title, onclose, children, footer }: Props = $props();
+  let { title, describedby, onclose, children, footer }: Props = $props();
 
   const { t } = getI18n();
   const uid = $props.id();
@@ -31,16 +33,28 @@
     return () => observer.disconnect();
   });
 
+  // Initial focus: the `[data-autofocus]` element when a sheet marks one (a
+  // destructive confirmation focuses Cancel), else the title. Unmounting
+  // removes the dialog before the browser can restore focus, so the opener is
+  // refocused by hand.
   $effect(() => {
+    const opener = document.activeElement;
     dialog.showModal();
-    heading.focus();
+    (dialog.querySelector<HTMLElement>("[data-autofocus]") ?? heading).focus();
     return () => {
       if (dialog.open) dialog.close();
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
     };
   });
 </script>
 
-<dialog bind:this={dialog} class="sheet" aria-labelledby={titleId} {onclose}>
+<dialog
+  bind:this={dialog}
+  class="sheet"
+  aria-labelledby={titleId}
+  aria-describedby={describedby}
+  {onclose}
+>
   <span class="sheet__grab" aria-hidden="true"></span>
   <div class="sheet__head">
     <h2 class="sheet__title" id={titleId} tabindex="-1" bind:this={heading}>

@@ -27,7 +27,7 @@ export const auditRoutes: readonly Route[] = [
   { kind: "settings" },
   { kind: "teacher" },
   { kind: "reviewHelp" },
-  { kind: "lesson", unitId: "u1" },
+  { kind: "lesson", unitId: "g1" },
 ];
 
 const ladder = { kind: "ladder" } as Route;

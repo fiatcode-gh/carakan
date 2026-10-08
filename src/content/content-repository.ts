@@ -7,7 +7,7 @@ import {
 } from "./content-format-error.ts";
 import { containsGlyph } from "./glyph-universe.ts";
 import { SandhanganItem } from "./sandhangan-item.ts";
-import { Unit } from "./unit.ts";
+import { RetiredUnit, Unit } from "./unit.ts";
 import { Word } from "./word.ts";
 
 /** Content data loaded once at startup (spec 7: static JSON, versioned). */
@@ -17,6 +17,8 @@ export interface ContentData {
   readonly sandhangan: readonly SandhanganItem[];
   readonly words: readonly Word[];
   readonly units: readonly Unit[];
+  /** Unit ids that left the ladder; their completions map by glyphs. */
+  readonly retiredUnits: readonly RetiredUnit[];
   readonly confusionPairs: readonly ConfusionPair[];
   /**
    * Teacher-curated chart examples: glyph id → words, in display order
@@ -59,6 +61,9 @@ export async function loadContent(
     ),
     words,
     units: objects(unitsData, "units").map((raw) => Unit.fromJson(raw)),
+    retiredUnits: objects(unitsData, "retiredUnits").map((raw) =>
+      RetiredUnit.fromJson(raw),
+    ),
     confusionPairs: objects(pairsData, "pairs").map((raw) =>
       ConfusionPair.fromJson(raw),
     ),

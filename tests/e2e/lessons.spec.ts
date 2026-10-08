@@ -19,7 +19,7 @@ import {
 } from "./support/a11y.ts";
 import { gotoRoute } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
-import { answerCurrentQuestion } from "./support/lesson.ts";
+import { answerCurrentQuestion, writeRows } from "./support/lesson.ts";
 import {
   createSolver,
   type QuestionPrompt,
@@ -47,6 +47,9 @@ const unit = (unitId: string): Unit => {
   if (found === undefined) throw new Error(`no unit ${unitId}`);
   return found;
 };
+
+const first = (): Unit => solver.content.units[0]!;
+const wuluSuku = (): Unit => solver.content.units[1]!;
 
 const shoot = (page: Page, name: string) =>
   page.screenshot({ path: `test-results/belajar-${name}.png` });
@@ -134,7 +137,7 @@ const row = (page: Page, n: number) => page.locator(".ladder > li").nth(n - 1);
 const rowButton = (page: Page, n: number) =>
   row(page, n).locator("button.unit");
 
-test("[P-B01] the ladder lists the 8 units in order with numbered medallions and names", async ({
+test("[P-B01] the ladder lists the 9 units in order with numbered medallions and names", async ({
   page,
 }) => {
   await gotoRoute(page, "");
@@ -142,8 +145,8 @@ test("[P-B01] the ladder lists the 8 units in order with numbered medallions and
     page.getByRole("heading", { level: 1, name: id["navLadder"]! }),
   ).toBeVisible();
   const rows = page.locator(".ladder > li");
-  await expect(rows).toHaveCount(8);
-  expect(solver.content.units).toHaveLength(8);
+  await expect(rows).toHaveCount(solver.content.units.length);
+  expect(solver.content.units).toHaveLength(9);
   for (const [i, u] of solver.content.units.entries()) {
     await expect(row(page, i + 1).locator(".medallion")).toContainText(
       String(i + 1),
@@ -181,7 +184,7 @@ test("[P-B03] on a fresh install only unit 1 is ready", async ({ page }) => {
   await gotoRoute(page, "");
   await expect(rowButton(page, 1)).toContainText(id["unitStatusReady"]!);
   await expect(rowButton(page, 1)).not.toHaveAttribute("aria-disabled", "true");
-  for (let n = 2; n <= 8; n++) {
+  for (let n = 2; n <= solver.content.units.length; n++) {
     await expect(rowButton(page, n)).toContainText(id["unitStatusLocked"]!);
     await expect(rowButton(page, n)).toHaveAttribute("aria-disabled", "true");
   }
@@ -193,10 +196,12 @@ test("[P-B04] a locked row does nothing; a ready row opens its lesson", async ({
   await gotoRoute(page, "");
   // Playwright treats aria-disabled as not actionable; a real tap still lands.
   await rowButton(page, 2).click({ force: true });
-  await rowButton(page, 8).click({ force: true });
+  await rowButton(page, solver.content.units.length).click({ force: true });
   expect(new URL(page.url()).hash).toBe("#/");
   await rowButton(page, 1).click();
-  await expect.poll(() => new URL(page.url()).hash).toBe("#/lesson/u1");
+  await expect
+    .poll(() => new URL(page.url()).hash)
+    .toBe(`#/lesson/${first().id}`);
   await expect(page.locator(".lesson")).toBeVisible();
 });
 
@@ -229,15 +234,15 @@ test("[P-B06][P-B07] the teacher button opens the teacher page with both cards",
 });
 
 test("[P-B08] the meet phase walks every glyph of unit 1", async ({ page }) => {
-  await openLesson(page, "u1");
+  await openLesson(page, first().id);
   await expect(
     page.getByRole("heading", { level: 1, name: id["lessonTitle"]! }),
   ).toBeVisible();
-  const u1 = unit("u1");
-  for (const [i, glyphId] of u1.glyphs.entries()) {
+  const firstUnit = first();
+  for (const [i, glyphId] of firstUnit.glyphs.entries()) {
     const info = solver.table.byId.get(glyphId)!;
     await expect(page.locator(".lesson .chip--count")).toHaveText(
-      `${i + 1}/${u1.glyphs.length}`,
+      `${i + 1}/${firstUnit.glyphs.length}`,
     );
     await expect(page.locator(".flashcard .aksara")).toHaveText(info.char);
     await expect(page.locator(".flashcard__name")).toHaveText(info.name);
@@ -258,17 +263,20 @@ test("[P-B08] the meet phase walks every glyph of unit 1", async ({ page }) => {
 test("[P-B11] the question view shows the progress, a prompt card and one button per option", async ({
   page,
 }) => {
-  await openLesson(page, "u1");
-  await walkMeet(page, 5);
+  await openLesson(page, first().id);
+  const n = first().glyphs.length;
+  await walkMeet(page, n);
   const q = await readQuestion(page);
   expect(q.number).toBe(1);
-  expect(q.total).toBe(5);
+  expect(q.total).toBe(n);
   await expect(page.locator(".kicker")).toHaveText(
-    fmt(id["questionProgress"]!, { number: 1, total: 5 }),
+    fmt(id["questionProgress"]!, { number: 1, total: n }),
   );
-  expect(q.options).toHaveLength(4);
-  expect(new Set(q.options).size).toBe(4);
-  await expect(page.locator(".options button")).toHaveCount(4);
+  // A confusion partner is forced in even when untaught (decision 10).
+  expect(q.options.length).toBeGreaterThanOrEqual(3);
+  expect(q.options.length).toBeLessThanOrEqual(4);
+  expect(new Set(q.options).size).toBe(q.options.length);
+  await expect(page.locator(".options button")).toHaveCount(q.options.length);
   // Unit 1 starts with the first question as glyph to sound.
   expect(q.prompt).toHaveProperty("glyph");
   await expect(page.locator(".options")).not.toHaveClass(/options--grid/);
@@ -285,7 +293,9 @@ test("[P-B11] the question view shows the progress, a prompt card and one button
   const second = await readQuestion(page);
   expect(second.prompt).toHaveProperty("sound");
   await expect(page.locator(".options")).toHaveClass(/options--grid/);
-  expect(second.options).toHaveLength(4);
+  expect(second.options.length).toBeGreaterThanOrEqual(3);
+  expect(second.options.length).toBeLessThanOrEqual(4);
+  expect(new Set(second.options).size).toBe(second.options.length);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await shoot(page, "question-sound");
@@ -294,8 +304,8 @@ test("[P-B11] the question view shows the progress, a prompt card and one button
 test("[P-B12] feedback shows right and wrong answers; the last question gets feedback too (W05)", async ({
   page,
 }) => {
-  await openLesson(page, "u1");
-  await walkMeet(page, 5);
+  await openLesson(page, first().id);
+  await walkMeet(page, first().glyphs.length);
 
   // Right answer on the first question.
   let q = await readQuestion(page);
@@ -356,11 +366,14 @@ test("[P-B12] feedback shows right and wrong answers; the last question gets fee
 test("[P-B14] the done view reports the score and Back returns to the ladder; the unit is saved and its glyphs queued", async ({
   page,
 }) => {
-  await completeLesson(page, "u1");
+  await completeLesson(page, first().id);
   await expect(
     page.getByRole("heading", {
       level: 2,
-      name: fmt(id["lessonDone"]!, { correct: 5, total: 5 }),
+      name: fmt(id["lessonDone"]!, {
+        correct: first().glyphs.length,
+        total: first().glyphs.length,
+      }),
     }),
   ).toBeVisible();
   await expectAccessible(page);
@@ -372,10 +385,10 @@ test("[P-B14] the done view reports the score and Back returns to the ladder; th
     page,
     UNIT_COMPLETIONS,
   );
-  expect(completions.map((r) => r.unitId)).toEqual(["u1"]);
+  expect(completions.map((r) => r.unitId)).toEqual([first().id]);
   const queued = await readStore<SrsItemRow>(page, SRS_ITEMS);
   expect(queued.map((r) => r.itemId).sort()).toEqual(
-    [...unit("u1").glyphs].sort(),
+    [...first().glyphs].sort(),
   );
 
   await page.locator(".lesson__foot").getByRole("button").click();
@@ -389,7 +402,7 @@ test("[P-B05] after a lesson the ladder shows unit 1 completed and unit 2 ready 
   await gotoRoute(page, "");
   await rowButton(page, 1).click();
   await expect(page.locator(".lesson")).toBeVisible();
-  await walkMeet(page, 5);
+  await walkMeet(page, first().glyphs.length);
   for (;;) {
     const q = await readQuestion(page);
     await page
@@ -407,29 +420,31 @@ test("[P-B05] after a lesson the ladder shows unit 1 completed and unit 2 ready 
   await expect(rowButton(page, 3)).toHaveAttribute("aria-disabled", "true");
   // A completed unit can be replayed.
   await rowButton(page, 1).click();
-  await expect.poll(() => new URL(page.url()).hash).toBe("#/lesson/u1");
+  await expect
+    .poll(() => new URL(page.url()).hash)
+    .toBe(`#/lesson/${first().id}`);
 });
 
 test("[P-B13] a wrong answer that picks the confusion-pair partner is logged once", async ({
   page,
 }) => {
-  const u1Glyphs = new Set(unit("u1").glyphs);
-  const u2 = unit("u2");
+  const firstGlyphs = new Set(first().glyphs);
+  const wuluSukuUnit = wuluSuku();
   const partnerOf = (glyphId: string) => (glyphId === "wulu" ? "suku" : "wulu");
-  // Pin the lesson seed to one whose plan puts the partner among the options.
+  // Pin the lesson seed to one whose plan puts the partner among the aksara
+  // options. Sound options cannot log: a partner's sound ("u") resolves to
+  // the swara entry before it reaches the sandhangan one.
   const pinned = Array.from({ length: 500 }, (_, i) => i / 500).find((r) =>
     generateExercises({
-      unit: u2,
-      taughtGlyphs: u1Glyphs,
+      unit: wuluSukuUnit,
+      taughtGlyphs: firstGlyphs,
       corpus: solver.content.words,
       seed: Math.floor(r * 0x7fffffff),
       glyphInfo: solver.table,
     }).some((e) => {
-      if (e.kind === "wordReading") return false;
+      if (e.kind !== "soundToGlyph") return false;
       const partner = solver.table.byId.get(partnerOf(e.glyphId))!;
-      return e.options.includes(
-        e.kind === "glyphToSound" ? partner.pujl : partner.char,
-      );
+      return e.options.includes(partner.char);
     }),
   );
   expect(pinned).toBeDefined();
@@ -437,8 +452,8 @@ test("[P-B13] a wrong answer that picks the confusion-pair partner is logged onc
     Math.random = () => value;
   }, pinned!);
 
-  await completeLesson(page, "u1");
-  await openLesson(page, "u2");
+  await completeLesson(page, first().id);
+  await openLesson(page, wuluSuku().id);
   await walkMeet(page, 2);
 
   let logged = false;
@@ -451,7 +466,7 @@ test("[P-B13] a wrong answer that picks the confusion-pair partner is logged onc
       targets
         .map((t) => solver.optionFor(partnerOf(t), q.prompt, q.options))
         .find((i) => i >= 0) ?? -1;
-    if (!logged && partnerIndex >= 0) {
+    if (!logged && "sound" in q.prompt && partnerIndex >= 0) {
       await page.locator(".options button").nth(partnerIndex).click();
       await expect(page.getByRole("status")).toHaveText(id["answerWrong"]!);
       logged = true;
@@ -481,7 +496,7 @@ test("[P-B15] meet to question transitions animate, and not under reduced motion
         document.getAnimations().filter((a) => a.playState === "running")
           .length,
     );
-  await openLesson(page, "u1");
+  await openLesson(page, first().id);
   await page.evaluate(
     () =>
       new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
@@ -490,7 +505,9 @@ test("[P-B15] meet to question transitions animate, and not under reduced motion
   expect(await running(), "animation after a transition").toBeGreaterThan(0);
 
   await page.emulateMedia({ reducedMotion: "reduce" });
-  for (let i = 0; i < 4; i++) await continueButton(page).click();
+  for (let i = 0; i < first().glyphs.length - 1; i++) {
+    await continueButton(page).click();
+  }
   await page.locator(".progress").waitFor();
   await page.evaluate(
     () =>
@@ -502,7 +519,11 @@ test("[P-B15] meet to question transitions animate, and not under reduced motion
 test("[P-B16] a locked or unknown lesson deep link lands on the ladder", async ({
   page,
 }) => {
-  await gotoRoute(page, "#/lesson/u3");
+  await gotoRoute(page, `#/lesson/${solver.content.units[2]!.id}`);
+  await expect.poll(() => new URL(page.url()).hash).toBe("#/");
+  await expect(page.locator(".ladder")).toBeVisible();
+  // A retired row id from before the shape regrouping.
+  await gotoRoute(page, "#/lesson/u1");
   await expect.poll(() => new URL(page.url()).hash).toBe("#/");
   await expect(page.locator(".ladder")).toBeVisible();
   await gotoRoute(page, "#/lesson/nope");
@@ -536,7 +557,7 @@ test.describe("English interface", () => {
     await page.goBack();
 
     await rowButton(page, 1).click();
-    const info = solver.table.byId.get("ha")!;
+    const info = solver.table.byId.get(first().glyphs[0]!)!;
     await expect(page.locator(".flashcard .chip")).toHaveText(
       `${en["soundLabel"]!} · ${info.pujl}`,
     );
@@ -557,8 +578,8 @@ test("[P-A11Y] focus stays in the lesson after every step instead of falling to 
   const body = () =>
     page.evaluate(() => document.activeElement === document.body);
   const proceed = page.getByRole("button", { name: id["continueButton"]! });
-  await gotoRoute(page, "#/lesson/u1");
-  const glyphs = unit("u1").glyphs.length;
+  await gotoRoute(page, `#/lesson/${first().id}`);
+  const glyphs = first().glyphs.length;
 
   // Each meet card puts focus on Continue.
   for (let i = 0; i < glyphs; i++) {
@@ -615,10 +636,97 @@ test("[P-S10] a storage read that fails after boot shows the storage error with 
   await page.evaluate(() => {
     (window as { __failReads?: boolean }).__failReads = true;
   });
-  await gotoRoute(page, "#/lesson/u1");
+  await gotoRoute(page, `#/lesson/${first().id}`);
   await expect(alert).toHaveText(new RegExp(id["storageErrorTitle"]!));
   await heal();
   await retry.click();
   await expect(page.locator(".lesson")).toBeVisible();
   await expect(alert).toHaveCount(0);
+});
+
+const ladderStatuses = async (page: Page): Promise<string[]> => {
+  const labels = [
+    [id["unitStatusCompleted"]!, "completed"],
+    [id["unitStatusReady"]!, "ready"],
+    [id["unitStatusLocked"]!, "locked"],
+  ] as const;
+  const rows = page.locator(".ladder > li button.unit");
+  const count = await rows.count();
+  const out: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const text = (await rows.nth(i).textContent()) ?? "";
+    out.push(labels.find(([label]) => text.includes(label))?.[1] ?? "?");
+  }
+  return out;
+};
+
+async function seedOldCompletions(page: Page, ids: string[]): Promise<void> {
+  await gotoRoute(page, "");
+  await writeRows(
+    page,
+    UNIT_COMPLETIONS,
+    ids.map((unitId) => ({ unitId, completedAt: 1 })),
+  );
+  await page.reload();
+  await page.locator('#app[data-boot="ready"]').waitFor();
+}
+
+const storedIds = async (page: Page) =>
+  (await readStore<UnitCompletionRow>(page, UNIT_COMPLETIONS))
+    .map((r) => r.unitId)
+    .sort();
+
+test("[P-B17] old completions u1 and u2 keep wulu/suku completed and map no letter group", async ({
+  page,
+}) => {
+  await seedOldCompletions(page, ["u1", "u2"]);
+  await expect
+    .poll(() => ladderStatuses(page))
+    .toEqual([
+      "ready",
+      "completed",
+      "ready",
+      ...Array<string>(6).fill("locked"),
+    ]);
+  expect(await storedIds(page)).toEqual(["u1", "u2"]);
+});
+
+test("[P-B17] old completions u1-u4 complete the shape groups they fully cover, once", async ({
+  page,
+}) => {
+  await seedOldCompletions(page, ["u1", "u2", "u3", "u4"]);
+  const expected = [
+    "completed",
+    "completed",
+    "ready",
+    "completed",
+    "completed",
+    "ready",
+    "locked",
+    "locked",
+    "locked",
+  ];
+  await expect.poll(() => ladderStatuses(page)).toEqual(expected);
+  expect(await storedIds(page)).toEqual([
+    "g1",
+    "g3",
+    "g4",
+    "u1",
+    "u2",
+    "u3",
+    "u4",
+  ]);
+  const before = await readStore<UnitCompletionRow>(page, UNIT_COMPLETIONS);
+
+  await page.reload();
+  await page.locator('#app[data-boot="ready"]').waitFor();
+  await expect.poll(() => ladderStatuses(page)).toEqual(expected);
+  expect(await readStore<UnitCompletionRow>(page, UNIT_COMPLETIONS)).toEqual(
+    before,
+  );
+
+  await gotoRoute(page, "#/lesson/g5");
+  await expect(page.locator(".lesson")).toBeVisible();
+  await gotoRoute(page, "#/lesson/u6");
+  await expect(page).toHaveURL(/#\/$/);
 });

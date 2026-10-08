@@ -50,7 +50,8 @@ const carried: ReadonlyArray<readonly [string, string]> = [
   ],
   [
     "public/content/v1/units.json",
-    "b33611cf275240ec8ae4424b62a7dc8512578b41529ff589055a39158a71cec3",
+    // regrouped by shape (teacher-feedback-2 A01)
+    "5fcd8cf6411f4aeab9b0bb6c5777ac62913b77fb85234bcb86eb6b84e67f49c9",
   ],
   [
     "public/content/v1/words.json",
