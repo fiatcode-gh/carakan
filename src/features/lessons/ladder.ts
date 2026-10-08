@@ -3,6 +3,7 @@ import type { Services } from "../../app/services.ts";
 import type { GlyphInfoTable } from "../../content/glyph-info-table.ts";
 import type { RetiredUnit, Unit } from "../../content/unit.ts";
 import type { UnitCompletionRepository } from "../../core/db/unit-completion-repository.ts";
+import type { Emitter } from "../../core/emitter.ts";
 
 export type UnitStatus = "locked" | "ready" | "completed";
 
@@ -90,6 +91,8 @@ export class LadderModel {
     units: readonly Unit[];
     retiredUnits: readonly RetiredUnit[];
     completions: UnitCompletionRepository;
+    /** Fires after the learner's saved progress was erased. */
+    erased: Emitter;
     now: () => number;
   }) {
     this.#units = deps.units;
@@ -98,6 +101,7 @@ export class LadderModel {
     this.#completions = deps.completions;
     // Lives for the app's lifetime, so the subscription is never released.
     deps.completions.changes.subscribe(() => void this.refresh());
+    deps.erased.subscribe(() => void this.refresh());
   }
 
   /** Never rejects: a failed read is the `error` state, and a refresh retries. */
@@ -122,7 +126,10 @@ export class LadderModel {
 
 /** The app-lifetime ladder: lessons and the ladder page share one. */
 export function ladderModel(
-  services: Pick<Services, "singleton" | "content" | "completions" | "now">,
+  services: Pick<
+    Services,
+    "singleton" | "content" | "completions" | "progress" | "now"
+  >,
 ): LadderModel {
   return services.singleton(
     "ladder",
@@ -131,6 +138,7 @@ export function ladderModel(
         units: services.content.units,
         retiredUnits: services.content.retiredUnits,
         completions: services.completions,
+        erased: services.progress.erased,
         now: services.now,
       }),
   );

@@ -3,7 +3,9 @@ import { describe, expect, test, vi } from "vitest";
 import { loadContent } from "../../../src/content/content-repository.ts";
 import { GlyphInfoTable } from "../../../src/content/glyph-info-table.ts";
 import { RetiredUnit, Unit } from "../../../src/content/unit.ts";
+import { LearnerProgress } from "../../../src/core/db/learner-progress.ts";
 import { UnitCompletionRepository } from "../../../src/core/db/unit-completion-repository.ts";
+import { createEmitter } from "../../../src/core/emitter.ts";
 import {
   computeLadder,
   LadderModel,
@@ -67,6 +69,7 @@ test("[P-B05] LadderModel starts loading, becomes ready on refresh and follows c
     units,
     retiredUnits: [],
     completions,
+    erased: createEmitter(),
     now: () => 1,
   });
   expect(get(model.state)).toEqual({ kind: "loading" });
@@ -155,6 +158,7 @@ test("[P-S10] a rejected completions read leaves an error state that a retry cle
     units,
     retiredUnits: [],
     completions,
+    erased: createEmitter(),
     now: () => 1,
   });
   const failing = vi
@@ -259,6 +263,7 @@ describe("[P-B17] LadderModel migration", () => {
       units: [a, b],
       retiredUnits: retired,
       completions,
+      erased: createEmitter(),
       now: () => 42,
     });
     await model.refresh();
@@ -283,6 +288,7 @@ describe("[P-B17] LadderModel migration", () => {
       units: [a, b],
       retiredUnits: retired,
       completions,
+      erased: createEmitter(),
       now: () => 5,
     });
     const failing = vi
@@ -296,5 +302,60 @@ describe("[P-B17] LadderModel migration", () => {
     expect(state.kind).toBe("ready");
     if (state.kind !== "ready") return;
     expect(state.statuses[0]!.status).toBe("completed");
+  });
+});
+
+describe("[P-T07] LadderModel after erased progress", () => {
+  const statuses = (model: LadderModel) => {
+    const state = get(model.state);
+    return state.kind === "ready" ? state.statuses.map((e) => e.status) : [];
+  };
+
+  test("[P-T07] erased progress leaves only the first unit ready", async () => {
+    const db = await openFreshDb();
+    const completions = new UnitCompletionRepository(db);
+    const progress = new LearnerProgress(db);
+    const model = new LadderModel({
+      units,
+      retiredUnits: [],
+      completions,
+      erased: progress.erased,
+      now: () => 1,
+    });
+    await completions.complete(units[0]!.id, 1);
+    await completions.complete(units[1]!.id, 1);
+    await model.refresh();
+    expect(statuses(model)).toEqual(["completed", "completed", "ready"]);
+    await progress.erase();
+    await vi.waitFor(() =>
+      expect(statuses(model)).toEqual(["ready", "locked", "locked"]),
+    );
+  });
+
+  test("[P-T07] erased retired completions are not migrated again", async () => {
+    const { loaded } = await content();
+    const db = await openFreshDb();
+    const completions = new UnitCompletionRepository(db);
+    const progress = new LearnerProgress(db);
+    const model = new LadderModel({
+      units: loaded.units,
+      retiredUnits: loaded.retiredUnits,
+      completions,
+      erased: progress.erased,
+      now: () => 1,
+    });
+    const retiredIds = loaded.retiredUnits.slice(0, 2).map((r) => r.id);
+    for (const id of retiredIds) await completions.complete(id, 1);
+    await model.refresh();
+    await progress.erase();
+    await vi.waitFor(() => {
+      const state = get(model.state);
+      expect(state.kind).toBe("ready");
+      if (state.kind !== "ready") return;
+      expect(state.statuses.map((e) => e.status)).toEqual(
+        state.statuses.map((_, i) => (i === 0 ? "ready" : "locked")),
+      );
+    });
+    expect((await completions.completedUnitIds()).size).toBe(0);
   });
 });

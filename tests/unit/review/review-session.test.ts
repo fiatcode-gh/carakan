@@ -1,5 +1,6 @@
 import { get } from "svelte/store";
 import { expect, test, vi } from "vitest";
+import { LearnerProgress } from "../../../src/core/db/learner-progress.ts";
 import { ReviewQueue } from "../../../src/core/srs/review-queue.ts";
 import { ReviewSession } from "../../../src/features/review/review-session.ts";
 import { openFreshDb } from "../core/db-helpers.ts";
@@ -9,9 +10,11 @@ const DAY = 86_400_000;
 const MINUTE = 60_000;
 
 async function setup(now: () => number = () => T0) {
-  const queue = new ReviewQueue(await openFreshDb());
-  const session = new ReviewSession({ queue, now });
-  return { queue, session };
+  const db = await openFreshDb();
+  const queue = new ReviewQueue(db);
+  const progress = new LearnerProgress(db);
+  const session = new ReviewSession({ queue, erased: progress.erased, now });
+  return { queue, session, progress };
 }
 
 const ids = (session: ReviewSession) => {
@@ -130,4 +133,26 @@ test("[P-S10] a rejected read or grade leaves an error state that a refresh clea
   write.mockRestore();
   await session.refresh();
   expect(ids(session)).toEqual(["ha"]);
+});
+
+test("[P-T07] erased progress empties the list, including the retry set", async () => {
+  const { queue, session, progress } = await setup();
+  await queue.enqueue("ha", T0);
+  await session.refresh();
+  await session.grade("ha", "again");
+  expect(kinds(session)).toEqual([["ha", "retry", false]]);
+  await progress.erase();
+  await session.refresh();
+  expect(get(session.state)).toEqual({ kind: "empty" });
+});
+
+test("[P-T07] a grade racing the erase ends in the empty state", async () => {
+  const { queue, session, progress } = await setup();
+  await queue.enqueue("ha", T0);
+  await session.refresh();
+  const racing = session.grade("ha", "again");
+  await progress.erase();
+  await racing;
+  await session.refresh();
+  expect(get(session.state)).toEqual({ kind: "empty" });
 });

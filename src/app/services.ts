@@ -2,6 +2,7 @@ import { getContext, setContext } from "svelte";
 import type { Readable } from "svelte/store";
 import type { ContentData } from "../content/content-repository.ts";
 import type { GlyphInfoTable } from "../content/glyph-info-table.ts";
+import type { LearnerProgress } from "../core/db/learner-progress.ts";
 import type { MistakeLogRepository } from "../core/db/mistake-log-repository.ts";
 import type { UnitCompletionRepository } from "../core/db/unit-completion-repository.ts";
 import type { LocaleController } from "../core/locale/locale-controller.ts";
@@ -12,6 +13,7 @@ import type { TabId } from "./router.ts";
 export interface Services {
   readonly completions: UnitCompletionRepository;
   readonly mistakes: MistakeLogRepository;
+  readonly progress: LearnerProgress;
   readonly reviewQueue: ReviewQueue;
   readonly content: ContentData;
   readonly glyphInfo: GlyphInfoTable;

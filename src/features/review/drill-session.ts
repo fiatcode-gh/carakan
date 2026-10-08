@@ -6,6 +6,7 @@ import { bitOf } from "../../content/glyph-universe.ts";
 import { Unit } from "../../content/unit.ts";
 import type { Word } from "../../content/word.ts";
 import type { MistakeLogRepository } from "../../core/db/mistake-log-repository.ts";
+import type { Emitter } from "../../core/emitter.ts";
 import {
   generateExercises,
   type Exercise,
@@ -27,6 +28,8 @@ export interface DrillDeps {
   corpus: readonly Word[];
   glyphInfo: GlyphInfoTable;
   mistakes: MistakeLogRepository;
+  /** Fires after the learner's saved progress was erased. */
+  erased: Emitter;
   seedSource: () => number;
   /** Epoch milliseconds. */
   now: () => number;
@@ -49,6 +52,7 @@ export class DrillSession {
     deps.mistakes.changes.subscribe(() => {
       if (get(this.#state).kind === "empty") void this.refresh();
     });
+    deps.erased.subscribe(() => void this.refresh());
   }
 
   /** Never rejects: a failed read is the `error` state, and a refresh retries. */
@@ -128,7 +132,13 @@ export class DrillSession {
 export function drillSession(
   services: Pick<
     Services,
-    "singleton" | "content" | "glyphInfo" | "mistakes" | "now" | "seedSource"
+    | "singleton"
+    | "content"
+    | "glyphInfo"
+    | "mistakes"
+    | "progress"
+    | "now"
+    | "seedSource"
   >,
 ): DrillSession {
   return services.singleton("drill", () => {
@@ -137,6 +147,7 @@ export function drillSession(
       corpus: services.content.words,
       glyphInfo: services.glyphInfo,
       mistakes: services.mistakes,
+      erased: services.progress.erased,
       seedSource: services.seedSource,
       now: services.now,
     });
