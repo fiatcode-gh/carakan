@@ -110,8 +110,46 @@ export const rekan: readonly Rekan[] = [
   }),
 ];
 
+/**
+ * Rekan the Pedoman 2002 chart lists (Ped p.16-17) that the converter does
+ * not write: data only. Bases and JGST per KAJ I p.8 table e.
+ */
+export const rekanCatalogue: readonly Rekan[] = [
+  rekanEntry({
+    id: "kha",
+    latinPujl: "kha",
+    latinJgst: "\u1e33a",
+    baseUnicodeName: "JAVANESE LETTER KA",
+    usesCecakTelu: true,
+  }),
+  rekanEntry({
+    id: "dza",
+    latinPujl: "dza",
+    latinJgst: "dza",
+    baseUnicodeName: "JAVANESE LETTER DA",
+    usesCecakTelu: true,
+  }),
+  rekanEntry({
+    id: "za",
+    latinPujl: "za",
+    latinJgst: "za",
+    baseUnicodeName: "JAVANESE LETTER JA",
+    usesCecakTelu: true,
+  }),
+  rekanEntry({
+    id: "gha",
+    latinPujl: "gha",
+    latinJgst: "g\u0323a",
+    baseUnicodeName: "JAVANESE LETTER GA",
+    usesCecakTelu: true,
+  }),
+];
+
 export function rekanById(id: string): Rekan | null {
   for (const r of rekan) {
+    if (r.id === id) return r;
+  }
+  for (const r of rekanCatalogue) {
     if (r.id === id) return r;
   }
   return null;

@@ -1,24 +1,30 @@
 <script lang="ts">
+  import { get } from "svelte/store";
   import { back } from "../../app/router.ts";
   import { getServices } from "../../app/services.ts";
   import { appVersion } from "../../core/app-info.ts";
   import type { LocaleSetting } from "../../core/locale/locale-controller.ts";
-  import { aksaraEngineRulesetId } from "../../engine/index.ts";
+  import { rulesets, type RulesetId } from "../../engine/index.ts";
   import { getI18n } from "../../l10n/context.ts";
   import type { MessageKey } from "../../l10n/i18n.ts";
+  import { RULESET_MESSAGES } from "../../l10n/ruleset-messages.ts";
   import Button from "../../ui/Button.svelte";
   import Icon from "../../ui/Icon.svelte";
   import Page from "../../ui/Page.svelte";
   import Slip from "../../ui/Slip.svelte";
   import Toast from "../../ui/Toast.svelte";
   import { CORPUS_LINKS, FONT_LINKS, fileName } from "./about-links.ts";
-  import { buildFeedbackReport } from "./feedback-report.ts";
+  import {
+    buildFeedbackReport,
+    FEEDBACK_RULE_SOURCES,
+  } from "./feedback-report.ts";
   import ReportDialog from "./ReportDialog.svelte";
   import ResetDialog from "./ResetDialog.svelte";
 
   const { t } = getI18n();
-  const { locale, progress } = getServices();
+  const { locale, progress, ruleset } = getServices();
   const setting = locale.setting;
+  const active = ruleset.setting;
 
   const options = $derived<readonly { value: LocaleSetting; label: string }[]>([
     { value: "system", label: $t("languageSystem") },
@@ -32,6 +38,13 @@
     if (locale.select(value)) return;
     // Not persisted, so not applied: put the checked radio back.
     for (const radio of radios) radio.checked = radio.value === $setting;
+  }
+
+  let rulesetRadios: HTMLInputElement[] = [];
+
+  function chooseRuleset(value: RulesetId): void {
+    if (ruleset.select(value)) return;
+    for (const radio of rulesetRadios) radio.checked = radio.value === $active;
   }
 
   // The description belongs to this page: kept across dialog openings,
@@ -48,7 +61,8 @@
         buildFeedbackReport({
           description,
           appVersion,
-          rulesetId: aksaraEngineRulesetId,
+          rulesetId: get(active),
+          sources: FEEDBACK_RULE_SOURCES[get(active)],
         }),
       );
       return true;
@@ -102,11 +116,11 @@
 
 <Page title={$t("settingsTitle")} onback={back}>
   <div class="stack stack--loose">
-    <fieldset class="language">
-      <legend class="language__legend">{$t("languageHeading")}</legend>
-      <div class="language__options">
+    <fieldset class="choice-group">
+      <legend class="choice-group__legend">{$t("languageHeading")}</legend>
+      <div class="choice-group__options">
         {#each options as option, index (option.value)}
-          <label class="language__option">
+          <label class="choice-group__option">
             <input
               type="radio"
               name="ui-language"
@@ -115,7 +129,30 @@
               bind:this={radios[index]}
               onchange={() => choose(option.value)}
             />
-            <span class="language__label">{option.label}</span>
+            <span class="choice-group__label">{option.label}</span>
+          </label>
+        {/each}
+      </div>
+    </fieldset>
+
+    <fieldset class="choice-group">
+      <legend class="choice-group__legend">{$t("rulesetSettingHeading")}</legend
+      >
+      <p class="muted choice-group__hint">{$t("rulesetSettingHint")}</p>
+      <div class="choice-group__options">
+        {#each rulesets as r, index (r.id)}
+          <label class="choice-group__option">
+            <input
+              type="radio"
+              name="ruleset"
+              value={r.id}
+              checked={$active === r.id}
+              bind:this={rulesetRadios[index]}
+              onchange={() => chooseRuleset(r.id)}
+            />
+            <span class="choice-group__label"
+              >{$t(RULESET_MESSAGES[r.id].name)}</span
+            >
           </label>
         {/each}
       </div>
@@ -130,11 +167,11 @@
       </Slip>
       <Slip tag="section" aria-labelledby="about-ruleset">
         <h3 id="about-ruleset">{$t("rulesetHeading")}</h3>
-        <p>{aksaraEngineRulesetId}</p>
+        <p>{$active}</p>
       </Slip>
       <Slip tag="section" aria-labelledby="about-sources">
         <h3 id="about-sources">{$t("ruleSourceHeading")}</h3>
-        <p>{$t("ruleSourceBody")}</p>
+        <p>{$t(RULESET_MESSAGES[$active].sources)}</p>
       </Slip>
       <Slip tag="section" aria-labelledby="about-fonts">
         <h3 id="about-fonts">{$t("fontHeading")}</h3>
@@ -217,20 +254,24 @@
     color: var(--color-danger);
   }
 
-  .language {
+  .choice-group {
     min-width: 0;
     margin: 0;
     padding: 0;
     border: 0;
   }
 
-  .language__legend {
+  .choice-group__legend {
     margin-bottom: var(--space-2);
     padding: 0;
     font-weight: var(--weight-bold);
   }
 
-  .language__options {
+  .choice-group__hint {
+    margin: 0 0 var(--space-2);
+  }
+
+  .choice-group__options {
     display: grid;
     gap: var(--space-1);
     padding: var(--space-1);
@@ -239,12 +280,12 @@
     background: var(--color-surface-sunken);
   }
 
-  .language__option {
+  .choice-group__option {
     position: relative;
     display: flex;
   }
 
-  .language__option input {
+  .choice-group__option input {
     position: absolute;
     inset: 0;
     margin: 0;
@@ -252,7 +293,7 @@
     cursor: pointer;
   }
 
-  .language__label {
+  .choice-group__label {
     display: flex;
     align-items: center;
     width: 100%;
@@ -262,13 +303,13 @@
     font-weight: var(--weight-bold);
   }
 
-  .language__option input:checked + .language__label {
+  .choice-group__option input:checked + .choice-group__label {
     background: var(--color-accent);
     color: var(--color-on-accent);
     box-shadow: 0 2px 0 var(--color-accent-pressed);
   }
 
-  .language__option input:focus-visible + .language__label {
+  .choice-group__option input:focus-visible + .choice-group__label {
     outline: var(--focus-ring);
     outline-offset: 2px;
   }

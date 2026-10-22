@@ -4,6 +4,7 @@ import {
   murdaLinks,
   nglegena,
   rekan,
+  rekanCatalogue,
   sandhangan,
   swara,
   swaraCatalogue,
@@ -48,6 +49,7 @@ describe("[P-D09] UI glyph set", () => {
       ...swara,
       ...swaraCatalogue,
       ...rekan,
+      ...rekanCatalogue,
       ...sandhangan,
     ];
     const texts = entries.flatMap((e) => [e.latinPujl, e.latinJgst]);

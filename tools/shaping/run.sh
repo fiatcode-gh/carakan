@@ -2,7 +2,8 @@
 # Shaping gate: the TS engine's case dump must be byte-identical to the Dart
 # dumper at ebc7cb5, every case must shape cleanly in HarfBuzz against the
 # exact Jejeg TTF the app serves, and no HarfBuzz glyph cluster may straddle
-# an engine cluster boundary (the tap-to-explain segmentation).
+# an engine cluster boundary (the tap-to-explain segmentation). The same two
+# HarfBuzz checks then run on the Pedoman 2002 outputs (no Dart oracle).
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
@@ -22,3 +23,9 @@ uv run --quiet --with uharfbuzz python tools/shaping/shape_check.py .cache/shapi
 
 node tools/shaping/dump-cases.ts --clusters > .cache/shaping/ts-clusters.tsv
 uv run --quiet --with uharfbuzz python tools/shaping/shape_check.py --clusters .cache/shaping/ts-clusters.tsv
+
+node tools/shaping/dump-cases.ts --ruleset pedoman-2002-v1 > .cache/shaping/ts-pedoman.tsv
+uv run --quiet --with uharfbuzz python tools/shaping/shape_check.py .cache/shaping/ts-pedoman.tsv
+
+node tools/shaping/dump-cases.ts --ruleset pedoman-2002-v1 --clusters > .cache/shaping/ts-pedoman-clusters.tsv
+uv run --quiet --with uharfbuzz python tools/shaping/shape_check.py --clusters .cache/shaping/ts-pedoman-clusters.tsv

@@ -1,7 +1,20 @@
 import { describe, expect, test } from "vitest";
 import { AksaraItem } from "../../../src/content/aksara-item.ts";
-import { loadContent } from "../../../src/content/content-repository.ts";
+import {
+  contentFor,
+  readContent,
+} from "../../../src/content/content-repository.ts";
 import { SandhanganItem } from "../../../src/content/sandhangan-item.ts";
+import {
+  kajRulesetId,
+  murdaLinks,
+  pedomanRulesetId,
+  rekan,
+  rulesetById,
+  swara,
+  swaraCatalogue,
+  swaraLongForms,
+} from "../../../src/engine/index.ts";
 import {
   angkaFlanked,
   buildChartSections,
@@ -13,7 +26,7 @@ import {
   type ChartStrings,
 } from "../../../src/features/chart/chart-catalog.ts";
 import { ak } from "../../engine/support/aksara-builder.ts";
-import { loadFromPublic } from "../../support/content-files.ts";
+import { loadFromPublic, loadView } from "../../support/content-files.ts";
 
 const aksara = [
   new AksaraItem({
@@ -65,7 +78,14 @@ const strings: ChartStrings = {
   longFormName: (name) => `long ${name}`,
 };
 
-const sections = buildChartSections({ aksara, sandhangan, strings });
+const kaj = rulesetById(kajRulesetId);
+const pedoman = rulesetById(pedomanRulesetId);
+const sections = buildChartSections({
+  aksara,
+  sandhangan,
+  strings,
+  ruleset: kaj,
+});
 const section = (title: string) => {
   const found = sections.find((s) => s.title === title);
   if (found === undefined) throw new Error(`no section ${title}`);
@@ -78,8 +98,14 @@ describe("chart helpers", () => {
   });
 
   test("[P-C01] murda variant comes from the engine link", () => {
-    expect(murdaVariant("na")).toBe(ak("NA_MURDA"));
-    expect(murdaVariant("wa")).toBeNull();
+    expect(murdaVariant("na", kaj)).toBe(ak("NA_MURDA"));
+    expect(murdaVariant("wa", kaj)).toBeNull();
+  });
+
+  test("[P-C08] murda variant is limited to the ruleset's murda", () => {
+    expect(murdaVariant("na", pedoman)).toBe(ak("NA_MURDA"));
+    expect(murdaVariant("ca", pedoman)).toBeNull();
+    expect(murdaVariant("ca", kaj)).toBe(ak("CA_MURDA"));
   });
 
   test("[P-C01] rekan char for fa is pa + cecak telu", () => {
@@ -97,11 +123,12 @@ describe("chart lookups for the converter", () => {
   });
 
   test("[P-U10] findChartEntry resolves real content ids in section order", async () => {
-    const content = await loadContent(loadFromPublic);
+    const content = await loadView(kajRulesetId);
     const real = buildChartSections({
       aksara: content.aksara,
       sandhangan: content.sandhangan,
       strings,
+      ruleset: kaj,
     });
     expect(findChartEntry(real, "wulu")?.id).toBe("wulu");
     expect(findChartEntry(real, "angka-1")?.id).toBe("angka-1");
@@ -179,6 +206,7 @@ describe("buildChartSections", () => {
             audioKey: id,
           }),
       ),
+      ruleset: kaj,
     });
     expect(grouped.slice(1, 4).map((s) => [s.title, s.entries.length])).toEqual(
       [
@@ -219,11 +247,12 @@ describe("buildChartSections", () => {
   });
 
   test("[P-C01] the real content yields no empty name, char or subtitle", async () => {
-    const content = await loadContent(loadFromPublic);
+    const content = await loadView(kajRulesetId);
     const real = buildChartSections({
       aksara: content.aksara,
       sandhangan: content.sandhangan,
       strings,
+      ruleset: kaj,
     });
     expect(real[0]?.entries).toHaveLength(20);
     for (const s of real) {
@@ -233,5 +262,100 @@ describe("buildChartSections", () => {
         expect(e.subtitle, e.id).not.toBe("");
       }
     }
+  });
+});
+
+describe("buildChartSections per ruleset", () => {
+  const sectionsOf = async (
+    rulesetId: typeof kajRulesetId | typeof pedomanRulesetId,
+  ) => {
+    const content = contentFor(await readContent(loadFromPublic), rulesetId);
+    return buildChartSections({
+      aksara: content.aksara,
+      sandhangan: content.sandhangan,
+      strings,
+      ruleset: content.ruleset,
+    });
+  };
+  const ids = (list: ReturnType<typeof buildChartSections>, title: string) =>
+    list.find((s) => s.title === title)?.entries.map((e) => e.id);
+
+  test("[P-C08] a Pedoman view lists 7 murda, 7 swara and 5 rekan", async () => {
+    const real = await sectionsOf(pedomanRulesetId);
+    expect(ids(real, "murda")).toEqual([
+      "naMurda",
+      "kaMurda",
+      "taMurda",
+      "saMurda",
+      "paMurda",
+      "gaMurda",
+      "baMurda",
+    ]);
+    expect(ids(real, "swara")).toEqual([
+      "a",
+      "i",
+      "u",
+      "e",
+      "o",
+      "paCerek",
+      "ngaLelet",
+    ]);
+    const rekanSection = real.find((s) => s.title === "rekan")!;
+    expect(rekanSection.entries.map((e) => e.id)).toEqual([
+      "kha",
+      "dza",
+      "fa",
+      "za",
+      "gha",
+    ]);
+    expect(rekanSection.entries.map((e) => e.char)).toEqual([
+      ak("KA CECAK_TELU"),
+      ak("DA CECAK_TELU"),
+      ak("PA CECAK_TELU"),
+      ak("JA CECAK_TELU"),
+      ak("GA CECAK_TELU"),
+    ]);
+    expect(rekanSection.entries[2]?.subtitle).toBe("fa/va / fa");
+  });
+
+  test("[P-C08] the murda hint follows the ruleset's murda", async () => {
+    const hint = async (
+      rulesetId: typeof kajRulesetId | typeof pedomanRulesetId,
+    ) => {
+      const carakan = (await sectionsOf(rulesetId))[0]!;
+      return Object.fromEntries(
+        ["nya", "ca", "ja", "ra", "ka"].map((id) => [
+          id,
+          carakan.entries
+            .find((e) => e.id === id)!
+            .subtitle.includes("has murda"),
+        ]),
+      );
+    };
+    expect(await hint(pedomanRulesetId)).toEqual({
+      nya: false,
+      ca: false,
+      ja: false,
+      ra: false,
+      ka: true,
+    });
+    expect(await hint(kajRulesetId)).toEqual({
+      nya: true,
+      ca: true,
+      ja: true,
+      ra: true,
+      ka: true,
+    });
+  });
+
+  test("[P-C08] the KAJ view is today's chart", async () => {
+    const real = await sectionsOf(kajRulesetId);
+    expect(ids(real, "murda")).toEqual(murdaLinks.map((m) => m.aksara.id));
+    expect(ids(real, "swara")).toEqual([
+      ...swara.map((s) => s.id),
+      ...[...swaraLongForms.values()].map((f) => `long-${f.baseId}`),
+      ...swaraCatalogue.map((s) => s.id),
+    ]);
+    expect(ids(real, "rekan")).toEqual(rekan.map((r) => r.id));
   });
 });

@@ -1,11 +1,11 @@
 import {
-  murdaFor,
   nglegenaById,
+  type Ruleset,
   sandhanganById,
   type SandhanganFunction,
 } from "../../engine/index.ts";
 import type { MessageKey } from "../../l10n/i18n.ts";
-import { pasanganString } from "./chart-catalog.ts";
+import { murdaVariant, pasanganString } from "./chart-catalog.ts";
 
 export interface NglegenaDetail {
   readonly id: string;
@@ -24,7 +24,10 @@ export interface SandhanganDetail {
   readonly jgst: string;
 }
 
-export function detailForNglegena(baseId: string): NglegenaDetail {
+export function detailForNglegena(
+  baseId: string,
+  ruleset: Ruleset,
+): NglegenaDetail {
   const a = nglegenaById(baseId);
   if (a === null) throw new RangeError(`unknown nglegena: ${baseId}`);
   return {
@@ -33,7 +36,7 @@ export function detailForNglegena(baseId: string): NglegenaDetail {
     pujl: a.latinPujl,
     jgst: a.latinJgst,
     pasanganDemo: pasanganString(a.id),
-    murda: murdaFor(baseId)?.aksara.char ?? null,
+    murda: murdaVariant(baseId, ruleset),
   };
 }
 

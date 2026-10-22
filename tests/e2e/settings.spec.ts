@@ -5,8 +5,11 @@ import {
   SRS_ITEMS,
   UNIT_COMPLETIONS,
 } from "../../src/core/db/schema.ts";
-import { aksaraEngineRulesetId } from "../../src/engine/index.ts";
-import { buildFeedbackReport } from "../../src/features/settings/feedback-report.ts";
+import { kajRulesetId } from "../../src/engine/index.ts";
+import {
+  buildFeedbackReport,
+  FEEDBACK_RULE_SOURCES,
+} from "../../src/features/settings/feedback-report.ts";
 import {
   expectAccessible,
   expectNoHorizontalOverflow,
@@ -121,9 +124,9 @@ test("[P-T05] about shows version, ruleset, sources, fonts and corpus", async ({
   await expect(main).toContainText(
     id["versionLabel"]!.replace("{version}", version),
   );
-  await expect(main).toContainText(aksaraEngineRulesetId);
+  await expect(main).toContainText(kajRulesetId);
   await expect(main).toContainText("kaj1-2021-simplified-v3");
-  await expect(main).toContainText(id["ruleSourceBody"]!);
+  await expect(main).toContainText(id["ruleSourceBodyKaj"]!);
   await expect(main).toContainText(id["fontBody"]!);
   await expect(main).toContainText(id["corpusBody"]!);
 });
@@ -187,7 +190,8 @@ test("[P-T06] the report keeps its text, copies the Indonesian report and confir
     buildFeedbackReport({
       description: "saté salah",
       appVersion: version,
-      rulesetId: aksaraEngineRulesetId,
+      rulesetId: kajRulesetId,
+      sources: FEEDBACK_RULE_SOURCES[kajRulesetId],
     }),
   );
 });
@@ -259,7 +263,7 @@ test("settings page is accessible in Indonesian", async ({ page }) => {
 
 let solver: Solver;
 test.beforeAll(async () => {
-  solver = await createSolver();
+  solver = await createSolver(kajRulesetId);
 });
 
 const resetDialog = (page: Page, catalog = id) =>

@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
 import {
+  kajRulesetId,
+  pedomanRulesetId,
+  rulesetById,
+} from "../../../src/engine/index.ts";
+import {
   detailForNglegena,
   detailForSandhangan,
   sandhanganFunctionMessageKey,
@@ -8,9 +13,11 @@ import en from "../../../src/l10n/en.json";
 import id from "../../../src/l10n/id.json";
 import { ak } from "../../engine/support/aksara-builder.ts";
 
+const kaj = rulesetById(kajRulesetId);
+const pedoman = rulesetById(pedomanRulesetId);
 describe("chart detail data", () => {
   test("[P-C04] nglegena detail carries both Latin forms, pasangan and murda", () => {
-    expect(detailForNglegena("ka")).toEqual({
+    expect(detailForNglegena("ka", kaj)).toEqual({
       id: "ka",
       name: "ka",
       pujl: "ka",
@@ -20,12 +27,23 @@ describe("chart detail data", () => {
     });
   });
 
+  test("[P-C08] ka has the same murda in both rulesets", () => {
+    expect(detailForNglegena("ka", pedoman)).toEqual(
+      detailForNglegena("ka", kaj),
+    );
+  });
+
+  test("[P-C08] ca has a murda in KAJ only", () => {
+    expect(detailForNglegena("ca", kaj).murda).toBe(ak("CA_MURDA"));
+    expect(detailForNglegena("ca", pedoman).murda).toBeNull();
+  });
+
   test("[P-C04] a letter without a murda form has none", () => {
-    expect(detailForNglegena("wa").murda).toBeNull();
+    expect(detailForNglegena("wa", kaj).murda).toBeNull();
   });
 
   test("[P-C04] an unknown nglegena id throws", () => {
-    expect(() => detailForNglegena("nope")).toThrow();
+    expect(() => detailForNglegena("nope", kaj)).toThrow();
   });
 
   test("[P-C05] sandhangan detail carries its function", () => {

@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { beforeAll, describe, expect, test } from "vitest";
 import type { ContentData } from "../../../src/content/content-repository.ts";
-import { loadContent } from "../../../src/content/content-repository.ts";
 import {
+  kajRulesetId,
   toAksara,
   type AksaraCluster,
   type ToAksaraSuccess,
@@ -17,7 +17,7 @@ import {
   clusterReading,
 } from "../../../src/features/converter/cluster-parts.ts";
 import { ak } from "../../engine/support/aksara-builder.ts";
-import { loadFromPublic } from "../../support/content-files.ts";
+import { loadView } from "../../support/content-files.ts";
 
 const strings: ChartStrings = {
   carakan: "carakan",
@@ -39,7 +39,7 @@ let content: ContentData;
 let table: ClusterPartTable;
 
 beforeAll(async () => {
-  content = await loadContent(loadFromPublic);
+  content = await loadView(kajRulesetId);
   table = ClusterPartTable.build(content);
 });
 
@@ -231,6 +231,7 @@ describe("fixture sweep", () => {
       aksara: content.aksara,
       sandhangan: content.sandhangan,
       strings,
+      ruleset: content.ruleset,
     });
     const fixture = JSON.parse(
       readFileSync(

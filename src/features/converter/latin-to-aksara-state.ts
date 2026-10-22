@@ -2,6 +2,7 @@ import { get, writable, type Readable } from "svelte/store";
 import {
   toAksara,
   type AksaraCluster,
+  type RulesetId,
   type ToAksaraSuccess,
 } from "../../engine/index.ts";
 
@@ -27,17 +28,22 @@ export type LatinToAksaraState =
   | { kind: "error"; message: string; index: number };
 
 export class LatinToAksaraConverter {
+  readonly #rulesetId: RulesetId;
   readonly #state = writable<LatinToAksaraState>({ kind: "initial" });
   readonly state: Readable<LatinToAksaraState> = {
     subscribe: this.#state.subscribe,
   };
+  constructor(rulesetId: RulesetId) {
+    this.#rulesetId = rulesetId;
+  }
+
   input(text: string): void {
     const trimmed = text.trim();
     if (trimmed === "") {
       this.#state.set({ kind: "initial" });
       return;
     }
-    const result = toAksara(trimmed);
+    const result = toAksara(trimmed, { ruleset: this.#rulesetId });
     switch (result.kind) {
       case "success":
         this.#state.set({

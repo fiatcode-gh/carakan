@@ -1,3 +1,4 @@
+import { isRulesetId, type RulesetId } from "../engine/index.ts";
 import {
   asArray,
   ContentFormatError,
@@ -19,6 +20,8 @@ export class Unit {
   readonly caps: readonly string[];
   /** 'previous' — the previous unit must be completed. */
   readonly unlock: string;
+  /** The rulesets whose ladder has this unit; null = every ruleset. */
+  readonly rulesets: readonly RulesetId[] | null;
 
   constructor(init: {
     id: string;
@@ -26,12 +29,18 @@ export class Unit {
     glyphs: readonly string[];
     caps?: readonly string[];
     unlock: string;
+    rulesets?: readonly RulesetId[] | null;
   }) {
     this.id = init.id;
     this.name = init.name;
     this.glyphs = init.glyphs;
     this.caps = init.caps ?? [];
     this.unlock = init.unlock;
+    this.rulesets = init.rulesets ?? null;
+  }
+
+  appliesTo(id: RulesetId): boolean {
+    return this.rulesets === null || this.rulesets.includes(id);
   }
 
   get glyphBits(): bigint {
@@ -52,12 +61,24 @@ export class Unit {
       );
     }
     asArray(json["glyphs"], "glyphs");
+    let rulesets: RulesetId[] | null = null;
+    if (json["rulesets"] !== undefined) {
+      const ids = stringList(json, "rulesets");
+      const valid = ids.filter(isRulesetId);
+      if (ids.length === 0 || valid.length !== ids.length) {
+        throw new ContentFormatError(
+          `unit ${id}: rulesets must list known ruleset ids`,
+        );
+      }
+      rulesets = valid;
+    }
     return new Unit({
       id,
       name,
       glyphs: stringList(json, "glyphs"),
       caps: stringList(json, "caps"),
       unlock: optionalString(json, "unlock") ?? "previous",
+      rulesets,
     });
   }
 }

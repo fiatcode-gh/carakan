@@ -1,13 +1,20 @@
 import { describe, expect, test } from "vitest";
-import { glyphUniverseIds } from "../../src/content/glyph-universe.ts";
+import {
+  glyphUniverseIds,
+  rulesetGlyphIds,
+} from "../../src/content/glyph-universe.ts";
 import { Word } from "../../src/content/word.ts";
+import { kajRulesetId, rulesets } from "../../src/engine/index.ts";
 import { readContentJson } from "../support/content-files.ts";
 import { hasPasangan, visibleGlyphs } from "../support/visible-glyphs.ts";
 
-const wordsById = new Map(
+const rawById = new Map(
   (readContentJson("words.json")["words"] as Record<string, unknown>[]).map(
-    (raw) => [raw["id"] as string, Word.fromJson(raw)] as const,
+    (raw) => [raw["id"] as string, raw] as const,
   ),
+);
+const wordsById = new Map(
+  [...rawById].map(([id, raw]) => [id, Word.fromJson(raw, kajRulesetId)]),
 );
 const examples = Object.entries(
   readContentJson("chart_examples.json")["examples"] as Record<
@@ -56,11 +63,16 @@ describe("[P-D04] chart examples", () => {
       }
     }
   });
+});
+
+describe.each(rulesets)("[P-D04] [P-D08] chart examples: $id", (ruleset) => {
+  const glyphIds = rulesetGlyphIds(ruleset);
+  const own = examples.filter(([key]) => glyphIds.has(key));
 
   test("the glyph is visible in every example (acceptance 3)", () => {
-    for (const [key, ids] of examples) {
+    for (const [key, ids] of own) {
       for (const id of ids) {
-        const w = wordsById.get(id)!;
+        const w = Word.fromJson(rawById.get(id)!, ruleset.id);
         expect(
           visibleGlyphs(w.aksara).has(key),
           `${key}: ${w.id} (${w.display})`,
@@ -70,9 +82,9 @@ describe("[P-D04] chart examples", () => {
   });
 
   test("no example has a pasangan (acceptance 3)", () => {
-    for (const [key, ids] of examples) {
+    for (const [key, ids] of own) {
       for (const id of ids) {
-        const w = wordsById.get(id)!;
+        const w = Word.fromJson(rawById.get(id)!, ruleset.id);
         expect(hasPasangan(w.aksara), `${key}: ${w.id} (${w.display})`).toBe(
           false,
         );

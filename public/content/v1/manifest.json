@@ -1,5 +1,8 @@
 {
   "contentVersion": 1,
-  "rulesetId": "kaj1-2021-simplified-v3",
-  "generatedAt": "2026-09-29T17:27:19.521072"
+  "rulesetIds": [
+    "pedoman-2002-v1",
+    "kaj1-2021-simplified-v3"
+  ],
+  "generatedAt": "2026-10-22T10:34:11.934Z"
 }

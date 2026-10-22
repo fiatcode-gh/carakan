@@ -19,7 +19,14 @@ import { syllabify, syllable, type Syllable } from "./latin/syllabifier.ts";
 import { murdaFor } from "./murda.ts";
 import { nglegenaByUnicodeName } from "./nglegena.ts";
 import { zeroWidthNonJoiner } from "./pada.ts";
+import {
+  applyInitialMurda,
+  checkPedomanTokens,
+  splitVowelPairs,
+  type VowelPairReading,
+} from "./pedoman-rules.ts";
 import { cecakTelu } from "./rekan.ts";
+import { kajRulesetId, pedomanRulesetId, type RulesetId } from "./ruleset.ts";
 import {
   sandhanganCakra,
   sandhanganCecak,
@@ -66,15 +73,18 @@ function spansOf(
 const isAsciiDigit = (ch: string): boolean => /^[0-9]$/.test(ch);
 
 /**
- * Latin -> aksara converter. Ruleset kaj1-2021-simplified-v3. Vowel signs,
+ * Latin -> aksara converter for `ruleset` (KAJ I `kaj1-2021-simplified-v3`
+ * when omitted). Vowel signs,
  * taling included, are stored after their base in Unicode order; the shaper
  * draws taling before it. Word-initial vowels take the ha carrier (KAJ I
- * p.5 3.b, p.124 8.b); only a capitalized vowel-initial word inside a
- * sentence keeps its swara letter.
+ * p.5 3.b; Tradisional p.124 8.b); only a capitalized vowel-initial word inside a
+ * sentence keeps its swara letter. The Pedoman 2002 differences apply when
+ * `ruleset` is the Pedoman.
  */
 export function latinToAksara(
   input: string,
   useMurda: boolean,
+  ruleset: RulesetId = kajRulesetId,
 ): ToAksaraResult {
   try {
     const chunks = splitChunks(input);
@@ -82,12 +92,22 @@ export function latinToAksara(
     // ambiguity handling.
     const tokenized: Item[] = [];
     let bareE = false;
+    let vowelPair = false;
     for (const chunk of chunks) {
       if (chunk.kind === "word") {
         try {
-          const tokens = tokenize(chunk.text);
+          const tokens =
+            ruleset === pedomanRulesetId
+              ? checkPedomanTokens(tokenize(chunk.text))
+              : tokenize(chunk.text);
           tokenized.push({ tokens, start: chunk.start });
           if (tokens.some((t) => t.vowel === "eBare")) bareE = true;
+          if (
+            ruleset === pedomanRulesetId &&
+            tokens.some((t) => t.vowel === "ai" || t.vowel === "au")
+          ) {
+            vowelPair = true;
+          }
         } catch (e) {
           if (e instanceof LatinParseError) {
             return {
@@ -104,11 +124,11 @@ export function latinToAksara(
       }
     }
 
-    if (bareE) {
-      return ambiguous(input, tokenized, useMurda);
+    if (bareE || vowelPair) {
+      return ambiguous(input, tokenized, useMurda, bareE, vowelPair, ruleset);
     }
 
-    return renderSentence(tokenized, useMurda, null);
+    return renderSentence(tokenized, useMurda, null, null, ruleset);
   } catch (e) {
     if (e instanceof LatinParseError) {
       return { kind: "error", input, index: e.index, message: e.message };
@@ -118,16 +138,23 @@ export function latinToAksara(
 }
 
 /**
- * Renders words and punctuation as joined writing (KAJ I p.24, p.126):
+ * Renders words and punctuation as joined writing (KAJ I p.24; Tradisional p.126 8.e):
  * spaces write nothing, so a word-final pangkon links to the next word as
  * pasangan. A comma after a pangkon is that pangkon itself; the ZWNJ stops
  * the font from linking it to the next word. A full stop after a pangkon
  * is pada lingsa.
+ *
+ * Pedoman 2002 differs in three places: a full stop is always pada lungsi
+ * (Ped p.50); a pangkon before a swara-initial word stays a visible pangkon
+ * (Ped p.13 no.3); and one before a cluster-initial word does too, so no
+ * three-tier stack forms (Ped p.27-28).
  */
 function renderSentence(
   items: readonly Item[],
   useMurda: boolean,
   eSubstitution: Vowel | null,
+  vowelPair: VowelPairReading | null,
+  ruleset: RulesetId,
 ): ToAksaraSuccess {
   const w = new ClusterWriter();
   let pangkonOpen = false; // output ends with PANGKON (ignoring a ZWNJ)
@@ -138,16 +165,33 @@ function renderSentence(
 
   for (const item of items) {
     if ("tokens" in item) {
-      const tokens =
+      let tokens =
         eSubstitution === null
           ? item.tokens
           : substituteE(item.tokens, eSubstitution);
+      if (vowelPair !== null) tokens = splitVowelPairs(tokens, vowelPair);
       if (breakPending) {
         w.write(zwnj, []);
         endsWithZwnj = true;
       }
+      const sylls = wordSyllables(tokens, useMurda, sentenceStart, ruleset);
+      const firstSyll = sylls[0];
+      if (
+        ruleset === pedomanRulesetId &&
+        pangkonOpen &&
+        !endsWithZwnj &&
+        firstSyll !== undefined &&
+        ((firstSyll.onset.length === 0 && !firstSyll.cerek) || // swara letter (Ped p.13 no.3)
+          firstSyll.keret ||
+          firstSyll.onset.length === 2) // cluster (Ped p.27-28)
+      ) {
+        w.write(zwnj, []);
+        endsWithZwnj = true;
+      }
       const before = w.text.length;
-      renderWord(tokens, useMurda, sentenceStart, item.start, w);
+      render(sylls, w, item.start, ruleset);
+      const last = tokens[tokens.length - 1]!;
+      if (last.kind === "pangkon") w.attribute(spansOf(item.start, last));
       sentenceStart = false;
       endsWithZwnj = false;
       pangkonOpen =
@@ -180,7 +224,9 @@ function renderSentence(
         breakPending = false;
         w.write(
           javaneseChar(
-            pangkonOpen ? "JAVANESE PADA LINGSA" : "JAVANESE PADA LUNGSI",
+            pangkonOpen && ruleset !== pedomanRulesetId
+              ? "JAVANESE PADA LINGSA"
+              : "JAVANESE PADA LUNGSI",
           ),
           here,
         );
@@ -211,14 +257,17 @@ function renderSentence(
   return { kind: "success", ...w.finish() };
 }
 
-function renderWord(
+function wordSyllables(
   tokens: readonly LatinToken[],
   useMurda: boolean,
   sentenceStart: boolean,
-  wordStart: number,
-  w: ClusterWriter,
-): void {
-  const effective = useMurda ? applyMurda(tokens) : tokens;
+  ruleset: RulesetId,
+): Syllable[] {
+  const effective = !useMurda
+    ? tokens
+    : ruleset === pedomanRulesetId
+      ? applyInitialMurda(tokens)
+      : applyMurda(tokens);
   const first = effective[0]!;
   const isVowel = first.kind === "vowel";
   // KAJ I p.5 3.b: swara only for capitalized names inside a sentence.
@@ -235,9 +284,7 @@ function renderWord(
           ...effective,
         ]
       : effective;
-  render(withGlides(syllabify(carried)), w, wordStart);
-  const last = tokens[tokens.length - 1]!;
-  if (last.kind === "pangkon") w.attribute(spansOf(wordStart, last));
+  return withGlides(syllabify(carried));
 }
 
 /**
@@ -336,19 +383,46 @@ function ambiguous(
   input: string,
   tokenized: readonly Item[],
   useMurda: boolean,
+  bareE: boolean,
+  vowelPair: boolean,
+  ruleset: RulesetId,
 ): ToAksaraAmbiguous {
   const candidates: ToAksaraSuccess[] = [];
-  for (const substitution of ["ePepet", "eTaling"] as const) {
-    candidates.push(renderSentence(tokenized, useMurda, substitution));
+  const eReadings: (Vowel | null)[] = bareE ? ["ePepet", "eTaling"] : [null];
+  const pairReadings: (VowelPairReading | null)[] = vowelPair
+    ? ["ha", "swara"]
+    : [null];
+  for (const e of eReadings) {
+    for (const p of pairReadings) {
+      candidates.push(renderSentence(tokenized, useMurda, e, p, ruleset));
+    }
+  }
+  if (!vowelPair) {
+    return {
+      kind: "ambiguous",
+      input,
+      candidates,
+      reason:
+        'Bare "e" is pepet (ě) or taling (é) — PUJL does not mark ' +
+        "the difference (KAJ I Daftar Transliterasi). Choose a reading, " +
+        "or type ě/ê/é/è.",
+    };
+  }
+  if (!bareE) {
+    return {
+      kind: "ambiguous",
+      input,
+      candidates,
+      reason:
+        '"ai"/"au" is two aksara in Pedoman 2002: ha between the vowels or a swara letter. Choose a reading, or type the h (sinahu).',
+    };
   }
   return {
     kind: "ambiguous",
     input,
     candidates,
     reason:
-      'Bare "e" is pepet (ě) or taling (é) — PUJL does not mark ' +
-      "the difference (KAJ I Daftar Transliterasi). Choose a reading, " +
-      "or type ě/ê/é/è.",
+      'Bare "e" is pepet (ě) or taling (é), and "ai"/"au" is two aksara in Pedoman 2002 (ha or a swara letter). Choose a reading.',
   };
 }
 
@@ -420,6 +494,7 @@ function render(
   sylls: readonly Syllable[],
   w: ClusterWriter,
   wordStart: number,
+  ruleset: RulesetId,
 ): void {
   for (let s = 0; s < sylls.length; s++) {
     const syll = sylls[s]!;
@@ -447,7 +522,10 @@ function render(
           );
         }
       }
-      w.write(swaraFor(syll.vowelToken), spansOf(wordStart, syll.vowelToken));
+      w.write(
+        swaraFor(syll.vowelToken, ruleset, wordStart),
+        spansOf(wordStart, syll.vowelToken),
+      );
       writeCoda(w, syll.coda, wordStart);
       continue;
     }
@@ -637,7 +715,18 @@ function codaText(coda: LatinToken | null): string {
   return javaneseChar(coda.aksaraUnicodeName!) + sandhanganPangkon.char;
 }
 
-function swaraFor(t: LatinToken | null): string {
+function swaraFor(
+  t: LatinToken | null,
+  ruleset: RulesetId,
+  wordStart: number,
+): string {
+  if (ruleset === pedomanRulesetId && t?.vowel === "aa") {
+    // A vowel-only aa would be the long swara A + tarung (Ped p.13-15).
+    throw new LatinParseError(
+      wordStart + t.sourceIndex,
+      "Long vowels have no sign in Pedoman 2002",
+    );
+  }
   switch (t?.vowel ?? null) {
     case "a":
       return javaneseChar("JAVANESE LETTER A");

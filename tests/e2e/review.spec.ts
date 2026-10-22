@@ -7,6 +7,7 @@ import {
   type MistakeLogRow,
   type SrsItemRow,
 } from "../../src/core/db/schema.ts";
+import { kajRulesetId } from "../../src/engine/index.ts";
 import { generateExercises } from "../../src/features/lessons/exercise-generator.ts";
 import {
   expectAccessible,
@@ -37,7 +38,7 @@ const DAY = 24 * HOUR;
 
 let solver: Solver;
 test.beforeAll(async () => {
-  solver = await createSolver();
+  solver = await createSolver(kajRulesetId);
 });
 
 const shoot = (page: Page, name: string) =>

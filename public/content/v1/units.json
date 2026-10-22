@@ -9,7 +9,8 @@
     {"id": "g5", "name": "Kelompok 5: ba nga tha nya ma", "glyphs": ["ba", "nga", "tha", "nya", "ma"]},
     {"id": "u6", "name": "Sandhangan lain", "glyphs": ["taling", "tarung", "pepet", "layar", "cecak", "wignyan", "pangkon", "cakra", "keret", "pengkal"]},
     {"id": "u7", "name": "Pasangan", "glyphs": ["pasangan-ha", "pasangan-na", "pasangan-ca", "pasangan-ra", "pasangan-ka", "pasangan-da", "pasangan-ta", "pasangan-sa", "pasangan-wa", "pasangan-la", "pasangan-pa", "pasangan-dha", "pasangan-ja", "pasangan-ya", "pasangan-nya", "pasangan-ma", "pasangan-ga", "pasangan-ba", "pasangan-tha", "pasangan-nga"], "caps": ["pasangan"]},
-    {"id": "u8", "name": "Sayap lanjutan: murda dan swara", "glyphs": ["naMurda", "kaMurda", "taMurda", "saMurda", "paMurda", "nyaMurda", "gaMurda", "baMurda", "caMurda", "jaMurda", "raAgung", "a", "i", "u", "e", "o", "paCerek", "ngaLelet"]}
+    {"id": "u8", "name": "Sayap lanjutan: murda dan swara", "glyphs": ["naMurda", "kaMurda", "taMurda", "saMurda", "paMurda", "nyaMurda", "gaMurda", "baMurda", "caMurda", "jaMurda", "raAgung", "a", "i", "u", "e", "o", "paCerek", "ngaLelet"], "rulesets": ["kaj1-2021-simplified-v3"]},
+    {"id": "u8p", "name": "Sayap lanjutan: murda dan swara", "glyphs": ["naMurda", "kaMurda", "taMurda", "saMurda", "paMurda", "gaMurda", "baMurda", "a", "i", "u", "e", "o", "paCerek", "ngaLelet"], "rulesets": ["pedoman-2002-v1"]}
   ],
   "retiredUnits": [
     {"id": "u1", "glyphs": ["ha", "na", "ca", "ra", "ka"]},

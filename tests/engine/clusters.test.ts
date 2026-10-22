@@ -2,10 +2,13 @@ import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 import {
   javaneseCodepoints,
+  pedomanRulesetId,
   toAksara,
+  type RulesetId,
   type TextSpan,
   type ToAksaraSuccess,
 } from "../../src/engine/index.ts";
+import { pedomanCases } from "./pedoman-2002-cases.ts";
 import { ak } from "./support/aksara-builder.ts";
 import { lcg, randomStrings } from "./support/random-input.ts";
 
@@ -95,8 +98,12 @@ function checkInvariants(input: string, s: ToAksaraSuccess): void {
   }
 }
 
-function checkResult(input: string, useMurda: boolean): void {
-  const r = toAksara(input, { useMurda });
+function checkResult(
+  input: string,
+  useMurda: boolean,
+  ruleset?: RulesetId,
+): void {
+  const r = toAksara(input, { useMurda, ruleset });
   if (r.kind === "success") checkInvariants(input, r);
   else if (r.kind === "ambiguous") {
     for (const c of r.candidates) checkInvariants(input, c);
@@ -117,8 +124,12 @@ function readable(input: string, s: ToAksaraSuccess): Golden[] {
 const expected = (rows: [string, string][]): Golden[] =>
   rows.map(([spec, src]) => [ak(spec), src]);
 
-function success(input: string, useMurda = false): ToAksaraSuccess {
-  const r = toAksara(input, { useMurda });
+function success(
+  input: string,
+  useMurda = false,
+  ruleset?: RulesetId,
+): ToAksaraSuccess {
+  const r = toAksara(input, { useMurda, ruleset });
   if (r.kind !== "success") throw new Error(`${input}: ${r.kind}`);
   return r;
 }
@@ -484,6 +495,25 @@ describe("[P-D06] engine reports output clusters", () => {
       for (const useMurda of [false, true]) {
         checkResult(input, useMurda);
         if (toAksara(input, { useMurda }).kind !== "error") successes++;
+      }
+    }
+    expect(successes).toBeGreaterThan(500);
+  });
+
+  test("[P-D06] [P-D07] invariants hold for every Pedoman case and 5,000 seeded random inputs under Pedoman", () => {
+    for (const c of pedomanCases) {
+      checkResult(c.input, c.useMurda ?? false, pedomanRulesetId);
+    }
+    const rand = lcg(0x9ed0a2);
+    const alphabet = [
+      ...("abcdeghijklmnoprstuwyv" + "ŕỿṛṙŋḥěéèêāīūḍṭñṅ" + " /,.AEIŔ0"),
+    ];
+    let successes = 0;
+    for (const input of randomStrings(rand, alphabet, 5_000)) {
+      for (const useMurda of [false, true]) {
+        checkResult(input, useMurda, pedomanRulesetId);
+        const r = toAksara(input, { useMurda, ruleset: pedomanRulesetId });
+        if (r.kind !== "error") successes++;
       }
     }
     expect(successes).toBeGreaterThan(500);

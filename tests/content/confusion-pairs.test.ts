@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { ConfusionPair } from "../../src/content/confusion-pair.ts";
-import { containsGlyph } from "../../src/content/glyph-universe.ts";
+import {
+  containsGlyph,
+  rulesetGlyphIds,
+} from "../../src/content/glyph-universe.ts";
+import { rulesets } from "../../src/engine/index.ts";
 import { readContentJson } from "../support/content-files.ts";
 
 const pairs = (
@@ -19,6 +23,16 @@ describe("[P-D04] confusion pairs", () => {
     expect(new Set(pairs.map((p) => p.key)).size, "no duplicate pairs").toBe(
       pairs.length,
     );
+  });
+
+  test("[P-D08] every pair member exists in every ruleset", () => {
+    for (const ruleset of rulesets) {
+      const ids = rulesetGlyphIds(ruleset);
+      for (const p of pairs) {
+        expect(ids.has(p.a), `${ruleset.id}: ${p.a}`).toBe(true);
+        expect(ids.has(p.b), `${ruleset.id}: ${p.b}`).toBe(true);
+      }
+    }
   });
 
   test("starter pairs cover the da/dha and ta/tha confusions", () => {

@@ -1,15 +1,18 @@
 import { expect, test } from "vitest";
-import { loadContent } from "../../../src/content/content-repository.ts";
 import { GlyphInfoTable } from "../../../src/content/glyph-info-table.ts";
 import { bitOf } from "../../../src/content/glyph-universe.ts";
 import { Unit } from "../../../src/content/unit.ts";
 import { Word } from "../../../src/content/word.ts";
-import { javaneseChar, sandhanganById } from "../../../src/engine/index.ts";
+import {
+  javaneseChar,
+  kajRulesetId,
+  sandhanganById,
+} from "../../../src/engine/index.ts";
 import {
   generateExercises,
   type Exercise,
 } from "../../../src/features/lessons/exercise-generator.ts";
-import { loadFromPublic } from "../../support/content-files.ts";
+import { loadView } from "../../support/content-files.ts";
 
 const u2 = new Unit({
   id: "u2",
@@ -31,6 +34,7 @@ const word = (
     requiredGlyphs,
     audioKey: id,
     source: "author",
+    rulesetId: kajRulesetId,
     displayPujl: displayPujl ?? null,
   });
 
@@ -203,7 +207,7 @@ test("[P-B10] sound options show the distractor's PUJL, never its id", () => {
 
 test("[P-B10] a glyph is never offered next to another glyph with the same sound", async () => {
   // taMurda and tha both read "tha": two identical sounds would be two right answers.
-  const real = GlyphInfoTable.build(await loadContent(loadFromPublic));
+  const real = GlyphInfoTable.build(await loadView(kajRulesetId));
   const unit = new Unit({
     id: "x",
     name: "x",

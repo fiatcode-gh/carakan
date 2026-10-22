@@ -154,14 +154,14 @@
     {"id": "enak", "canonical": "énak/", "gloss": "enak", "requiredGlyphs": ["ha", "na", "ka", "taling", "pangkon"], "source": "author"},
     {"id": "isa", "canonical": "isa", "gloss": "bisa (krama)", "requiredGlyphs": ["ha", "sa", "wulu"], "source": "wiktionary:isa"},
     {"id": "bima", "canonical": "ḅima", "gloss": "Bima (tokoh wayang)", "displayPujl": "Bima", "requiredGlyphs": ["ma", "wulu", "baMurda"], "source": "author"},
-    {"id": "nabi", "canonical": "ṇaḅi", "gloss": "nabi", "displayPujl": "Nabi", "requiredGlyphs": ["wulu", "naMurda", "baMurda"], "source": "author"},
+    {"id": "nabi", "canonical": "ṇaḅi", "gloss": "nabi", "displayPujl": "Nabi", "requiredGlyphs": ["wulu", "naMurda", "baMurda"], "source": "author", "byRuleset": {"pedoman-2002-v1": {"canonical": "ṇabi", "requiredGlyphs": ["ba", "wulu", "naMurda"]}}},
     {"id": "foto", "canonical": "foto", "gloss": "foto", "requiredGlyphs": ["ta", "taling", "tarung", "fa"], "source": "author"},
     {"id": "fajar", "canonical": "fajaṙ", "gloss": "fajar", "requiredGlyphs": ["ja", "layar", "fa"], "source": "wiktionary:fajar"},
-    {"id": "vila", "canonical": "vila", "gloss": "vila", "requiredGlyphs": ["la", "wulu", "va"], "source": "author"},
+    {"id": "vila", "canonical": "vila", "gloss": "vila", "requiredGlyphs": ["la", "wulu", "va"], "source": "author", "byRuleset": {"pedoman-2002-v1": {"displayPujl": "vila", "requiredGlyphs": ["la", "wulu", "fa"]}}},
     {"id": "endhog", "canonical": "ěnḍog/", "gloss": "telur", "requiredGlyphs": ["ha", "na", "dha", "ga", "taling", "tarung", "pepet", "pangkon"], "requiredCaps": ["pasangan"], "source": "wiktionary:endhog"},
     {"id": "emas", "canonical": "ěmas/", "gloss": "emas", "requiredGlyphs": ["ha", "sa", "ma", "pepet", "pangkon"], "source": "wiktionary:emas"},
     {"id": "maaf", "canonical": "maaf/", "gloss": "maaf", "requiredGlyphs": ["ma", "pangkon", "a", "fa"], "source": "author"},
-    {"id": "ramai", "canonical": "ramai", "gloss": "ramai", "requiredGlyphs": ["ra", "ma", "ai"], "source": "author"},
+    {"id": "ramai", "canonical": "ramai", "gloss": "ramai", "requiredGlyphs": ["ra", "ma", "ai"], "source": "author", "byRuleset": {"pedoman-2002-v1": {"canonical": "ramahi", "displayPujl": "ramai", "requiredGlyphs": ["ha", "ra", "ma", "wulu"]}}},
     {"id": "lombok", "canonical": "lombok/", "gloss": "cabai", "requiredGlyphs": ["ka", "la", "ma", "ba", "taling", "tarung", "pangkon"], "requiredCaps": ["pasangan"], "source": "wiktionary:lombok"},
     {"id": "rawon", "canonical": "rawon/", "gloss": "rawon (masakan)", "requiredGlyphs": ["na", "ra", "wa", "taling", "tarung", "pangkon"], "source": "wiktionary:rawon"},
     {"id": "ngombe", "canonical": "ṅombé", "gloss": "minum", "requiredGlyphs": ["ma", "ba", "nga", "taling", "tarung", "pangkon"], "requiredCaps": ["pasangan"], "source": "author"},
@@ -230,6 +230,6 @@
     {"id": "pare", "canonical": "paré", "gloss": "pare (sayuran pahit)", "requiredGlyphs": ["ra", "pa", "taling"], "source": "wiktionary:pare"},
     {"id": "loro", "canonical": "loro", "gloss": "dua; sakit", "requiredGlyphs": ["ra", "la", "taling", "tarung"], "source": "wiktionary:loro"},
     {"id": "faham", "canonical": "faham/", "gloss": "paham", "requiredGlyphs": ["ha", "ma", "pangkon", "fa"], "source": "kaj1:faham"},
-    {"id": "vakum", "canonical": "vakum/", "gloss": "vakum", "requiredGlyphs": ["ka", "ma", "suku", "pangkon", "va"], "source": "kaj1:vakum"}
+    {"id": "vakum", "canonical": "vakum/", "gloss": "vakum", "requiredGlyphs": ["ka", "ma", "suku", "pangkon", "va"], "source": "kaj1:vakum", "byRuleset": {"pedoman-2002-v1": {"displayPujl": "vakum", "requiredGlyphs": ["ka", "ma", "suku", "pangkon", "fa"]}}}
   ]
 }

@@ -8,8 +8,8 @@ import { describe, expect, it } from "vitest";
 const carried: ReadonlyArray<readonly [string, string]> = [
   [
     "docs/references/CITATIONS.md",
-    // updated for carakan paths (Task 18)
-    "f437997c8b00599355e847421720feeaaa41bd745011cdfde08d73c216a45679",
+    // Pedoman 2002 ruleset (pedoman-2002-ruleset)
+    "5b5e9e7c84e041331de9ad86670679e14f6897dd0efa521a1d4413a188208ffd",
   ],
   [
     "docs/references/unicode-javanese-block.txt",
@@ -25,8 +25,8 @@ const carried: ReadonlyArray<readonly [string, string]> = [
   ],
   [
     "docs/content/corpus-guide.md",
-    // updated for carakan paths (Task 18)
-    "bdb1d861a289eb3c75cf50d14e818b0a728722fa046a63cdc72dc52efec27e3c",
+    // Pedoman 2002 ruleset (pedoman-2002-ruleset)
+    "5df701e49b2304622adb682d1d0b8b54ef11bf296842fc03a9d7ae15cc24cf29",
   ],
   [
     "public/content/v1/aksara.json",
@@ -42,7 +42,8 @@ const carried: ReadonlyArray<readonly [string, string]> = [
   ],
   [
     "public/content/v1/manifest.json",
-    "4501199fded1634c791b587263277509b06800aa871f0c544434b0906010be6f",
+    // per-ruleset content (pedoman-2002-ruleset)
+    "b9552f2755b1eb09d8f6ebf286e3386ebb3f94c163bb28ad66bf3671dbbb7774",
   ],
   [
     "public/content/v1/sandhangan.json",
@@ -51,11 +52,13 @@ const carried: ReadonlyArray<readonly [string, string]> = [
   [
     "public/content/v1/units.json",
     // regrouped by shape (teacher-feedback-2 A01)
-    "5fcd8cf6411f4aeab9b0bb6c5777ac62913b77fb85234bcb86eb6b84e67f49c9",
+    // per-ruleset content (pedoman-2002-ruleset)
+    "9f598568f0c90af0a0b2f1ddd7fae0f93901817bea612285dbd58f769c64f327",
   ],
   [
     "public/content/v1/words.json",
-    "712f59dddac9d0a7375c0c6226fb3187e4c51c3a2fa71fe41d7f86f4ce9fb4df",
+    // per-ruleset content (pedoman-2002-ruleset)
+    "de5e50c2eb7b19e6373f48635c4e000b7e076cc7ab82f00043cc17b4aa4aad61",
   ],
   [
     "public/fonts/nykNgayogyanJejeg-Regular.ttf",

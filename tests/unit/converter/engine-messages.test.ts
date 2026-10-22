@@ -1,8 +1,9 @@
 import { readdirSync, readFileSync } from "node:fs";
 import ts from "typescript";
 import { describe, expect, test } from "vitest";
-import { toAksara } from "../../../src/engine/index.ts";
+import { pedomanRulesetId, toAksara } from "../../../src/engine/index.ts";
 import {
+  ambiguityTitleKey,
   ENGINE_MESSAGES,
   localizeEngineMessage,
 } from "../../../src/features/converter/engine-messages.ts";
@@ -101,7 +102,7 @@ describe("engine message table", () => {
       untranslated.map((m) => `untranslated engine message: ${m}`),
     ).toEqual([]);
     expect(stale.map((m) => `stale row: ${m}`)).toEqual([]);
-    expect(ENGINE_MESSAGES).toHaveLength(15);
+    expect(ENGINE_MESSAGES).toHaveLength(20);
   });
 
   test("[P-U09] every message of the Dart fixture resolves to a specific key", () => {
@@ -215,5 +216,27 @@ describe("engine message locales", () => {
       expect(() => formatMessage(id[key], params)).not.toThrow();
       expect(() => formatMessage(en[key], params)).not.toThrow();
     }
+  });
+});
+
+describe("ambiguityTitleKey", () => {
+  const reasonOf = (text: string, ruleset?: typeof pedomanRulesetId) => {
+    const result = toAksara(text, ruleset === undefined ? {} : { ruleset });
+    if (result.kind !== "ambiguous") throw new Error("not ambiguous");
+    return result.reason;
+  };
+
+  test("[P-U11] each ambiguity reason has its own title", () => {
+    expect(ambiguityTitleKey(reasonOf("prelu"))).toBe("ambiguousTitle");
+    expect(ambiguityTitleKey(reasonOf("sinau", pedomanRulesetId))).toBe(
+      "ambiguousTitleVowelPair",
+    );
+    expect(ambiguityTitleKey(reasonOf("rame sinau", pedomanRulesetId))).toBe(
+      "ambiguousTitleMixed",
+    );
+  });
+
+  test("[P-U11] an unknown reason falls back to the bare-e title", () => {
+    expect(ambiguityTitleKey("something else")).toBe("ambiguousTitle");
   });
 });

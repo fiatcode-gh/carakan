@@ -1,18 +1,23 @@
 import { get } from "svelte/store";
 import { describe, expect, test, vi } from "vitest";
-import { loadContent } from "../../../src/content/content-repository.ts";
+import {
+  contentFor,
+  readContent,
+} from "../../../src/content/content-repository.ts";
 import { GlyphInfoTable } from "../../../src/content/glyph-info-table.ts";
 import { RetiredUnit, Unit } from "../../../src/content/unit.ts";
 import { LearnerProgress } from "../../../src/core/db/learner-progress.ts";
 import { UnitCompletionRepository } from "../../../src/core/db/unit-completion-repository.ts";
 import { createEmitter } from "../../../src/core/emitter.ts";
+import { kajRulesetId, pedomanRulesetId } from "../../../src/engine/index.ts";
 import {
   computeLadder,
   LadderModel,
+  ladderModel,
   ladderPreview,
   unitsCompletedByRetired,
 } from "../../../src/features/lessons/ladder.ts";
-import { loadFromPublic } from "../../support/content-files.ts";
+import { loadFromPublic, loadView } from "../../support/content-files.ts";
 import { openFreshDb } from "../core/db-helpers.ts";
 
 const units = [
@@ -40,7 +45,7 @@ const statusesOf = (done: string[]) =>
   computeLadder(units, new Set(done)).statuses.map((e) => e.status);
 
 async function content() {
-  const loaded = await loadContent(loadFromPublic);
+  const loaded = await loadView(kajRulesetId);
   return { loaded, table: GlyphInfoTable.build(loaded) };
 }
 
@@ -357,5 +362,56 @@ describe("[P-T07] LadderModel after erased progress", () => {
       );
     });
     expect((await completions.completedUnitIds()).size).toBe(0);
+  });
+});
+
+describe("[P-B18] progress carries across rulesets", () => {
+  const sharedUnits = ["g1", "u2", "g2", "g3", "g4", "g5", "u6", "u7"];
+
+  async function ladderFor(
+    rulesetId: typeof kajRulesetId | typeof pedomanRulesetId,
+    completed: string[],
+  ) {
+    const view = contentFor(await readContent(loadFromPublic), rulesetId);
+    const completions = new UnitCompletionRepository(await openFreshDb());
+    await completions.completeAll(completed, 1);
+    const completeAll = vi.spyOn(completions, "completeAll");
+    const model = ladderModel({
+      singleton: (_key, make) => make(),
+      content: view,
+      completions,
+      progress: new LearnerProgress(await openFreshDb()),
+      now: () => 2,
+    });
+    await model.refresh();
+    return { model, completeAll, view };
+  }
+
+  test("a Pedoman ladder counts the KAJ-only unit as done in the other ruleset", async () => {
+    const { model, completeAll, view } = await ladderFor(pedomanRulesetId, [
+      ...sharedUnits,
+      "u8",
+    ]);
+    expect(completeAll).toHaveBeenCalledWith(["u8p"], 2);
+    const state = get(model.state);
+    if (state.kind !== "ready") throw new Error("not ready");
+    expect(view.units).toHaveLength(9);
+    expect(state.statuses.map((e) => e.status)).toEqual(
+      Array(9).fill("completed"),
+    );
+  });
+
+  test("a KAJ ladder does not count a Pedoman completion that covers fewer letters", async () => {
+    const { model, completeAll } = await ladderFor(kajRulesetId, [
+      ...sharedUnits,
+      "u8p",
+    ]);
+    expect(completeAll).not.toHaveBeenCalled();
+    const state = get(model.state);
+    if (state.kind !== "ready") throw new Error("not ready");
+    expect(state.statuses.at(-1)).toMatchObject({
+      unit: { id: "u8" },
+      status: "ready",
+    });
   });
 });

@@ -3,11 +3,12 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Word } from "../../src/content/word.ts";
 import {
-  aksaraEngineRulesetId,
   murdaLinks,
   nglegena,
   padaCatalogue,
   rekan,
+  rekanCatalogue,
+  rulesets,
   sandhangan,
   swara,
   swaraCatalogue,
@@ -99,7 +100,9 @@ export function computeGlyphSet(): number[] {
   const words = readJson("public", "content", "v1", "words.json") as {
     words: Record<string, unknown>[];
   };
-  for (const raw of words.words) addText(out, Word.fromJson(raw).display);
+  for (const raw of words.words) {
+    for (const r of rulesets) addText(out, Word.fromJson(raw, r.id).display);
+  }
 
   const catalog = [
     ...nglegena,
@@ -107,6 +110,8 @@ export function computeGlyphSet(): number[] {
     ...swara,
     ...swaraCatalogue,
     ...rekan,
+    ...rekanCatalogue,
+    ...rulesets.flatMap((r) => r.rekan),
     ...sandhangan,
   ];
   for (const e of catalog) {
@@ -120,7 +125,7 @@ export function computeGlyphSet(): number[] {
   for (const p of padaCatalogue) if (p.latin !== null) addText(out, p.latin);
 
   addFixtureText(out);
-  addText(out, aksaraEngineRulesetId);
+  for (const r of rulesets) addText(out, r.id);
 
   return [...out].filter((cp) => !isExcluded(cp)).sort((a, b) => a - b);
 }

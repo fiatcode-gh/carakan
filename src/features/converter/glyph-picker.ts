@@ -2,12 +2,11 @@ import type { AksaraItem } from "../../content/aksara-item.ts";
 import {
   angkaDigitToChar,
   javaneseChar,
-  murdaLinks,
   nglegena,
   padaActive,
   padaCatalogue,
+  type Ruleset,
   swara,
-  swaraLongForms,
 } from "../../engine/index.ts";
 import type { MessageKey, MessageParams } from "../../l10n/i18n.ts";
 
@@ -45,6 +44,7 @@ function letterFor(baseId: string): string {
  */
 export function pickerSections(
   aksara: readonly AksaraItem[],
+  ruleset: Ruleset,
   t: (key: MessageKey, params?: MessageParams) => string,
 ): PickerSection[] {
   const names = new Map(aksara.map((item) => [item.id, item.name] as const));
@@ -65,7 +65,7 @@ export function pickerSections(
     ),
     section("sectionSwara", [
       ...swara.map((s) => entry(s.id, s.char)),
-      ...[...swaraLongForms.values()].map((f) => ({
+      ...ruleset.swaraLongForms.map((f) => ({
         label: t("longFormName", { name: nameOf(f.baseId) }),
         char:
           javaneseChar(`JAVANESE LETTER ${letterFor(f.baseId)}`) + f.tarungChar,
@@ -73,7 +73,7 @@ export function pickerSections(
     ]),
     section(
       "sectionMurda",
-      murdaLinks.map((m) => entry(m.aksara.id, m.aksara.char)),
+      ruleset.murda.map((m) => entry(m.aksara.id, m.aksara.char)),
     ),
     section(
       "sectionAngka",

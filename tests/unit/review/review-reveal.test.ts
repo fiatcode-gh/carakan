@@ -16,6 +16,7 @@ async function setup(items: string[]) {
     queue,
     erased: progress.erased,
     now: () => T0,
+    shows: () => true,
   });
   await session.refresh();
   return { queue, session, progress };

@@ -7,7 +7,7 @@ import { Word } from "../../../src/content/word.ts";
 import { MistakeLogRepository } from "../../../src/core/db/mistake-log-repository.ts";
 import { UnitCompletionRepository } from "../../../src/core/db/unit-completion-repository.ts";
 import { ReviewQueue } from "../../../src/core/srs/review-queue.ts";
-import { javaneseChar } from "../../../src/engine/index.ts";
+import { javaneseChar, kajRulesetId } from "../../../src/engine/index.ts";
 import {
   generateExercises,
   type Exercise,
@@ -33,6 +33,7 @@ const word = (id: string, gloss: string, requiredGlyphs: string[]) =>
     requiredGlyphs,
     audioKey: id,
     source: "author",
+    rulesetId: kajRulesetId,
   });
 
 const corpus = [
