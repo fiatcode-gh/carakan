@@ -8,12 +8,14 @@
   import Icon from "../../ui/Icon.svelte";
   import Reading from "../../ui/Reading.svelte";
   import Surface from "../../ui/Surface.svelte";
+  import TracePractice from "../tracing/TracePractice.svelte";
+  import { unitAccent } from "./unit-display.ts";
   import type { LessonSession } from "./lesson-session.ts";
 
   let { session }: { session: LessonSession } = $props();
 
   const { t } = getI18n();
-  const { glyphInfo } = getServices();
+  const { glyphInfo, content } = getServices();
   const lesson = $derived(session.state);
   const current = $derived($lesson);
   const failedStore = $derived(session.failed);
@@ -22,11 +24,13 @@
   const viewKey = $derived(
     current.kind === "meet"
       ? `meet-${current.index}`
-      : current.kind === "question"
-        ? `question-${current.number}`
-        : current.kind === "feedback"
-          ? `feedback-${current.number}`
-          : current.kind,
+      : current.kind === "trace"
+        ? `trace-${current.index}`
+        : current.kind === "question"
+          ? `question-${current.number}`
+          : current.kind === "feedback"
+            ? `feedback-${current.number}`
+            : current.kind,
   );
 
   // Every step re-creates the view, destroying the button just activated, so
@@ -85,9 +89,19 @@
           data-autofocus
           onclick={() => void session.meetNext()}
         >
-          {$t("continueButton")}
+          {$t(current.traceable ? "tryWritingButton" : "continueButton")}
         </Button>
       </div>
+    {:else if current.kind === "trace"}
+      <TracePractice
+        glyph={current.glyph}
+        accent={unitAccent(
+          content.units.findIndex((u) => u.id === current.unit.id),
+        )}
+        backIcon="chevron-left"
+        onback={back}
+        onfinish={() => void session.finishTrace()}
+      />
     {:else if current.kind === "question" || current.kind === "feedback"}
       {@const { exercise, number, total } = current}
       {@const options =

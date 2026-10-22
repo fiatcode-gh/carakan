@@ -2,7 +2,6 @@ import type { Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { Unit } from "../../src/content/unit.ts";
 import {
-  DB_NAME,
   MISTAKE_LOGS,
   SRS_ITEMS,
   UNIT_COMPLETIONS,
@@ -11,7 +10,11 @@ import {
   type UnitCompletionRow,
 } from "../../src/core/db/schema.ts";
 import { kajRulesetId } from "../../src/engine/index.ts";
-import { generateExercises } from "../../src/features/lessons/exercise-generator.ts";
+import {
+  generateExercises,
+  type Exercise,
+} from "../../src/features/lessons/exercise-generator.ts";
+import { groupByGlyph } from "../../src/features/lessons/lesson-session.ts";
 import {
   splitUnitName,
   unitWatermark,
@@ -24,15 +27,17 @@ import {
 import { gotoRoute } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
 import {
+  advanceToQuestion,
   answerCurrentQuestion,
+  completeLesson,
+  continueButton,
+  playLesson,
+  readQuestion,
+  readStore,
   unitButton,
   writeRows,
 } from "./support/lesson.ts";
-import {
-  createSolver,
-  type QuestionPrompt,
-  type Solver,
-} from "./support/solver.ts";
+import { createSolver, type Solver } from "./support/solver.ts";
 
 const messages = (locale: "id" | "en") =>
   JSON.parse(readFileSync(`src/l10n/${locale}.json`, "utf8")) as Record<
@@ -62,83 +67,34 @@ const wuluSuku = (): Unit => solver.content.units[1]!;
 const shoot = (page: Page, name: string) =>
   page.screenshot({ path: `test-results/belajar-${name}.png` });
 
-interface Question {
-  number: number;
-  total: number;
-  prompt: QuestionPrompt;
-  options: string[];
-}
-
-async function readQuestion(page: Page): Promise<Question> {
-  const options = page.locator(".options button:not([disabled])");
-  await options.first().waitFor();
-  const bar = page.getByRole("progressbar");
-  const number = Number(await bar.getAttribute("aria-valuenow"));
-  const total = Number(await bar.getAttribute("aria-valuemax"));
-  const sound = page.locator(".prompt__sound");
-  const prompt: QuestionPrompt =
-    (await sound.count()) > 0
-      ? { sound: ((await sound.textContent()) ?? "").trim() }
-      : {
-          glyph: (
-            (await page.locator(".flashcard .aksara").textContent()) ?? ""
-          ).trim(),
-        };
-  const texts = (await options.allTextContents()).map((s) => s.trim());
-  return { number, total, prompt, options: texts };
-}
-
-const continueButton = (page: Page) =>
-  page.getByRole("button", { name: id["continueButton"]! });
-
-async function walkMeet(page: Page, glyphs: number): Promise<void> {
-  for (let i = 0; i < glyphs; i++) {
-    await expect(page.locator(".lesson .chip--count")).toHaveText(
-      `${i + 1}/${glyphs}`,
-    );
-    await continueButton(page).click();
-  }
-}
+const pinSeed = async (
+  page: Page,
+  target: Unit,
+  accept: (plan: Exercise[]) => boolean,
+): Promise<void> => {
+  const pinned = Array.from({ length: 500 }, (_, i) => i / 500).find((r) =>
+    accept(
+      groupByGlyph(
+        generateExercises({
+          unit: target,
+          taughtGlyphs: new Set(),
+          corpus: solver.content.words,
+          seed: Math.floor(r * 0x7fffffff),
+          glyphInfo: solver.table,
+        }),
+        target.glyphs,
+      ),
+    ),
+  );
+  expect(pinned).toBeDefined();
+  await page.addInitScript((value) => {
+    Math.random = () => value;
+  }, pinned!);
+};
 
 async function openLesson(page: Page, unitId: string): Promise<void> {
   await gotoRoute(page, `#/lesson/${unitId}`);
   await expect(page.locator(".lesson")).toBeVisible();
-}
-
-/** Plays a whole lesson, right answers only, ending on the done view. */
-async function completeLesson(page: Page, unitId: string): Promise<void> {
-  await openLesson(page, unitId);
-  await walkMeet(page, unit(unitId).glyphs.length);
-  for (;;) {
-    const q = await readQuestion(page);
-    const index = solver.correctIndex(q.prompt, q.options);
-    await page.locator(".options button").nth(index).click();
-    await page.locator(".feedback").waitFor();
-    await continueButton(page).click();
-    if (q.number === q.total) break;
-  }
-  await expect(page.locator(".trophy")).toBeVisible();
-}
-
-async function readStore<T>(page: Page, store: string): Promise<T[]> {
-  return page.evaluate(
-    async ({ name, storeName }) => {
-      const db = await new Promise<IDBDatabase>((resolve, reject) => {
-        const request = indexedDB.open(name);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-      return new Promise<unknown[]>((resolve, reject) => {
-        const request = db
-          .transaction(storeName)
-          .objectStore(storeName)
-          .getAll();
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-    },
-    { name: DB_NAME, storeName: store },
-  ) as Promise<T[]>;
 }
 
 const rowButton = (page: Page, n: number) =>
@@ -284,39 +240,116 @@ test("[P-B06][P-B07] the teacher button opens the teacher page with both cards",
   await expectNoHorizontalOverflow(page);
 });
 
-test("[P-B08] the meet phase walks every glyph of unit 1", async ({ page }) => {
+test("[P-B08] the first meet card shows glyph one with its counter, name, sound and a write button", async ({
+  page,
+}) => {
   await openLesson(page, first().id);
   await expect(
     page.getByRole("heading", { level: 1, name: id["lessonTitle"]! }),
   ).toBeVisible();
   const firstUnit = first();
-  for (const [i, glyphId] of firstUnit.glyphs.entries()) {
+  const info = solver.table.byId.get(firstUnit.glyphs[0]!)!;
+  await expect(page.locator(".lesson .chip--count")).toHaveText(
+    `1/${firstUnit.glyphs.length}`,
+  );
+  await expect(page.locator(".flashcard .aksara")).toHaveText(info.char);
+  await expect(page.locator(".flashcard__name")).toHaveText(info.name);
+  await expect(page.locator(".flashcard .chip")).toHaveText(
+    `${id["soundLabel"]!} · ${info.pujl}`,
+  );
+  await expect(
+    page.getByRole("button", { name: id["tryWritingButton"]! }),
+  ).toBeVisible();
+  await expectAccessible(page);
+  await expectTouchTargets(page);
+  await expectNoHorizontalOverflow(page);
+  await shoot(page, "meet");
+});
+
+test("[P-B19] unit 1 goes glyph by glyph: meet, trace, that glyph's question, next glyph, then done", async ({
+  page,
+}) => {
+  await openLesson(page, first().id);
+  const glyphs = first().glyphs;
+  for (const [i, glyphId] of glyphs.entries()) {
     const info = solver.table.byId.get(glyphId)!;
     await expect(page.locator(".lesson .chip--count")).toHaveText(
-      `${i + 1}/${firstUnit.glyphs.length}`,
+      `${i + 1}/${glyphs.length}`,
     );
     await expect(page.locator(".flashcard .aksara")).toHaveText(info.char);
-    await expect(page.locator(".flashcard__name")).toHaveText(info.name);
-    await expect(page.locator(".flashcard .chip")).toHaveText(
-      `${id["soundLabel"]!} · ${info.pujl}`,
-    );
+    await page.getByRole("button", { name: id["tryWritingButton"]! }).click();
+
+    await expect(page.locator(".lesson .trace")).toBeVisible();
+    await expect(page.locator(".trace__reading")).toHaveText(info.pujl);
     if (i === 0) {
       await expectAccessible(page);
-      await expectTouchTargets(page);
-      await expectNoHorizontalOverflow(page);
-      await shoot(page, "meet");
+      await shoot(page, "trace");
     }
+    await page.getByRole("button", { name: id["traceSkip"]! }).click();
+
+    const q = await readQuestion(page);
+    expect(q.number).toBe(i + 1);
+    expect(solver.targetIds(q.prompt)).toContain(glyphId);
+    await page
+      .locator(".options button")
+      .nth(solver.correctIndex(q.prompt, q.options))
+      .click();
     await continueButton(page).click();
   }
-  await expect(page.locator(".progress")).toBeVisible();
+  await expect(page.locator(".trophy")).toBeVisible();
+  expect(
+    (await readStore<UnitCompletionRow>(page, UNIT_COMPLETIONS)).map(
+      (r) => r.unitId,
+    ),
+  ).toEqual([first().id]);
+  expect(
+    (await readStore<SrsItemRow>(page, SRS_ITEMS)).map((r) => r.itemId).sort(),
+  ).toEqual([...glyphs].sort());
+});
+
+test("[P-B19] wulu and suku are not base letters: no trace screen, a question after each meet", async ({
+  page,
+}) => {
+  await seedOldCompletions(page, [first().id]);
+  await openLesson(page, wuluSuku().id);
+  const glyphs = wuluSuku().glyphs;
+  for (const [i, glyphId] of glyphs.entries()) {
+    const info = solver.table.byId.get(glyphId)!;
+    await expect(page.locator(".lesson .chip--count")).toHaveText(
+      `${i + 1}/${glyphs.length}`,
+    );
+    await expect(page.locator(".flashcard .aksara")).toHaveText(info.char);
+    await expect(
+      page.getByRole("button", { name: id["tryWritingButton"]! }),
+    ).toHaveCount(0);
+    await continueButton(page).click();
+    const q = await readQuestion(page);
+    expect(q.number).toBe(i + 1);
+    await expect(page.locator(".trace")).toHaveCount(0);
+    expect(solver.targetIds(q.prompt)).toContain(glyphId);
+    await page
+      .locator(".options button")
+      .nth(solver.correctIndex(q.prompt, q.options))
+      .click();
+    await continueButton(page).click();
+  }
+  await expect(page.locator(".trophy")).toBeVisible();
 });
 
 test("[P-B11] the question view shows the progress, a prompt card and one button per option", async ({
   page,
 }) => {
+  // Pin the seed so the first glyph is asked glyph to sound and the second
+  // sound to glyph; the kind of each follows the shuffled position.
+  await pinSeed(
+    page,
+    first(),
+    (plan) =>
+      plan[0]?.kind === "glyphToSound" && plan[1]?.kind === "soundToGlyph",
+  );
   await openLesson(page, first().id);
   const n = first().glyphs.length;
-  await walkMeet(page, n);
+  await advanceToQuestion(page, solver);
   const q = await readQuestion(page);
   expect(q.number).toBe(1);
   expect(q.total).toBe(n);
@@ -328,7 +361,6 @@ test("[P-B11] the question view shows the progress, a prompt card and one button
   expect(q.options.length).toBeLessThanOrEqual(4);
   expect(new Set(q.options).size).toBe(q.options.length);
   await expect(page.locator(".options button")).toHaveCount(q.options.length);
-  // Unit 1 starts with the first question as glyph to sound.
   expect(q.prompt).toHaveProperty("glyph");
   await expect(page.locator(".options")).not.toHaveClass(/options--grid/);
   await expectAccessible(page);
@@ -341,6 +373,7 @@ test("[P-B11] the question view shows the progress, a prompt card and one button
     .nth(solver.correctIndex(q.prompt, q.options))
     .click();
   await continueButton(page).click();
+  await advanceToQuestion(page, solver);
   const second = await readQuestion(page);
   expect(second.prompt).toHaveProperty("sound");
   await expect(page.locator(".options")).toHaveClass(/options--grid/);
@@ -356,7 +389,7 @@ test("[P-B12] feedback shows right and wrong answers; the last question gets fee
   page,
 }) => {
   await openLesson(page, first().id);
-  await walkMeet(page, first().glyphs.length);
+  await advanceToQuestion(page, solver);
 
   // Right answer on the first question.
   let q = await readQuestion(page);
@@ -376,6 +409,7 @@ test("[P-B12] feedback shows right and wrong answers; the last question gets fee
   await continueButton(page).click();
 
   // Wrong answer on the second.
+  await advanceToQuestion(page, solver);
   q = await readQuestion(page);
   const correct = solver.correctIndex(q.prompt, q.options);
   const wrong = (correct + 1) % q.options.length;
@@ -397,6 +431,7 @@ test("[P-B12] feedback shows right and wrong answers; the last question gets fee
 
   // Answer through to the last question: feedback first, done after Continue.
   for (;;) {
+    await advanceToQuestion(page, solver);
     q = await readQuestion(page);
     await page
       .locator(".options button")
@@ -417,7 +452,7 @@ test("[P-B12] feedback shows right and wrong answers; the last question gets fee
 test("[P-B14] the done view reports the score and Back returns to the ladder; the unit is saved and its glyphs queued", async ({
   page,
 }) => {
-  await completeLesson(page, first().id);
+  await completeLesson(page, solver, first().id);
   await expect(
     page.getByRole("heading", {
       level: 2,
@@ -453,16 +488,7 @@ test("[P-B05] after a lesson the ladder shows unit 1 completed and unit 2 ready 
   await gotoRoute(page, "");
   await rowButton(page, 1).click();
   await expect(page.locator(".lesson")).toBeVisible();
-  await walkMeet(page, first().glyphs.length);
-  for (;;) {
-    const q = await readQuestion(page);
-    await page
-      .locator(".options button")
-      .nth(solver.correctIndex(q.prompt, q.options))
-      .click();
-    await continueButton(page).click();
-    if (q.number === q.total) break;
-  }
+  await playLesson(page, solver, first().id, { navigate: false });
   await page.locator(".lesson__foot").getByRole("button").click();
   await expect(page.locator(".ladder")).toBeVisible();
   await expect(rowButton(page, 1)).toContainText(id["unitStatusCompleted"]!);
@@ -514,34 +540,32 @@ test("[P-B13] a wrong answer that picks the confusion-pair partner is logged onc
     Math.random = () => value;
   }, pinned!);
 
-  await completeLesson(page, first().id);
-  await openLesson(page, wuluSuku().id);
-  await walkMeet(page, 2);
+  await completeLesson(page, solver, first().id);
 
   let logged = false;
-  for (;;) {
-    const q = await readQuestion(page);
-    const targets = solver
-      .targetIds(q.prompt)
-      .filter((t) => t === "wulu" || t === "suku");
-    const partnerIndex =
-      targets
-        .map((t) => solver.optionFor(partnerOf(t), q.prompt, q.options))
-        .find((i) => i >= 0) ?? -1;
-    if (!logged && "sound" in q.prompt && partnerIndex >= 0) {
-      await page.locator(".options button").nth(partnerIndex).click();
-      await expect(page.getByRole("status")).toHaveText(id["answerWrong"]!);
-      logged = true;
-    } else {
-      await page
-        .locator(".options button")
-        .nth(solver.correctIndex(q.prompt, q.options))
-        .click();
-      await expect(page.getByRole("status")).toHaveText(id["answerCorrect"]!);
-    }
-    if (q.number === q.total) break;
-    await continueButton(page).click();
-  }
+  const lessonOptions = (p: Page) => p.locator(".lesson .options button");
+  const lessonStatus = (p: Page) => p.locator(".lesson").getByRole("status");
+  await playLesson(page, solver, wuluSuku().id, {
+    onQuestion: async (p, q) => {
+      const targets = solver
+        .targetIds(q.prompt)
+        .filter((t) => t === "wulu" || t === "suku");
+      const partnerIndex =
+        targets
+          .map((t) => solver.optionFor(partnerOf(t), q.prompt, q.options))
+          .find((i) => i >= 0) ?? -1;
+      if (!logged && "sound" in q.prompt && partnerIndex >= 0) {
+        await lessonOptions(p).nth(partnerIndex).click();
+        await expect(lessonStatus(p)).toHaveText(id["answerWrong"]!);
+        logged = true;
+      } else {
+        await lessonOptions(p)
+          .nth(solver.correctIndex(q.prompt, q.options))
+          .click();
+        await expect(lessonStatus(p)).toHaveText(id["answerCorrect"]!);
+      }
+    },
+  });
   expect(logged).toBe(true);
   const rows = await readStore<MistakeLogRow>(page, MISTAKE_LOGS);
   expect(rows.map((r) => [r.confusionPair, r.count])).toEqual([
@@ -563,13 +587,12 @@ test("[P-B15] meet to question transitions animate, and not under reduced motion
     () =>
       new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
   );
-  await continueButton(page).click();
+  await page.locator(".lesson__foot button").click();
+  await page.locator(".lesson .trace").waitFor();
   expect(await running(), "animation after a transition").toBeGreaterThan(0);
 
   await page.emulateMedia({ reducedMotion: "reduce" });
-  for (let i = 0; i < first().glyphs.length - 1; i++) {
-    await continueButton(page).click();
-  }
+  await advanceToQuestion(page, solver);
   await page.locator(".progress").waitFor();
   await page.evaluate(
     () =>
@@ -623,11 +646,12 @@ test.describe("English interface", () => {
     );
     await expect(page.locator(".flashcard__name")).toHaveText(info.name);
     await expect(
-      continueButton(page).or(
-        page.getByRole("button", { name: en["continueButton"]! }),
-      ),
+      page.getByRole("button", { name: en["tryWritingButton"]! }),
     ).toBeVisible();
-    await page.getByRole("button", { name: en["continueButton"]! }).click();
+    await page.getByRole("button", { name: en["tryWritingButton"]! }).click();
+    await expect(
+      page.getByRole("button", { name: en["traceSkip"]! }),
+    ).toBeVisible();
     await expectAccessible(page);
   });
 });
@@ -637,33 +661,33 @@ test("[P-A11Y] focus stays in the lesson after every step instead of falling to 
 }) => {
   const body = () =>
     page.evaluate(() => document.activeElement === document.body);
-  const proceed = page.getByRole("button", { name: id["continueButton"]! });
+  const tryWriting = page.getByRole("button", {
+    name: id["tryWritingButton"]!,
+  });
+  const checkTrace = page.getByRole("button", { name: id["traceCheck"]! });
+  const skipTrace = page.getByRole("button", { name: id["traceSkip"]! });
   await gotoRoute(page, `#/lesson/${first().id}`);
-  const glyphs = first().glyphs.length;
 
-  // Each meet card puts focus on Continue.
-  for (let i = 0; i < glyphs; i++) {
-    await expect(page.locator(".lesson .chip--count")).toHaveText(
-      `${i + 1}/${glyphs}`,
-    );
-    if (i > 0) await expect(proceed).toBeFocused();
-    await proceed.click();
-  }
+  // The first meet card is focused by the page; "Coba tulis" opens the trace
+  // screen, whose primary action takes focus.
+  await expect(tryWriting).toBeVisible();
+  await tryWriting.click();
+  await expect(page.locator(".lesson .trace")).toBeVisible();
+  await expect(checkTrace).toBeFocused();
+  await skipTrace.click();
 
   // A new question focuses its first option; an answer focuses the feedback.
   await expect(page.locator(".options button").first()).toBeFocused();
   await answerCurrentQuestion(page, solver);
   await expect(page.locator(".feedback")).toBeFocused();
   expect(await body()).toBe(false);
-  await proceed.click();
-  await expect(page.locator(".options button").first()).toBeFocused();
+  await continueButton(page).click();
+
+  // The next glyph's meet card puts focus on its button.
+  await expect(tryWriting).toBeFocused();
+  await playLesson(page, solver, first().id, { navigate: false });
 
   // Finish the lesson: the done heading takes focus.
-  for (;;) {
-    const q = await answerCurrentQuestion(page, solver);
-    await proceed.click();
-    if (q.number === q.total) break;
-  }
   await expect(page.locator(".done__title")).toBeFocused();
 });
 

@@ -179,5 +179,6 @@
   "traceFail": "Not quite. Follow the lines again.",
   "traceEmpty": "Write in the box first.",
   "practiceLabel": "Practice",
-  "writeLetterButton": "Write {name}"
+  "writeLetterButton": "Write {name}",
+  "tryWritingButton": "Try writing"
 }

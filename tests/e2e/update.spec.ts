@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { kajRulesetId } from "../../src/engine/index.ts";
 import { gotoRoute, tokenColor } from "./support/app.ts";
 import { expect, test, trackForeignRequests } from "./support/fixtures.ts";
-import { id, walkMeet } from "./support/lesson.ts";
+import { advanceToQuestion, id } from "./support/lesson.ts";
 import { createSolver, type Solver } from "./support/solver.ts";
 import {
   startStaticServer,
@@ -96,8 +96,7 @@ test("an update never interrupts a lesson, is offered on the ladder, can wait, a
 
   // (a) a waiting worker, mid-lesson: no banner, the question stays.
   await gotoRoute(page, `#/lesson/${solver.content.units[0]!.id}`);
-  await walkMeet(page, solver.content.units[0]!.glyphs.length);
-  await page.locator(".options button").first().waitFor();
+  await advanceToQuestion(page, solver);
   await publishV2(page);
   await expect(banner(page)).toHaveCount(0);
   await expect(page.locator(".options button").first()).toBeVisible();
@@ -191,8 +190,7 @@ test("accepting in one window does not reload another window that is mid-lesson"
 
   const lesson = await context.newPage();
   await gotoRoute(lesson, `#/lesson/${solver.content.units[0]!.id}`);
-  await walkMeet(lesson, solver.content.units[0]!.glyphs.length);
-  await lesson.locator(".options button").first().waitFor();
+  await advanceToQuestion(lesson, solver);
   const prompt = await lesson.locator(".lesson").innerHTML();
   await lesson.evaluate(() => {
     const w = window as unknown as Record<string, unknown>;

@@ -179,5 +179,6 @@
   "traceFail": "Belum pas. Ikuti garisnya lagi.",
   "traceEmpty": "Tulis dulu di kotak.",
   "practiceLabel": "Latihan",
-  "writeLetterButton": "Tulis {name}"
+  "writeLetterButton": "Tulis {name}",
+  "tryWritingButton": "Coba tulis"
 }

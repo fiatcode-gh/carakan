@@ -141,7 +141,11 @@
           onclick: onfinish,
           autofocus: true,
         }
-      : { label: $t("traceCheck"), onclick: () => void check() }}
+      : {
+          label: $t("traceCheck"),
+          onclick: () => void check(),
+          autofocus: true,
+        }}
   />
 </div>
 

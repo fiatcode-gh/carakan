@@ -16,7 +16,7 @@ import {
 } from "./support/a11y.ts";
 import { gotoRoute, tokenColor } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
-import { writeRows } from "./support/lesson.ts";
+import { playLesson, writeRows } from "./support/lesson.ts";
 import {
   createSolver,
   type QuestionPrompt,
@@ -480,45 +480,26 @@ test("[P-R11] a mistake made in a lesson surfaces the drill without a reload", a
   await gotoRoute(page, "#/review");
   await expect(page.getByText(id["reviewEmpty"]!)).toBeVisible();
 
-  const play = async (unitId: string, glyphs: number, wrongOnWulu: boolean) => {
+  const play = async (unitId: string, wrongOnWulu: boolean) => {
     await page.evaluate((hash) => {
       location.hash = hash;
     }, `#/lesson/${unitId}`);
-    await expect(page.locator(".lesson")).toBeVisible();
-    for (let i = 0; i < glyphs; i++) {
-      await page.getByRole("button", { name: id["continueButton"]! }).click();
-    }
-    let done = false;
     let logged = false;
-    while (!done) {
-      const options = page.locator(".options button:not([disabled])");
-      await options.first().waitFor();
-      const bar = page.getByRole("progressbar");
-      const number = Number(await bar.getAttribute("aria-valuenow"));
-      const total = Number(await bar.getAttribute("aria-valuemax"));
-      const sound = page.locator(".prompt__sound");
-      const prompt: QuestionPrompt =
-        (await sound.count()) > 0
-          ? { sound: ((await sound.textContent()) ?? "").trim() }
-          : {
-              glyph: (
-                (await page.locator(".flashcard .aksara").textContent()) ?? ""
-              ).trim(),
-            };
-      const texts = (await options.allTextContents()).map((s) => s.trim());
-      const sukuIndex = solver.targetIds(prompt).includes("wulu")
-        ? solver.optionFor("suku", prompt, texts)
-        : -1;
-      let index = solver.correctIndex(prompt, texts);
-      if (wrongOnWulu && !logged && "sound" in prompt && sukuIndex >= 0) {
-        index = sukuIndex;
-        logged = true;
-      }
-      await options.nth(index).click();
-      await expect(page.getByRole("status")).toBeVisible();
-      done = number === total;
-      await page.getByRole("button", { name: id["continueButton"]! }).click();
-    }
+    await playLesson(page, solver, unitId, {
+      navigate: false,
+      onQuestion: async (p, { prompt, options }) => {
+        const sukuIndex = solver.targetIds(prompt).includes("wulu")
+          ? solver.optionFor("suku", prompt, options)
+          : -1;
+        let index = solver.correctIndex(prompt, options);
+        if (wrongOnWulu && !logged && "sound" in prompt && sukuIndex >= 0) {
+          index = sukuIndex;
+          logged = true;
+        }
+        await p.locator(".lesson .options button").nth(index).click();
+        await expect(p.locator(".lesson").getByRole("status")).toBeVisible();
+      },
+    });
     if (wrongOnWulu) expect(logged).toBe(true);
   };
 
@@ -529,9 +510,9 @@ test("[P-R11] a mistake made in a lesson surfaces the drill without a reload", a
     await page.locator(".lesson__foot").getByRole("button").click();
   };
 
-  await play(units[0]!.id, units[0]!.glyphs.length, false);
+  await play(units[0]!.id, false);
   await backFromDone();
-  await play(units[1]!.id, units[1]!.glyphs.length, true);
+  await play(units[1]!.id, true);
   await backFromDone();
   await page.getByRole("link", { name: id["navReview"]! }).click();
   await expect(
