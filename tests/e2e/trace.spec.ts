@@ -8,9 +8,11 @@ import {
   draw,
   glyphRuns,
   line,
+  offsetBy,
   padBox,
   scribble,
   strokesOf,
+  zigzagOver,
   type Pointer,
   type Pt,
 } from "./support/trace.ts";
@@ -134,6 +136,32 @@ test("[P-B20] a short stroke in a corner away from the glyph fails", async ({
   await expect(status(page)).toHaveText(id["traceFail"]!);
   await expect(doneSlots(page)).toHaveCount(0);
 });
+
+test("[P-B20] a sloppy trace, off by half the stroke width, still passes", async ({
+  page,
+}) => {
+  await openTrace(page);
+  const strokes = strokesOf(await glyphRuns(page, glyph("pa").char));
+  await draw(page, "mouse", offsetBy(strokes, 6, 6));
+  await button(page, "traceCheck").click();
+  await expect(status(page)).toHaveText(id["tracePass"]!);
+  await expect(doneSlots(page)).toHaveCount(1);
+});
+
+for (const glyphId of ["pa", "ha", "nga"]) {
+  for (const spacing of [12, 18, 24]) {
+    test(`[P-B20] a blind zigzag over the ${glyphId} ink box, rows ${spacing}px apart, fails and fills no slot`, async ({
+      page,
+    }) => {
+      await openTrace(page, glyphId);
+      const runs = await glyphRuns(page, glyph(glyphId).char);
+      await draw(page, "mouse", zigzagOver(runs, spacing));
+      await button(page, "traceCheck").click();
+      await expect(status(page)).toHaveText(id["traceFail"]!);
+      await expect(doneSlots(page)).toHaveCount(0);
+    });
+  }
+}
 
 /** Summed alpha of the ink within 10 CSS px of a viewport point. */
 function inkNear(page: Page, [x, y]: Pt): Promise<number> {

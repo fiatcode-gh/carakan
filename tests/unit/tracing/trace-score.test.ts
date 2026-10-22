@@ -10,6 +10,14 @@ import {
   scoreTrace,
   type CellMask,
 } from "../../../src/features/tracing/trace-score.ts";
+import {
+  LETTER_IDS,
+  STROKE_PX,
+  judge,
+  padGlyph,
+  shifted,
+  zigzag,
+} from "./support/pad.ts";
 
 const SIZE = 100;
 
@@ -49,8 +57,10 @@ describe("[P-B20] maskFromAlpha", () => {
     data[(5 * SIZE + 9) * 4 + 3] = 127;
     const m = maskFromAlpha(data, SIZE, SIZE);
     expect(m.width).toBe(SIZE / TRACE_CELL_PX);
-    expect(m.cells[1 * m.width + 1]).toBe(1);
-    expect(m.cells[1 * m.width + 2]).toBe(0);
+    const cell = Math.floor(5 / TRACE_CELL_PX);
+    const faint = Math.floor(9 / TRACE_CELL_PX);
+    expect(m.cells[cell * m.width + cell]).toBe(1);
+    expect(m.cells[cell * m.width + faint]).toBe(0);
   });
 
   test("a buffer that does not match the size is a RangeError", () => {
@@ -83,7 +93,7 @@ describe("[P-B20] scoreTrace", () => {
     expect(MIN_COVERAGE).toBeLessThanOrEqual(0.7);
     expect(MIN_PRECISION).toBeGreaterThanOrEqual(0.6);
     expect(MIN_PRECISION).toBeLessThanOrEqual(0.8);
-    expect(COVER_RADIUS).toBeLessThan(PRECISION_RADIUS);
+    expect(PRECISION_RADIUS).toBeLessThanOrEqual(COVER_RADIUS);
   });
 
   test("ink along the whole glyph band passes", () => {
@@ -133,5 +143,50 @@ describe("[P-B20] scoreTrace", () => {
   test("masks of different sizes are a RangeError", () => {
     const small = maskFromAlpha(new Uint8ClampedArray(40 * 40 * 4), 40, 40);
     expect(() => scoreTrace(glyph, small)).toThrow(RangeError);
+  });
+});
+
+describe("[P-B20] scoreTrace on the 20 base letters", () => {
+  const zigzags = [12, 18, 24].flatMap((spacing) =>
+    [0, spacing / 2].flatMap((phase) =>
+      [true, false].map((joined) => ({ spacing, phase, joined })),
+    ),
+  );
+
+  test("the fixture holds the 20 base letters", () => {
+    expect(LETTER_IDS).toHaveLength(20);
+  });
+
+  describe.each(LETTER_IDS)("%s", (id) => {
+    const letter = padGlyph(id);
+
+    test("a trace along the glyph passes with margin", () => {
+      const score = judge(letter, letter.genuine);
+      expect(score.passed).toBe(true);
+      expect(score.coverage).toBeGreaterThanOrEqual(0.9);
+      expect(score.precision).toBeGreaterThanOrEqual(0.9);
+    });
+
+    test("a sloppy trace, off by half the stroke width, still passes", () => {
+      const half = STROKE_PX / 2;
+      for (const [dx, dy] of [
+        [half, half],
+        [-half, -half],
+        [half, -half],
+        [-half, half],
+      ] as const) {
+        const score = judge(letter, shifted(letter.genuine, dx, dy));
+        expect(score.passed, `offset ${dx},${dy}`).toBe(true);
+      }
+    });
+
+    test.each(zigzags)(
+      "a blind zigzag over the glyph box fails ($spacing px apart, phase $phase, joined $joined)",
+      ({ spacing, phase, joined }) => {
+        const score = judge(letter, zigzag(letter.box, spacing, phase, joined));
+        expect(score.passed).toBe(false);
+        expect(score.precision).toBeLessThan(MIN_PRECISION);
+      },
+    );
   });
 });

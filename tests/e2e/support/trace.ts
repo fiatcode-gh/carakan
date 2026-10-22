@@ -10,11 +10,34 @@ export type Pointer = "mouse" | "touch" | "pen";
 export type Pt = readonly [x: number, y: number];
 
 /**
+ * Waits until the visible pad has held its page position for several frames:
+ * the view rises 4% as it fades in, and ink drawn at a position measured
+ * mid-rise lands off the glyph by up to ~10px.
+ */
+async function padSettled(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const pad = [...document.querySelectorAll<HTMLElement>(".trace-pad")].find(
+      (el) => el.checkVisibility(),
+    )!;
+    let still = 0;
+    let last = "";
+    while (still < 6) {
+      const { left, top } = pad.getBoundingClientRect();
+      const at = `${left},${top}`;
+      still = at === last ? still + 1 : 0;
+      last = at;
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+  });
+}
+
+/**
  * Rebuilds the glyph mask in the page from the pad's `data-*` layout (the pad
  * carries no answer geometry) and returns page-coordinate runs of ink, one
  * scan every 6px row, each trimmed 2px at both ends.
  */
-export function glyphRuns(page: Page, char: string): Promise<Run[]> {
+export async function glyphRuns(page: Page, char: string): Promise<Run[]> {
+  await padSettled(page);
   return page.evaluate(async (glyph) => {
     const pad = [...document.querySelectorAll<HTMLElement>(".trace-pad")].find(
       (el) => el.checkVisibility(),
@@ -56,9 +79,10 @@ export function glyphRuns(page: Page, char: string): Promise<Run[]> {
 }
 
 /** The pad's page rectangle (inside its border). */
-export function padBox(
+export async function padBox(
   page: Page,
 ): Promise<{ x: number; y: number; width: number; height: number }> {
+  await padSettled(page);
   return page.evaluate(() => {
     const pad = [...document.querySelectorAll<HTMLElement>(".trace-pad")].find(
       (el) => el.checkVisibility(),
@@ -88,6 +112,38 @@ export function line(from: Pt, to: Pt): Pt[] {
 /** One stroke across every run, so a trace covers the whole glyph. */
 export function strokesOf(runs: readonly Run[]): Pt[][] {
   return runs.map((r) => line([r.x0, r.y], [r.x1, r.y]));
+}
+
+/** The strokes moved by (dx, dy): a sloppy trace of the same glyph. */
+export function offsetBy(
+  strokes: readonly (readonly Pt[])[],
+  dx: number,
+  dy: number,
+): Pt[][] {
+  return strokes.map((s) => s.map(([x, y]): Pt => [x + dx, y + dy]));
+}
+
+/**
+ * One blind stroke that sweeps left and right over the glyph's ink box, rows
+ * `spacing` px apart. The box comes from the scan runs (to within one 6px scan
+ * row), widened by the 2px trim.
+ */
+export function zigzagOver(runs: readonly Run[], spacing: number): Pt[][] {
+  const left = Math.min(...runs.map((r) => r.x0)) - 2;
+  const right = Math.max(...runs.map((r) => r.x1)) + 2;
+  const top = Math.min(...runs.map((r) => r.y));
+  const bottom = Math.max(...runs.map((r) => r.y));
+  const stroke: Pt[] = [];
+  let leftToRight = true;
+  for (let y = top; ; y += spacing) {
+    const row = Math.min(y, bottom);
+    const [from, to] = leftToRight ? [left, right] : [right, left];
+    stroke.push(...line([from, row], [to, row]));
+    if (row === bottom) break;
+    stroke.push(...line([to, row], [to, Math.min(y + spacing, bottom)]));
+    leftToRight = !leftToRight;
+  }
+  return [stroke];
 }
 
 /** Draws strokes with a real pointer of the given type. */

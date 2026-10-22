@@ -1,13 +1,16 @@
 /** Side of one mask cell in CSS pixels. */
-export const TRACE_CELL_PX = 4;
+export const TRACE_CELL_PX = 2;
 /** How far (in cells) ink may sit from the glyph and still cover it. */
-export const COVER_RADIUS = 2;
-/** How far (in cells) ink may sit from the glyph and still count as on it. */
-export const PRECISION_RADIUS = 4;
+export const COVER_RADIUS = 4;
+/**
+ * How far (in cells) ink may sit from the glyph and still count as on it.
+ * Tight, so ink spread over the glyph's box is mostly off the glyph.
+ */
+export const PRECISION_RADIUS = 2;
 /** Share of the glyph the ink must cover. */
 export const MIN_COVERAGE = 0.6;
 /** Share of the ink that must lie near the glyph. */
-export const MIN_PRECISION = 0.7;
+export const MIN_PRECISION = 0.72;
 
 /** A coarse on/off raster; `cells` is row-major, 1 = on. */
 export interface CellMask {
