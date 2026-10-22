@@ -143,7 +143,7 @@ test("[P-B01] the ladder lists the 9 units in order with numbered medallions and
 }) => {
   await gotoRoute(page, "");
   await expect(
-    page.getByRole("heading", { level: 1, name: id["navLadder"]! }),
+    page.getByRole("heading", { level: 1, name: id["ladderTitle"]! }),
   ).toBeVisible();
   const rows = page.locator(".ladder > li");
   await expect(rows).toHaveCount(solver.content.units.length);
@@ -542,7 +542,7 @@ test.describe("English interface", () => {
   }) => {
     await gotoRoute(page, "");
     await expect(
-      page.getByRole("heading", { level: 1, name: en["navLadder"]! }),
+      page.getByRole("heading", { level: 1, name: en["ladderTitle"]! }),
     ).toBeVisible();
     await expect(rowButton(page, 1)).toContainText(en["unitStatusReady"]!);
     await expect(rowButton(page, 2)).toContainText(en["unitStatusLocked"]!);

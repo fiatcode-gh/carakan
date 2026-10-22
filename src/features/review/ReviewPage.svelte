@@ -6,6 +6,7 @@
   import { getI18n } from "../../l10n/context.ts";
   import AksaraText from "../../ui/AksaraText.svelte";
   import Button from "../../ui/Button.svelte";
+  import HandNote from "../../ui/HandNote.svelte";
   import IconButton from "../../ui/IconButton.svelte";
   import Page from "../../ui/Page.svelte";
   import Reading from "../../ui/Reading.svelte";
@@ -83,6 +84,9 @@
 <svelte:document onvisibilitychange={onVisibility} />
 
 <Page title={$t("reviewTitle")}>
+  {#snippet note()}
+    <HandNote tilt>{$t("reviewNote")}</HandNote>
+  {/snippet}
   {#snippet actions()}
     <IconButton
       icon="circle-help"

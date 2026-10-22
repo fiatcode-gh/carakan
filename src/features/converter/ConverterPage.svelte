@@ -30,8 +30,9 @@
 <Page title={$t("converterTitle")}>
   {#snippet actions()}
     <IconButton
-      icon="info"
+      icon="circle-help"
       label={$t("aboutTitle")}
+      tone="card"
       {...routeLink({ kind: "settings" })}
     />
   {/snippet}

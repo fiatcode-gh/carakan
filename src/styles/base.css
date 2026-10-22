@@ -158,7 +158,24 @@ button {
   width: 100%;
   max-width: var(--content-max);
   margin-inline: auto;
-  padding: var(--space-4) var(--space-4) var(--space-9);
+  padding: var(--space-4) var(--gutter) var(--space-9);
+}
+
+/* Learn: the notebook margin line sits 30px inside the column and moves with it. */
+.page--margin {
+  position: relative;
+  padding-inline-start: var(--gutter-notebook);
+}
+
+.page--margin::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 30px;
+  width: 2px;
+  background: var(--color-margin);
+  opacity: 0.8;
+  pointer-events: none;
 }
 
 body[data-chrome="tabs"] .page {

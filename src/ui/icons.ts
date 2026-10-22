@@ -15,10 +15,6 @@ export const icons = {
     { tag: "path", d: "m16 21 4-4-4-4" },
     { tag: "path", d: "M20 17H4" },
   ],
-  "arrow-left": [
-    { tag: "path", d: "m12 19-7-7 7-7" },
-    { tag: "path", d: "M19 12H5" },
-  ],
   "book-open": [
     { tag: "path", d: "M12 5v16" },
     {
@@ -27,6 +23,7 @@ export const icons = {
     },
   ],
   check: [{ tag: "path", d: "M20 6 9 17l-5-5" }],
+  "chevron-left": [{ tag: "path", d: "m15 18-6-6 6-6" }],
   "chevron-right": [{ tag: "path", d: "m9 18 6-6-6-6" }],
   "circle-check": [
     { tag: "circle", cx: 12, cy: 12, r: 10 },
@@ -92,6 +89,11 @@ export const icons = {
     { tag: "rect", width: 18, height: 11, x: 3, y: 11, rx: 2, ry: 2 },
     { tag: "path", d: "M7 11V7a5 5 0 0 1 10 0v4" },
   ],
+  menu: [
+    { tag: "path", d: "M4 5h16" },
+    { tag: "path", d: "M4 12h16" },
+    { tag: "path", d: "M4 19h16" },
+  ],
   play: [
     {
       tag: "path",
@@ -103,12 +105,6 @@ export const icons = {
     { tag: "path", d: "M21 3v5h-5" },
     { tag: "path", d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" },
     { tag: "path", d: "M8 16H3v5" },
-  ],
-  repeat: [
-    { tag: "path", d: "m17 2 4 4-4 4" },
-    { tag: "path", d: "M3 11v-1a4 4 0 0 1 4-4h14" },
-    { tag: "path", d: "m7 22-4-4 4-4" },
-    { tag: "path", d: "M21 13v1a4 4 0 0 1-4 4H3" },
   ],
   settings: [
     {

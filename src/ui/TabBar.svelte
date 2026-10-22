@@ -54,9 +54,9 @@
     gap: var(--space-1);
     min-height: var(--nav-height);
     padding: var(--space-2) var(--space-1);
-    color: var(--color-ink);
+    color: var(--color-ink-muted);
     font-size: var(--text-xs);
-    font-weight: var(--weight-black);
+    font-weight: var(--weight-bold);
     text-decoration: none;
   }
 
@@ -69,10 +69,16 @@
     place-items: center;
   }
 
+  .tab-bar__pill :global(.icon) {
+    width: 22px;
+    height: 22px;
+  }
+
   /* The selected tab is more than hue: ink fill with paper content. */
   .tab-bar__item[aria-current="page"] {
     background: var(--color-ink);
     color: var(--color-on-ink);
+    font-weight: var(--weight-black);
   }
 
   /* Wide screens: the tab bar becomes a side rail and content stays centred. */

@@ -33,7 +33,13 @@ test("[P-S01] four tabs in order, labelled, with icons and a selected state", as
   for (const link of await links.all()) {
     await expect(link.locator('svg[aria-hidden="true"]')).toHaveCount(1);
   }
+  await expect(links).toHaveCount(4);
   await expect(links.nth(0)).toHaveAttribute("aria-current", "page");
+  const fills = await links.evaluateAll((nodes) =>
+    nodes.map((node) => getComputedStyle(node).backgroundColor),
+  );
+  expect(fills[0]).not.toBe(fills[1]);
+  expect(new Set(fills.slice(1)).size).toBe(1);
   await links.nth(1).click();
   await expect(links.nth(1)).toHaveAttribute("aria-current", "page");
   await expect(links.nth(0)).not.toHaveAttribute("aria-current", "page");
@@ -44,7 +50,7 @@ test("[P-S02] first launch shows Belajar at #/", async ({ page }) => {
   await page.locator('#app[data-boot="ready"]').waitFor();
   expect(new URL(page.url()).hash).toBe("#/");
   await expect(
-    page.getByRole("heading", { level: 1, name: id["navLadder"]! }),
+    page.getByRole("heading", { level: 1, name: id["ladderTitle"]! }),
   ).toBeVisible();
 });
 
@@ -126,7 +132,7 @@ test("[P-S05] an unknown hash lands on #/", async ({ page }) => {
   await gotoRoute(page, "#/does-not-exist");
   await expect.poll(() => new URL(page.url()).hash).toBe("#/");
   await expect(
-    page.getByRole("heading", { level: 1, name: id["navLadder"]! }),
+    page.getByRole("heading", { level: 1, name: id["ladderTitle"]! }),
   ).toBeVisible();
 });
 

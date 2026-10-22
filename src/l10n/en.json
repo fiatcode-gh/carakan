@@ -1,7 +1,7 @@
 {
   "appTitle": "Carakan",
   "appSubtitle": "Javanese script",
-  "converterTitle": "Converter",
+  "converterTitle": "Convert aksara.",
   "dirLatinToAksara": "Latin → aksara",
   "dirAksaraToLatin": "Aksara → Latin",
   "inputHintLatin": "Type a word in Latin letters…",
@@ -72,7 +72,7 @@
   "lessonDone": "Done! {correct} of {total} correct",
   "backButton": "Back",
   "questionProgress": "Question {number} of {total}",
-  "reviewTitle": "Review",
+  "reviewTitle": "Review again.",
   "drillHeading": "Targeted practice",
   "reviewGroupRetry": "Try again",
   "reviewGroupFresh": "New",
@@ -90,7 +90,7 @@
   "gradeHard": "Hard",
   "gradeGood": "Good",
   "gradeEasy": "Easy",
-  "chartTitle": "Aksara chart",
+  "chartTitle": "Aksara chart.",
   "soundLabel": "Sound",
   "pasanganLabel": "Pasangan",
   "murdaLabel": "Murda",
@@ -148,5 +148,8 @@
   "engineAmbiguousBareE": "A plain “e” can be pepet (ě) or taling (é). Pick one, or type ě/ê/é/è.",
   "engineAmbiguousVowelPair": "In Pedoman 2002, “ai”/“au” is two aksara: ha between the vowels (sinahu) or a swara letter. Pick one, or type the h.",
   "engineAmbiguousBareEAndVowelPair": "A plain “e” can be pepet (ě) or taling (é), and “ai”/“au” is two aksara (ha or a swara letter). Pick one.",
-  "engineErrorGeneric": "This input cannot be converted."
+  "engineErrorGeneric": "This input cannot be converted.",
+  "ladderTitle": "Learn aksara.",
+  "chartNote": "Tap for details",
+  "reviewNote": "a little, but often"
 }

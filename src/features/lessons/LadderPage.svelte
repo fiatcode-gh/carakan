@@ -31,16 +31,18 @@
   } as const;
 </script>
 
-<Page title={$t("navLadder")}>
+<Page title={$t("ladderTitle")} margin>
   {#snippet actions()}
     <IconButton
       icon="graduation-cap"
       label={$t("teacherTitle")}
+      tone="paper"
       {...routeLink({ kind: "teacher" })}
     />
     <IconButton
-      icon="settings"
+      icon="menu"
       label={$t("settingsTitle")}
+      tone="butter"
       {...routeLink({ kind: "settings" })}
     />
   {/snippet}

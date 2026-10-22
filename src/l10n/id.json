@@ -1,7 +1,7 @@
 {
   "appTitle": "Carakan",
   "appSubtitle": "Aksara Jawa",
-  "converterTitle": "Ubah Aksara",
+  "converterTitle": "Ganti aksara.",
   "dirLatinToAksara": "Latin → Aksara",
   "dirAksaraToLatin": "Aksara → Latin",
   "inputHintLatin": "Ketik kata dalam huruf Latin…",
@@ -72,7 +72,7 @@
   "lessonDone": "Selesai! {correct} dari {total} benar",
   "backButton": "Kembali",
   "questionProgress": "Soal {number} dari {total}",
-  "reviewTitle": "Ulangi",
+  "reviewTitle": "Ulangi lagi.",
   "drillHeading": "Latihan fokus",
   "reviewGroupRetry": "Coba lagi",
   "reviewGroupFresh": "Baru",
@@ -90,7 +90,7 @@
   "gradeHard": "Agak sulit",
   "gradeGood": "Lancar",
   "gradeEasy": "Mudah",
-  "chartTitle": "Bagan Aksara",
+  "chartTitle": "Tabel aksara.",
   "soundLabel": "Bunyi",
   "pasanganLabel": "Pasangan",
   "murdaLabel": "Murda",
@@ -148,5 +148,8 @@
   "engineAmbiguousBareE": "Huruf “e” tanpa tanda bisa dibaca pepet (ě) atau taling (é). Pilih salah satu, atau ketik ě/ê/é/è.",
   "engineAmbiguousVowelPair": "Dalam Pedoman 2002, “ai”/“au” ditulis dua aksara: ha di antara kedua vokal (sinahu) atau aksara swara. Pilih salah satu, atau ketik h-nya.",
   "engineAmbiguousBareEAndVowelPair": "Huruf “e” tanpa tanda bisa dibaca pepet (ě) atau taling (é), dan “ai”/“au” ditulis dua aksara (ha atau aksara swara). Pilih salah satu.",
-  "engineErrorGeneric": "Masukan ini tidak bisa diubah."
+  "engineErrorGeneric": "Masukan ini tidak bisa diubah.",
+  "ladderTitle": "Sinau aksara.",
+  "chartNote": "Ketuk untuk detail",
+  "reviewNote": "sedikit tapi rutin"
 }

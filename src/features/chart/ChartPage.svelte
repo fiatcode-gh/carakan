@@ -2,6 +2,7 @@
   import { getServices } from "../../app/services.ts";
   import { getI18n } from "../../l10n/context.ts";
   import GlyphTile from "../../ui/GlyphTile.svelte";
+  import HandNote from "../../ui/HandNote.svelte";
   import Page from "../../ui/Page.svelte";
   import ChartDetailSheet from "./ChartDetailSheet.svelte";
   import { buildChartSections, type ChartEntry } from "./chart-catalog.ts";
@@ -25,6 +26,9 @@
 </script>
 
 <Page title={$t("chartTitle")}>
+  {#snippet note()}
+    <HandNote tilt>{$t("chartNote")}</HandNote>
+  {/snippet}
   <div class="stack">
     {#each sections as section, index (index)}
       <section class="section" aria-labelledby={`${uid}-h-${index}`}>
