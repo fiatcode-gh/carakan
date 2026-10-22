@@ -135,6 +135,97 @@ test("[P-B20] a short stroke in a corner away from the glyph fails", async ({
   await expect(doneSlots(page)).toHaveCount(0);
 });
 
+/** Summed alpha of the ink within 10 CSS px of a viewport point. */
+function inkNear(page: Page, [x, y]: Pt): Promise<number> {
+  return page.locator(".trace-pad__ink").evaluate(
+    (canvas: HTMLCanvasElement, at: readonly [number, number]) => {
+      const rect = canvas.getBoundingClientRect();
+      const scale = canvas.width / rect.width;
+      const half = Math.round(10 * scale);
+      const { data } = canvas
+        .getContext("2d")!
+        .getImageData(
+          Math.round((at[0] - rect.left) * scale) - half,
+          Math.round((at[1] - rect.top) * scale) - half,
+          half * 2,
+          half * 2,
+        );
+      let sum = 0;
+      for (let i = 3; i < data.length; i += 4) sum += data[i]!;
+      return sum;
+    },
+    [x, y] as const,
+  );
+}
+
+test("[P-B20] a second finger down while one draws is ignored", async ({
+  page,
+}) => {
+  await openTrace(page);
+  const box = await padBox(page);
+  const first: Pt = [box.x + 40, box.y + 40];
+  const second: Pt = [box.x + box.width - 40, box.y + box.height - 40];
+  const cdp = await page.context().newCDPSession(page);
+  const point = ([x, y]: Pt, pointId: number) => ({ x, y, id: pointId });
+  const touch = (
+    type: "touchStart" | "touchMove" | "touchEnd",
+    touchPoints: { x: number; y: number; id: number }[],
+  ) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints });
+  try {
+    await touch("touchStart", [point(first, 1)]);
+    await touch("touchStart", [point(first, 1), point(second, 2)]);
+    const movedFirst: Pt = [first[0] + 30, first[1] + 10];
+    const movedSecond: Pt = [second[0] - 30, second[1] - 10];
+    await touch("touchMove", [point(movedFirst, 1), point(movedSecond, 2)]);
+    await touch("touchEnd", []);
+  } finally {
+    await cdp.detach();
+  }
+  expect(await inkNear(page, [first[0] + 30, first[1] + 10])).toBeGreaterThan(
+    0,
+  );
+  expect(await inkNear(page, second), "no ink under the second finger").toBe(0);
+  expect(
+    await inkNear(page, [second[0] - 30, second[1] - 10]),
+    "no ink where the second finger moved",
+  ).toBe(0);
+});
+
+test("[P-B20] a pointer that cannot be captured does not lock the pad", async ({
+  page,
+}) => {
+  await openTrace(page);
+  // An unknown pointer id makes setPointerCapture throw, as a lifted finger would.
+  await page.locator(".trace-pad__ink").evaluate((canvas) => {
+    canvas.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        pointerId: 999,
+        clientX: 40,
+        clientY: 40,
+        bubbles: true,
+      }),
+    );
+  });
+  await traceGlyph(page, "mouse");
+  await button(page, "traceCheck").click();
+  await expect(status(page)).toHaveText(id["tracePass"]!);
+  await expect(doneSlots(page)).toHaveCount(1);
+});
+
+test("[P-B20] resizing the pad rubs out the ink, so Selesai finds an empty pad", async ({
+  page,
+}) => {
+  await openTrace(page);
+  await draw(page, "mouse", await scribble(page));
+  expect(await inkPixels(page)).toBeGreaterThan(0);
+  await page.locator(".trace-pad").evaluate((pad: HTMLElement) => {
+    pad.style.width = `${pad.clientWidth - 40}px`;
+  });
+  await expect.poll(() => inkPixels(page)).toBe(0);
+  await button(page, "traceCheck").click();
+  await expect(status(page)).toHaveText(id["traceEmpty"]!);
+});
+
 test("[P-B20] Selesai on an empty pad asks to write first", async ({
   page,
 }) => {

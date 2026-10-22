@@ -18,7 +18,7 @@
     isTraceable(glyphId) ? (glyphInfo.byId.get(glyphId) ?? null) : null,
   );
   const accent = $derived(
-    glyphUnits(content.units).get(glyphId)?.accent ?? "coral",
+    glyphUnits(content.units).get(glyphId)?.accent ?? null,
   );
 
   onMount(() => {

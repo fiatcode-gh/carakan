@@ -148,12 +148,14 @@
   function begin(event: PointerEvent): void {
     // One finger at a time: a second pointer never starts a stroke.
     if (activePointer !== null) return;
-    activePointer = event.pointerId;
     try {
       inkCanvas!.setPointerCapture(event.pointerId);
     } catch {
-      // The pointer is already gone; its pointerup will not come either.
+      // The pointer is already gone: no pointerup will follow, so a stroke
+      // started now would hold the pad until the next resize or Hapus.
+      return;
     }
+    activePointer = event.pointerId;
     const at = pointOf(event);
     strokes = [...strokes, [at]];
     current = strokes[strokes.length - 1]!;
