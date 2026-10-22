@@ -2,7 +2,7 @@
   import { getI18n } from "../../l10n/context.ts";
   import AksaraText from "../../ui/AksaraText.svelte";
   import Reading from "../../ui/Reading.svelte";
-  import { accentVar, type UnitAccent } from "../lessons/unit-display.ts";
+  import { accentVar, type UnitAccent } from "../../ui/accent.ts";
   import type { ClusterPart } from "./cluster-parts.ts";
 
   interface Props {

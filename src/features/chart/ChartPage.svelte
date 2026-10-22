@@ -8,12 +8,8 @@
   import HandNote from "../../ui/HandNote.svelte";
   import Page from "../../ui/Page.svelte";
   import Tabs from "../../ui/Tabs.svelte";
-  import {
-    accentVar,
-    glyphUnits,
-    splitUnitName,
-    type UnitAccent,
-  } from "../lessons/unit-display.ts";
+  import { accentVar, type UnitAccent } from "../../ui/accent.ts";
+  import { glyphUnits, splitUnitName } from "../lessons/unit-display.ts";
   import ChartDetailSheet from "./ChartDetailSheet.svelte";
   import {
     buildChartTabs,

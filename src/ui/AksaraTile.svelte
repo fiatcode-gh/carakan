@@ -1,9 +1,6 @@
 <script lang="ts">
   import type { HTMLButtonAttributes } from "svelte/elements";
-  import {
-    accentVar,
-    type UnitAccent,
-  } from "../features/lessons/unit-display.ts";
+  import { accentVar, type UnitAccent } from "./accent.ts";
   import AksaraText from "./AksaraText.svelte";
   import Reading from "./Reading.svelte";
 

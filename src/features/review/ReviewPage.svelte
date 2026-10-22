@@ -12,7 +12,8 @@
   import StateView from "../../ui/StateView.svelte";
   import StrengthBar from "../../ui/StrengthBar.svelte";
   import Surface from "../../ui/Surface.svelte";
-  import { accentVar, glyphUnits } from "../lessons/unit-display.ts";
+  import { accentVar } from "../../ui/accent.ts";
+  import { glyphUnits } from "../lessons/unit-display.ts";
   import { drillSession } from "./drill-session.ts";
   import DrillSection from "./DrillSection.svelte";
   import { reviewSession } from "./review-session.ts";

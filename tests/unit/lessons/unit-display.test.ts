@@ -3,13 +3,12 @@ import { GlyphInfoTable } from "../../../src/content/glyph-info-table.ts";
 import { Unit } from "../../../src/content/unit.ts";
 import { kajRulesetId, pedomanRulesetId } from "../../../src/engine/index.ts";
 import {
-  accentVar,
   glyphUnits,
   splitUnitName,
   unitAccent,
   unitWatermark,
-  type UnitAccent,
 } from "../../../src/features/lessons/unit-display.ts";
+import type { UnitAccent } from "../../../src/ui/accent.ts";
 import { loadView } from "../../support/content-files.ts";
 
 const d4: readonly UnitAccent[] = [
@@ -54,13 +53,6 @@ describe("unitAccent", () => {
     expect(() => unitAccent(-1)).toThrow(RangeError);
     expect(() => unitAccent(1.5)).toThrow(RangeError);
   });
-});
-
-test("accentVar names the colour token; null is neutral", () => {
-  expect(accentVar("coral")).toBe("var(--color-coral)");
-  expect(accentVar("periwinkle")).toBe("var(--color-periwinkle)");
-  expect(accentVar("butter")).toBe("var(--color-butter)");
-  expect(accentVar(null)).toBe("var(--color-neutral)");
 });
 
 describe("glyphUnits", () => {

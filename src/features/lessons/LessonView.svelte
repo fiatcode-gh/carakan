@@ -14,7 +14,8 @@
   import Tape from "../../ui/Tape.svelte";
   import TracePractice from "../tracing/TracePractice.svelte";
   import QuizStep from "./QuizStep.svelte";
-  import { accentVar, splitUnitName, unitAccent } from "./unit-display.ts";
+  import { accentVar } from "../../ui/accent.ts";
+  import { splitUnitName, unitAccent } from "./unit-display.ts";
   import type { LessonSession } from "./lesson-session.ts";
 
   let { session }: { session: LessonSession } = $props();

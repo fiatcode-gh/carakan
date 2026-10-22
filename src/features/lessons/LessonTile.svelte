@@ -5,7 +5,8 @@
   import Icon from "../../ui/Icon.svelte";
   import Reading from "../../ui/Reading.svelte";
   import type { UnitStatus } from "./ladder.ts";
-  import { accentVar, splitUnitName, type UnitAccent } from "./unit-display.ts";
+  import { accentVar, type UnitAccent } from "../../ui/accent.ts";
+  import { splitUnitName } from "./unit-display.ts";
 
   interface Props {
     unit: Unit;

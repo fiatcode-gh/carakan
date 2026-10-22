@@ -1,9 +1,8 @@
 import type { GlyphInfoTable } from "../../content/glyph-info-table.ts";
 import type { Unit } from "../../content/unit.ts";
+import type { UnitAccent } from "../../ui/accent.ts";
 
-/** The unit colours (D4), cycled over the active ruleset's ladder. */
-export type UnitAccent = "coral" | "periwinkle" | "butter";
-
+/** D4: the unit colours cycle over the active ruleset's ladder. */
 const accents: readonly UnitAccent[] = ["coral", "periwinkle", "butter"];
 
 /** `ladderIndex` is the unit's position in `services.content.units`. */
@@ -32,11 +31,6 @@ export function glyphUnits(
     }
   });
   return map;
-}
-
-/** A CSS value for an accent fill; no unit (a glyph no unit teaches) is neutral. */
-export function accentVar(accent: UnitAccent | null): string {
-  return accent === null ? "var(--color-neutral)" : `var(--color-${accent})`;
 }
 
 /**

@@ -9,7 +9,8 @@
   import Reading from "../../ui/Reading.svelte";
   import Sheet from "../../ui/Sheet.svelte";
   import SoundButton from "../../ui/SoundButton.svelte";
-  import { accentVar, glyphUnits } from "../lessons/unit-display.ts";
+  import { accentVar } from "../../ui/accent.ts";
+  import { glyphUnits } from "../lessons/unit-display.ts";
   import { isTraceable } from "../tracing/traceable.ts";
   import { pasanganBaseId, type ChartLocation } from "./chart-catalog.ts";
   import {

@@ -7,7 +7,8 @@
   import Surface from "../../ui/Surface.svelte";
   import Tape from "../../ui/Tape.svelte";
   import type { Unit } from "../../content/unit.ts";
-  import { splitUnitName, type UnitAccent } from "./unit-display.ts";
+  import type { UnitAccent } from "../../ui/accent.ts";
+  import { splitUnitName } from "./unit-display.ts";
 
   interface Props {
     unit: Unit;

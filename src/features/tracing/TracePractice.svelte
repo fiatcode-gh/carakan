@@ -10,12 +10,13 @@
   import PrimaryBar from "../../ui/PrimaryBar.svelte";
   import Reading from "../../ui/Reading.svelte";
   import SegmentedProgress from "../../ui/SegmentedProgress.svelte";
-  import { accentVar, type UnitAccent } from "../lessons/unit-display.ts";
+  import { accentVar, type UnitAccent } from "../../ui/accent.ts";
   import TracingPad, { type Point } from "./TracingPad.svelte";
 
   interface Props {
     glyph: GlyphInfo;
-    accent: UnitAccent;
+    /** Unit colour of the header; null (no unit teaches the glyph) is neutral. */
+    accent: UnitAccent | null;
     /** `x` when the screen closes an activity rather than going back a page. */
     backIcon?: "chevron-left" | "x";
     onback: () => void;
