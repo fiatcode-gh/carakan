@@ -12,7 +12,10 @@ import {
 } from "../../src/core/db/schema.ts";
 import { kajRulesetId } from "../../src/engine/index.ts";
 import { generateExercises } from "../../src/features/lessons/exercise-generator.ts";
-import { ladderPreview } from "../../src/features/lessons/ladder.ts";
+import {
+  splitUnitName,
+  unitWatermark,
+} from "../../src/features/lessons/unit-display.ts";
 import {
   expectAccessible,
   expectNoHorizontalOverflow,
@@ -20,7 +23,11 @@ import {
 } from "./support/a11y.ts";
 import { gotoRoute } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
-import { answerCurrentQuestion, writeRows } from "./support/lesson.ts";
+import {
+  answerCurrentQuestion,
+  unitButton,
+  writeRows,
+} from "./support/lesson.ts";
 import {
   createSolver,
   type QuestionPrompt,
@@ -134,25 +141,50 @@ async function readStore<T>(page: Page, store: string): Promise<T[]> {
   ) as Promise<T[]>;
 }
 
-const row = (page: Page, n: number) => page.locator(".ladder > li").nth(n - 1);
 const rowButton = (page: Page, n: number) =>
-  row(page, n).locator("button.unit");
+  unitButton(page, solver.content.units[n - 1]!.id);
+const tiles = (page: Page) => page.locator(".ladder ul button[data-unit]");
 
-test("[P-B01] the ladder lists the 9 units in order with numbered medallions and names", async ({
+test("[P-B01] the hero is unit 1 and the tiles list units 2-9 in order, numbered and locked", async ({
   page,
 }) => {
   await gotoRoute(page, "");
   await expect(
     page.getByRole("heading", { level: 1, name: id["ladderTitle"]! }),
   ).toBeVisible();
-  const rows = page.locator(".ladder > li");
-  await expect(rows).toHaveCount(solver.content.units.length);
-  expect(solver.content.units).toHaveLength(9);
-  for (const [i, u] of solver.content.units.entries()) {
-    await expect(row(page, i + 1).locator(".medallion")).toContainText(
-      String(i + 1),
+  const units = solver.content.units;
+  expect(units).toHaveLength(9);
+
+  const hero = page.locator(".hero");
+  await expect(hero).toHaveCount(1);
+  await expect(hero.locator(".eyebrow")).toHaveText("01 — Kelompok 1");
+  await expect(hero.locator("button[data-unit]")).toHaveAttribute(
+    "data-unit",
+    units[0]!.id,
+  );
+  await expect(hero.getByRole("button")).toHaveAccessibleName(
+    `${id["startLessonButton"]!} ${units[0]!.name}`,
+  );
+
+  await expect(hero.getByRole("heading", { level: 2 })).toHaveText(
+    splitUnitName(units[0]!.name).tail,
+  );
+  await expect(
+    page.getByRole("heading", { level: 2, name: id["ladderNext"]! }),
+  ).toBeVisible();
+  const list = tiles(page);
+  await expect(list).toHaveCount(units.length - 1);
+  for (const [i, u] of units.slice(1).entries()) {
+    const tile = list.nth(i);
+    await expect(tile).toHaveAttribute("data-unit", u.id);
+    await expect(tile).toHaveAttribute("data-status", "locked");
+    await expect(tile.locator(".tile__number")).toHaveText(
+      String(i + 2).padStart(2, "0"),
     );
-    await expect(row(page, i + 1).locator(".unit__name")).toContainText(u.name);
+    await expect(tile.locator("svg")).toHaveAttribute("data-icon", "lock");
+    await expect(tile).toHaveAccessibleName(
+      `${i + 2}. ${u.name}, ${id["unitStatusLocked"]!}`,
+    );
   }
   await expectAccessible(page);
   await expectTouchTargets(page);
@@ -160,30 +192,46 @@ test("[P-B01] the ladder lists the 9 units in order with numbered medallions and
   await shoot(page, "ladder");
 });
 
-test("[P-B02][P-S07] each unit previews its first five glyphs in Jejeg", async ({
+test("[P-B01] the note counts the base letters learned: 0 / 20 fresh, 3 / 20 after unit 1", async ({
+  page,
+}) => {
+  await gotoRoute(page, "");
+  const note = page.locator(".top-bar__note:visible");
+  await expect(note).toHaveText("0 / 20 aksara");
+  await writeRows(page, UNIT_COMPLETIONS, [
+    { unitId: first().id, completedAt: 1 },
+  ]);
+  await page.reload();
+  await page.locator('#app[data-boot="ready"]').waitFor();
+  await expect(note).toHaveText("3 / 20 aksara");
+});
+
+test("[P-B02][P-S07] each tile and the hero show their first glyph as an aria-hidden Jejeg watermark", async ({
   page,
 }) => {
   await gotoRoute(page, "");
   for (const [i, u] of solver.content.units.entries()) {
-    const expected = ladderPreview(u, solver.table);
+    const expected = unitWatermark(u, solver.table);
     expect(expected).not.toBe("");
-    await expect(row(page, i + 1).locator(".aksara")).toHaveText(expected);
+    const mark =
+      i === 0
+        ? page.locator(".hero .aksara")
+        : rowButton(page, i + 1).locator(".aksara");
+    await expect(mark).toHaveText(expected);
+    await expect(mark).toHaveAttribute("aria-hidden", "true");
+    await expect(mark).toHaveCSS("font-family", /Jejeg/);
   }
-  const ha = solver.table.byId.get("ha")!.char;
+  const ha = solver.table.byId.get("pa")!.char;
   await expect
     .poll(() =>
       page.evaluate((char) => document.fonts.check("32px Jejeg", char), ha),
     )
     .toBe(true);
-  await expect(row(page, 1).locator(".aksara")).toHaveCSS(
-    "font-family",
-    /Jejeg/,
-  );
 });
 
 test("[P-B03] on a fresh install only unit 1 is ready", async ({ page }) => {
   await gotoRoute(page, "");
-  await expect(rowButton(page, 1)).toContainText(id["unitStatusReady"]!);
+  await expect(rowButton(page, 1)).toHaveAttribute("data-status", "ready");
   await expect(rowButton(page, 1)).not.toHaveAttribute("aria-disabled", "true");
   for (let n = 2; n <= solver.content.units.length; n++) {
     await expect(rowButton(page, n)).toContainText(id["unitStatusLocked"]!);
@@ -215,7 +263,7 @@ test("[P-B06][P-B07] the teacher button opens the teacher page with both cards",
   await expect(
     page.getByRole("heading", { level: 1, name: id["teacherTitle"]! }),
   ).toBeVisible();
-  const slips = page.locator("main .surface");
+  const slips = page.locator("main .surface:visible");
   await expect(slips).toHaveCount(2);
   await expect(slips.nth(0).getByRole("heading")).toHaveText(
     id["deviationTitle"]!,
@@ -418,9 +466,20 @@ test("[P-B05] after a lesson the ladder shows unit 1 completed and unit 2 ready 
   await page.locator(".lesson__foot").getByRole("button").click();
   await expect(page.locator(".ladder")).toBeVisible();
   await expect(rowButton(page, 1)).toContainText(id["unitStatusCompleted"]!);
-  await expect(rowButton(page, 2)).toContainText(id["unitStatusReady"]!);
+  await expect(rowButton(page, 2)).toHaveAttribute("data-status", "ready");
   await expect(rowButton(page, 2)).not.toHaveAttribute("aria-disabled", "true");
   await expect(rowButton(page, 3)).toHaveAttribute("aria-disabled", "true");
+  await expect(page.locator(".top-bar__note:visible")).toHaveText(
+    "3 / 20 aksara",
+  );
+  const done = page.locator(".ladder section").filter({
+    has: page.getByRole("heading", { level: 2, name: id["ladderDone"]! }),
+  });
+  await expect(done.locator("button[data-unit]")).toHaveCount(1);
+  await expect(done.locator("svg").first()).toHaveAttribute(
+    "data-icon",
+    "circle-check",
+  );
   // A completed unit can be replayed.
   await rowButton(page, 1).click();
   await expect
@@ -544,12 +603,10 @@ test.describe("English interface", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: en["ladderTitle"]! }),
     ).toBeVisible();
-    await expect(rowButton(page, 1)).toContainText(en["unitStatusReady"]!);
+    await expect(rowButton(page, 1)).toHaveAttribute("data-status", "ready");
     await expect(rowButton(page, 2)).toContainText(en["unitStatusLocked"]!);
     for (const [i, u] of solver.content.units.entries()) {
-      await expect(row(page, i + 1).locator(".unit__name")).toContainText(
-        u.name,
-      );
+      await expect(rowButton(page, i + 1)).toContainText(u.name);
     }
     await expectAccessible(page);
 
@@ -648,19 +705,15 @@ test("[P-S10] a storage read that fails after boot shows the storage error with 
 });
 
 const ladderStatuses = async (page: Page): Promise<string[]> => {
-  const labels = [
-    [id["unitStatusCompleted"]!, "completed"],
-    [id["unitStatusReady"]!, "ready"],
-    [id["unitStatusLocked"]!, "locked"],
-  ] as const;
-  const rows = page.locator(".ladder > li button.unit");
-  const count = await rows.count();
-  const out: string[] = [];
-  for (let i = 0; i < count; i++) {
-    const text = (await rows.nth(i).textContent()) ?? "";
-    out.push(labels.find(([label]) => text.includes(label))?.[1] ?? "?");
+  const byUnit = new Map<string, string>();
+  const all = page.locator("button[data-unit][data-status]");
+  for (let i = 0; i < (await all.count()); i++) {
+    byUnit.set(
+      (await all.nth(i).getAttribute("data-unit")) ?? "",
+      (await all.nth(i).getAttribute("data-status")) ?? "?",
+    );
   }
-  return out;
+  return solver.content.units.map((u) => byUnit.get(u.id) ?? "missing");
 };
 
 async function seedOldCompletions(page: Page, ids: string[]): Promise<void> {

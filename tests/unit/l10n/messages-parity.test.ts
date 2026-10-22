@@ -30,9 +30,9 @@ test("[P-L01] every value is non-empty", () => {
   }
 });
 
-test("[P-L01] message files hold 153 keys (90 ARB + 15 W10 + 1 W14 + 20 W15 + 1 copy failure + 8 converter breakdown + 8 progress reset + 2 ai/au titles + 5 ruleset choice + 3 Buku Poster shell)", () => {
-  expect(Object.keys(id)).toHaveLength(153);
-  expect(Object.keys(en)).toHaveLength(153);
+test("[P-L01] message files hold 159 keys (90 ARB + 15 W10 + 1 W14 + 20 W15 + 1 copy failure + 8 converter breakdown + 8 progress reset + 2 ai/au titles + 5 ruleset choice + 3 Buku Poster shell + 6 Buku Poster learn path)", () => {
+  expect(Object.keys(id)).toHaveLength(159);
+  expect(Object.keys(en)).toHaveLength(159);
 });
 
 test("[P-L01] no ICU syntax beyond simple {name} placeholders", () => {

@@ -1,14 +1,17 @@
 <script lang="ts">
   import { navigate, routeLink } from "../../app/router.ts";
   import { getServices } from "../../app/services.ts";
+  import { nglegena } from "../../engine/index.ts";
   import { getI18n } from "../../l10n/context.ts";
-  import AksaraText from "../../ui/AksaraText.svelte";
-  import Icon from "../../ui/Icon.svelte";
+  import HandNote from "../../ui/HandNote.svelte";
   import IconButton from "../../ui/IconButton.svelte";
-  import Medallion from "../../ui/Medallion.svelte";
   import Page from "../../ui/Page.svelte";
   import StateView from "../../ui/StateView.svelte";
-  import { ladderModel, ladderPreview, type UnitStatus } from "./ladder.ts";
+  import Stamp from "../../ui/Stamp.svelte";
+  import HeroLessonCard from "./HeroLessonCard.svelte";
+  import { ladderModel } from "./ladder.ts";
+  import LessonTile from "./LessonTile.svelte";
+  import { unitAccent, unitWatermark } from "./unit-display.ts";
 
   const { t } = getI18n();
   const services = getServices();
@@ -19,19 +22,43 @@
   // The model follows completions on its own; this only leaves `loading`.
   void ladder.refresh();
 
-  const statusLabel = $derived({
-    locked: $t("unitStatusLocked"),
-    ready: $t("unitStatusReady"),
-    completed: $t("unitStatusCompleted"),
-  } satisfies Record<UnitStatus, string>);
-  const statusIcon = {
-    locked: "lock",
-    ready: "play",
-    completed: "circle-check",
-  } as const;
+  const entries = $derived(
+    $state.kind === "ready"
+      ? $state.statuses.map(({ unit, status }, index) => ({
+          unit,
+          status,
+          number: index + 1,
+          accent: unitAccent(index),
+          watermark: unitWatermark(unit, glyphInfo),
+        }))
+      : [],
+  );
+  const currentAt = $derived(entries.findIndex((e) => e.status === "ready"));
+  const current = $derived(currentAt < 0 ? null : entries[currentAt]!);
+  const upcoming = $derived(currentAt < 0 ? [] : entries.slice(currentAt + 1));
+  const done = $derived(
+    (currentAt < 0 ? entries : entries.slice(0, currentAt)).filter(
+      (e) => e.status === "completed",
+    ),
+  );
+  const learned = $derived(
+    $state.kind === "ready"
+      ? nglegena.filter((a) => $state.taughtGlyphIds.has(a.id)).length
+      : 0,
+  );
 </script>
 
 <Page title={$t("ladderTitle")} margin>
+  {#snippet note()}
+    {#if $state.kind === "ready"}
+      <HandNote tilt
+        >{$t("ladderProgress", {
+          learned,
+          total: nglegena.length,
+        })}</HandNote
+      >
+    {/if}
+  {/snippet}
   {#snippet actions()}
     <IconButton
       icon="graduation-cap"
@@ -58,137 +85,92 @@
       page
     />
   {:else}
-    <ol class="ladder">
-      {#each $state.statuses as { unit, status }, i (unit.id)}
-        {@const preview = ladderPreview(unit, glyphInfo)}
-        <li class="ladder__step" style:--i={i}>
-          <Medallion number={i + 1} state={status} />
-          <button
-            type="button"
-            class="unit unit--{status}"
-            aria-disabled={status === "locked" ? "true" : undefined}
-            onclick={status === "locked"
-              ? undefined
-              : () => navigate({ kind: "lesson", unitId: unit.id })}
-          >
-            <span class="unit__name"
-              ><span class="visually-hidden">{i + 1}. </span>{unit.name}</span
-            >
-            {#if preview !== ""}
-              <AksaraText
-                text={preview}
-                class="unit__preview"
-                aria-hidden="true"
-              />
-            {/if}
-            <span class="unit__status">
-              <Icon name={statusIcon[status]} small />
-              {statusLabel[status]}
-              {#if status !== "locked"}
-                <Icon name="chevron-right" small class="unit__go" />
-              {/if}
-            </span>
-          </button>
-        </li>
-      {/each}
-    </ol>
+    <div class="ladder">
+      {#if current !== null}
+        <HeroLessonCard
+          unit={current.unit}
+          number={current.number}
+          accent={current.accent}
+          watermark={current.watermark}
+          onstart={() => navigate({ kind: "lesson", unitId: current.unit.id })}
+        />
+      {:else}
+        <h2 class="ladder__all-done">{$t("ladderAllDone")}</h2>
+      {/if}
+
+      {#if upcoming.length > 0}
+        <section class="ladder__section">
+          <HandNote tag="h2">{$t("ladderNext")}</HandNote>
+          {@render tiles(upcoming)}
+        </section>
+      {/if}
+
+      {#if done.length > 0}
+        <section class="ladder__section">
+          <HandNote tag="h2">{$t("ladderDone")}</HandNote>
+          {@render tiles(done)}
+        </section>
+      {:else if !entries.some((e) => e.status === "completed")}
+        <div class="ladder__stamp">
+          <Stamp variant="decor">{$t("stampLetsStart")}</Stamp>
+        </div>
+      {/if}
+    </div>
   {/if}
 </Page>
 
+{#snippet tiles(list: typeof entries)}
+  <ul class="ladder__tiles">
+    {#each list as e (e.unit.id)}
+      <li>
+        <LessonTile
+          unit={e.unit}
+          number={e.number}
+          status={e.status}
+          accent={e.accent}
+          watermark={e.watermark}
+          onopen={() => navigate({ kind: "lesson", unitId: e.unit.id })}
+        />
+      </li>
+    {/each}
+  </ul>
+{/snippet}
+
 <style>
   .ladder {
-    position: relative;
     display: grid;
-    gap: var(--space-4);
+    gap: var(--space-6);
+    padding-block-start: var(--space-2);
+  }
+
+  .ladder__all-done {
+    margin: 0;
+    font-size: var(--text-xl);
+    font-weight: var(--weight-black);
+    letter-spacing: var(--tracking-title);
+  }
+
+  .ladder__section {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .ladder__section > :global(.hand) {
+    font-size: 22px;
+  }
+
+  .ladder__tiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  .ladder__step {
-    position: relative;
-    display: grid;
-    grid-template-columns: 3rem minmax(0, 1fr);
-    align-items: start;
-    gap: var(--space-3);
-    animation: rise 360ms var(--ease-out) backwards;
-    animation-delay: calc(var(--i, 0) * 70ms);
-  }
-
-  /* The thread the medallions sit on: one segment per step, from this
-     medallion's centre to the next one. */
-  .ladder__step:not(:last-child)::before {
-    content: "";
-    position: absolute;
-    top: calc(var(--space-4) + 1.5rem);
-    left: calc(1.5rem - 1px);
-    height: calc(100% + var(--space-4));
-    border-left: var(--border);
-    opacity: 0.4;
-  }
-
-  .ladder__step > :global(.medallion) {
-    z-index: 1;
-    margin-top: var(--space-4);
-  }
-
-  .unit {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-2);
-    min-height: var(--touch-min);
-    padding: var(--space-3) var(--space-4);
-    border: var(--border);
-    background: var(--color-card);
-    box-shadow: var(--shadow-tile);
-    color: inherit;
-    text-align: start;
-  }
-
-  .unit__name {
-    font-weight: var(--weight-bold);
-    font-size: var(--text-md);
-    line-height: var(--leading-snug);
-  }
-
-  .unit :global(.unit__preview) {
-    min-height: 3.2rem;
-    white-space: nowrap;
-    overflow-x: clip;
-    font-size: var(--aksara-md);
-  }
-
-  .unit__status {
+  .ladder__stamp {
     display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-bold);
-    color: var(--color-ink-muted);
-  }
-
-  .unit__status :global(.unit__go) {
-    margin-inline-start: auto;
-  }
-
-  .unit--ready {
-    border: 2px solid var(--color-coral);
-    background: var(--color-card);
-  }
-
-  .unit--ready .unit__status,
-  .unit--completed .unit__status {
-    color: var(--color-ink);
-  }
-
-  .unit--locked {
-    background: var(--color-neutral);
-    box-shadow: none;
-    color: var(--color-ink-muted);
-    cursor: not-allowed;
-  }
-
-  .unit--locked :global(.unit__preview) {
-    opacity: 0.8;
+    justify-content: flex-end;
+    padding-inline-end: var(--space-3);
   }
 </style>

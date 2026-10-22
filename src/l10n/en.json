@@ -149,6 +149,12 @@
   "engineAmbiguousVowelPair": "In Pedoman 2002, “ai”/“au” is two aksara: ha between the vowels (sinahu) or a swara letter. Pick one, or type the h.",
   "engineAmbiguousBareEAndVowelPair": "A plain “e” can be pepet (ě) or taling (é), and “ai”/“au” is two aksara (ha or a swara letter). Pick one.",
   "engineErrorGeneric": "This input cannot be converted.",
+  "ladderProgress": "{learned} / {total} aksara",
+  "ladderNext": "Next up…",
+  "ladderDone": "Already learned",
+  "ladderAllDone": "Every unit is done.",
+  "startLessonButton": "Start writing",
+  "stampLetsStart": "Let's start",
   "ladderTitle": "Learn aksara.",
   "chartNote": "Tap for details",
   "reviewNote": "a little, but often"

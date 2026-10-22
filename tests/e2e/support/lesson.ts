@@ -83,11 +83,8 @@ export async function completeLesson(
   await expect(page.locator(".trophy")).toBeVisible();
 }
 
-export const ladderRow = (page: Page, n: number) =>
-  page
-    .locator(".ladder > li")
-    .nth(n - 1)
-    .locator("button.unit");
+export const unitButton = (page: Page, unitId: string) =>
+  page.locator(`button[data-unit="${unitId}"][data-status]`);
 
 export async function writeRows(
   page: Page,

@@ -17,7 +17,7 @@ import {
 } from "./support/a11y.ts";
 import { gotoRoute, seedLocale } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
-import { ladderRow, readStore, writeRows } from "./support/lesson.ts";
+import { readStore, unitButton, writeRows } from "./support/lesson.ts";
 import { createSolver, type Solver } from "./support/solver.ts";
 
 const messages = (locale: "id" | "en") =>
@@ -369,7 +369,7 @@ for (const locale of ["id", "en"] as const) {
     expect(await storeCounts(page)).toEqual(seededCounts);
 
     await page.getByRole("button", { name: catalog["backButton"]! }).click();
-    await expect(ladderRow(page, 1)).toContainText(
+    await expect(unitButton(page, solver.content.units[0]!.id)).toContainText(
       catalog["unitStatusCompleted"]!,
     );
   });
@@ -398,13 +398,13 @@ for (const locale of ["id", "en"] as const) {
     ).toBe(locale);
 
     const expectFresh = async () => {
-      await expect(ladderRow(page, 1)).toContainText(
-        catalog["unitStatusReady"]!,
-      );
+      await expect(
+        unitButton(page, solver.content.units[0]!.id),
+      ).toHaveAttribute("data-status", "ready");
       for (let n = 2; n <= solver.content.units.length; n++) {
-        await expect(ladderRow(page, n)).toContainText(
-          catalog["unitStatusLocked"]!,
-        );
+        await expect(
+          unitButton(page, solver.content.units[n - 1]!.id),
+        ).toContainText(catalog["unitStatusLocked"]!);
       }
       await page
         .getByRole("link", { name: catalog["navReview"]! })

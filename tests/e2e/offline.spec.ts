@@ -15,8 +15,8 @@ import { expect, test, trackForeignRequests } from "./support/fixtures.ts";
 import {
   completeLesson,
   id,
-  ladderRow,
   readStore,
+  unitButton,
   writeRows,
 } from "./support/lesson.ts";
 import { createSolver, type Solver } from "./support/solver.ts";
@@ -85,8 +85,13 @@ test("[P-S05] unit 1 can be completed offline", async ({ page, context }) => {
   await page.reload();
   await completeLesson(page, solver, solver.content.units[0]!.id);
   await page.locator(".lesson__foot").getByRole("button").click();
-  await expect(ladderRow(page, 1)).toContainText(id["unitStatusCompleted"]!);
-  await expect(ladderRow(page, 2)).toContainText(id["unitStatusReady"]!);
+  await expect(unitButton(page, solver.content.units[0]!.id)).toContainText(
+    id["unitStatusCompleted"]!,
+  );
+  await expect(unitButton(page, solver.content.units[1]!.id)).toHaveAttribute(
+    "data-status",
+    "ready",
+  );
 });
 
 test("[P-S09] progress and a graded review card survive closing the browser, offline", async ({
@@ -130,12 +135,12 @@ test("[P-S09] progress and a graded review card survive closing the browser, off
     const secondPage = second.pages()[0] ?? (await second.newPage());
     foreign.push(...trackForeignRequests(secondPage, origin));
     await gotoRoute(secondPage, "");
-    await expect(ladderRow(secondPage, 1)).toContainText(
-      id["unitStatusCompleted"]!,
-    );
-    await expect(ladderRow(secondPage, 2)).toContainText(
-      id["unitStatusReady"]!,
-    );
+    await expect(
+      unitButton(secondPage, solver.content.units[0]!.id),
+    ).toContainText(id["unitStatusCompleted"]!);
+    await expect(
+      unitButton(secondPage, solver.content.units[1]!.id),
+    ).toHaveAttribute("data-status", "ready");
     expect(
       await readStore<UnitCompletionRow>(secondPage, UNIT_COMPLETIONS),
     ).toHaveLength(1);
@@ -189,10 +194,17 @@ test("[P-B17][P-S09] mapped progress shows offline", async ({
   await page.reload();
   await page.locator('#app[data-boot="ready"]').waitFor();
   for (let n = 1; n <= 6; n++) {
-    await expect(ladderRow(page, n)).toContainText(id["unitStatusCompleted"]!);
+    await expect(
+      unitButton(page, solver.content.units[n - 1]!.id),
+    ).toContainText(id["unitStatusCompleted"]!);
   }
-  await expect(ladderRow(page, 7)).toContainText(id["unitStatusReady"]!);
+  await expect(unitButton(page, solver.content.units[6]!.id)).toHaveAttribute(
+    "data-status",
+    "ready",
+  );
   for (const n of [8, 9]) {
-    await expect(ladderRow(page, n)).toContainText(id["unitStatusLocked"]!);
+    await expect(
+      unitButton(page, solver.content.units[n - 1]!.id),
+    ).toContainText(id["unitStatusLocked"]!);
   }
 });

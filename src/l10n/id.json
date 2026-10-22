@@ -149,6 +149,12 @@
   "engineAmbiguousVowelPair": "Dalam Pedoman 2002, “ai”/“au” ditulis dua aksara: ha di antara kedua vokal (sinahu) atau aksara swara. Pilih salah satu, atau ketik h-nya.",
   "engineAmbiguousBareEAndVowelPair": "Huruf “e” tanpa tanda bisa dibaca pepet (ě) atau taling (é), dan “ai”/“au” ditulis dua aksara (ha atau aksara swara). Pilih salah satu.",
   "engineErrorGeneric": "Masukan ini tidak bisa diubah.",
+  "ladderProgress": "{learned} / {total} aksara",
+  "ladderNext": "Berikutnya…",
+  "ladderDone": "Sudah dipelajari",
+  "ladderAllDone": "Semua unit sudah selesai.",
+  "startLessonButton": "Mulai menulis",
+  "stampLetsStart": "Ayo mulai",
   "ladderTitle": "Sinau aksara.",
   "chartNote": "Ketuk untuk detail",
   "reviewNote": "sedikit tapi rutin"

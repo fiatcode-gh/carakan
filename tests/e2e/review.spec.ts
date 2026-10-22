@@ -129,7 +129,7 @@ test("[P-R01][P-R12] the help button opens the help page with both slips and fou
   await expect(
     page.getByRole("heading", { level: 1, name: id["reviewHelpTitle"]! }),
   ).toBeVisible();
-  const slips = page.locator("main .surface");
+  const slips = page.locator("main .surface:visible");
   await expect(slips).toHaveCount(2);
   await expect(slips.nth(0).getByRole("heading")).toHaveText(
     id["reviewHelpWhyHeading"]!,
