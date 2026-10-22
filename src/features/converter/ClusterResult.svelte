@@ -25,14 +25,17 @@
 
   let wrapper = $state<HTMLDivElement>();
   let boxes = $state<readonly ClusterBox[]>([]);
+  let em = $state(0);
 
   function measure(): void {
     if (!wrapper) return;
-    const text = wrapper.querySelector(".aksara")?.firstChild;
+    const aksara = wrapper.querySelector(".aksara");
+    const text = aksara?.firstChild;
     if (!(text instanceof Text)) {
       boxes = [];
       return;
     }
+    em = parseFloat(getComputedStyle(aksara!).fontSize);
     const origin = wrapper.getBoundingClientRect();
     const range = document.createRange();
     const glyphs: Box[] = clusters.map((c) => {
@@ -68,19 +71,23 @@
     return () => observer.disconnect();
   });
 
-  // A Range rect is the content area of the primary font (MPLUS Rounded 1c,
-  // hhea 1075/-320 per 1000), but Jejeg draws from 1.32 em above to 0.88 em
-  // below the baseline (hhea 3300/-2200 per 2500): a pasangan or suku would
-  // fall outside a mark sized to the rect, so the mark covers Jejeg's extent.
+  // The mark covers Jejeg's extent, 1.32 em above to 0.88 em below the
+  // baseline (hhea 3300/-2200 per 2500), so a pasangan or suku stays inside.
+  // A Range rect is a content area, but engines differ in whose: Chromium
+  // uses the primary font (MPLUS Rounded 1c, hhea 1075/-320 per 1000),
+  // Firefox the font that draws the glyphs (Jejeg). The rect height tells
+  // which, and that font's descent locates the baseline.
   const mplusAscent = 1.075;
   const mplusDescent = 0.32;
   const jejegAscent = 1.32;
   const jejegDescent = 0.88;
   const mark = $derived.by(() => {
     const glyph = selected === null ? undefined : boxes[selected]?.glyph;
-    if (!glyph) return undefined;
-    const em = glyph.height / (mplusAscent + mplusDescent);
-    const baseline = glyph.y + mplusAscent * em;
+    if (!glyph || em === 0) return undefined;
+    const midway =
+      (mplusAscent + mplusDescent + jejegAscent + jejegDescent) / 2;
+    const descent = glyph.height / em > midway ? jejegDescent : mplusDescent;
+    const baseline = glyph.y + glyph.height - descent * em;
     return {
       ...glyph,
       y: baseline - jejegAscent * em,
