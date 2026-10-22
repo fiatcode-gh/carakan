@@ -73,7 +73,8 @@ function spansOf(
 const isAsciiDigit = (ch: string): boolean => /^[0-9]$/.test(ch);
 
 /**
- * Latin -> aksara converter. Default ruleset. Vowel signs,
+ * Latin -> aksara converter for `ruleset` (KAJ I `kaj1-2021-simplified-v3`
+ * when omitted). Vowel signs,
  * taling included, are stored after their base in Unicode order; the shaper
  * draws taling before it. Word-initial vowels take the ha carrier (KAJ I
  * p.5 3.b; Tradisional p.124 8.b); only a capitalized vowel-initial word inside a
