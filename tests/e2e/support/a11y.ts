@@ -1,11 +1,20 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page } from "@playwright/test";
 
-/** axe reads colors mid-fade otherwise: wait for every entrance animation. */
+/**
+ * axe reads colors mid-fade otherwise: wait for every entrance animation.
+ * A page that swaps its content (loading → question) cancels the animations of
+ * the removed element, which rejects `finished`; a cancelled animation is not
+ * a fade in progress, so wait for what is left until nothing animates.
+ */
 export const settle = (page: Page) =>
-  page.evaluate(() =>
-    Promise.all(document.getAnimations().map((a) => a.finished)),
-  );
+  page.evaluate(async () => {
+    for (let pass = 0; pass < 10; pass += 1) {
+      const running = document.getAnimations();
+      if (running.length === 0) return;
+      await Promise.allSettled(running.map((a) => a.finished));
+    }
+  });
 
 export async function expectAccessible(page: Page): Promise<void> {
   await settle(page);

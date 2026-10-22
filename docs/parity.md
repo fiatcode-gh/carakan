@@ -3,7 +3,7 @@
 Parity authority for contract §3.3 (`.flow/contracts/carakan-web-port.md`). Derived from the Flutter source at
 `aksara-app@ebc7cb524ca7ddea8a3adca8b21939cd3da09bca` (`app/lib/**`, `app/lib/l10n/*.arb`, `app/assets/content/v1/*`,
 `packages/aksara_engine/**`). Where this list and the source disagree, the source wins unless the item is changed by an
-approved rework decision (section W below, recorded in `docs/decisions/0001-ui-rework.md`, and the teacher feedback record `docs/decisions/teacher-feedback-2.md`). This tracked file is the parity
+approved rework decision (section W below, recorded in `docs/decisions/0001-ui-rework.md` and, for the Buku Poster redesign, `docs/decisions/0003-buku-poster.md`, and the teacher feedback record `docs/decisions/teacher-feedback-2.md`). This tracked file is the parity
 authority; `docs/spec.md` links it.
 
 ## How proof works
@@ -148,7 +148,7 @@ authority; `docs/spec.md` links it.
 
 ## N/A — present in source, intentionally not ported
 
-- `AudioService` and `audioKey` playback: no recordings exist and no UI ever called it (contract §9). `audioKey` fields stay in the JSON untouched.
+- `AudioService` and `audioKey` playback: no recordings exist and the Flutter UI never called it. The web app has sound buttons backed by a clip manifest (P-S11) that is empty today. `audioKey` fields stay in the JSON untouched.
 - Re-tapping the current tab: `goBranch(initialLocation: true)` has no visible effect because no tab has nested routes.
 - DI (`get_it`/`injectable`), drift schema code generation: replaced by the web architecture (PLAN.md §4).
 
@@ -156,7 +156,7 @@ authority; `docs/spec.md` links it.
 
 `docs/decisions/0001-ui-rework.md` (approved prototype `bf8eac8`) approves **every** item W01–W15; none was rejected. Each row states the
 Flutter behavior it replaces and the behavior the web app implements. The item texts above describe the implemented variant. W14 and W15
-were added at the approval stop; their parity items are P-R14, P-R15 and P-U09.
+were added at the approval stop; their parity items are P-R14, P-R15 and P-U09. `docs/decisions/0003-buku-poster.md` supersedes W14: P-R14 and P-R15 are retired and P-R17 and P-R18 describe the review quiz.
 
 | ID  | Source behavior (Flutter at `ebc7cb5`)                                                                        | Decision                  | Resulting behavior                                                                                                                                                                                                                                                                                                                                                                                                                                         | Affects             |
 | --- | ------------------------------------------------------------------------------------------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
