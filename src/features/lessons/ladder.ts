@@ -60,7 +60,7 @@ export function ladderPreview(unit: Unit, glyphInfo: GlyphInfoTable): string {
  */
 export function unitsCompletedByRetired(
   units: readonly Unit[],
-  retiredUnits: readonly RetiredUnit[],
+  retiredUnits: readonly Pick<RetiredUnit, "id" | "glyphs">[],
   completedIds: ReadonlySet<string>,
 ): string[] {
   const learned = new Set<string>();
@@ -81,7 +81,7 @@ export function unitsCompletedByRetired(
 
 export class LadderModel {
   readonly #units: readonly Unit[];
-  readonly #retiredUnits: readonly RetiredUnit[];
+  readonly #retiredUnits: readonly Pick<RetiredUnit, "id" | "glyphs">[];
   readonly #now: () => number;
   readonly #completions: UnitCompletionRepository;
   readonly #state = writable<LadderState>({ kind: "loading" });
@@ -89,7 +89,7 @@ export class LadderModel {
 
   constructor(deps: {
     units: readonly Unit[];
-    retiredUnits: readonly RetiredUnit[];
+    retiredUnits: readonly Pick<RetiredUnit, "id" | "glyphs">[];
     completions: UnitCompletionRepository;
     /** Fires after the learner's saved progress was erased. */
     erased: Emitter;
@@ -136,7 +136,13 @@ export function ladderModel(
     () =>
       new LadderModel({
         units: services.content.units,
-        retiredUnits: services.content.retiredUnits,
+        // Another ruleset's units map exactly like retired ones (contract 2.4):
+        // a unit counts as complete when all its glyphs were completed in
+        // either ruleset.
+        retiredUnits: [
+          ...services.content.retiredUnits,
+          ...services.content.otherRulesetUnits,
+        ],
         completions: services.completions,
         erased: services.progress.erased,
         now: services.now,

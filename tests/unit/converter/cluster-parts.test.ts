@@ -232,6 +232,7 @@ describe("fixture sweep", () => {
       aksara: content.aksara,
       sandhangan: content.sandhangan,
       strings,
+      ruleset: content.ruleset,
     });
     const fixture = JSON.parse(
       readFileSync(

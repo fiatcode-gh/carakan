@@ -5,18 +5,14 @@ import {
   angkaFlanker,
   cecakTelu,
   javaneseChar,
-  murdaFor,
-  murdaLinks,
   nglegena,
   nglegenaById,
   padaActive,
   padaCatalogue,
-  rekan,
   rekanById,
+  type Ruleset,
   sandhanganPangkon,
   swara,
-  swaraCatalogue,
-  swaraLongForms,
 } from "../../engine/index.ts";
 
 export interface ChartEntry {
@@ -83,8 +79,8 @@ export function findChartEntry(
   return null;
 }
 
-export function murdaVariant(baseId: string): string | null {
-  return murdaFor(baseId)?.aksara.char ?? null;
+export function murdaVariant(baseId: string, ruleset: Ruleset): string | null {
+  return ruleset.murda.find((m) => m.baseId === baseId)?.aksara.char ?? null;
 }
 
 export function rekanChar(rekanId: string): string {
@@ -128,10 +124,12 @@ export function buildChartSections({
   aksara,
   sandhangan,
   strings,
+  ruleset,
 }: {
   aksara: readonly AksaraItem[];
   sandhangan: readonly SandhanganItem[];
   strings: ChartStrings;
+  ruleset: Ruleset;
 }): ChartSection[] {
   const byId = new Map(aksara.map((a) => [a.id, a]));
   const nameOf = (id: string) => byId.get(id)?.name ?? id;
@@ -144,7 +142,7 @@ export function buildChartSections({
       name: nameOf(a.id),
       char: a.char,
       subtitle: `${a.latinPujl} / ${a.latinJgst}${
-        murdaVariant(a.id) !== null ? ` — ${strings.murdaHint}` : ""
+        murdaVariant(a.id, ruleset) !== null ? ` — ${strings.murdaHint}` : ""
       }`,
     })),
   });
@@ -178,7 +176,7 @@ export function buildChartSections({
 
   result.push({
     title: strings.murda,
-    entries: murdaLinks.map((m) => ({
+    entries: ruleset.murda.map((m) => ({
       id: m.aksara.id,
       name: nameOf(m.aksara.id),
       char: m.aksara.char,
@@ -195,14 +193,14 @@ export function buildChartSections({
         char: s.char,
         subtitle: `${s.latinPujl} / ${s.latinJgst}`,
       })),
-      ...[...swaraLongForms.values()].map((f) => ({
+      ...ruleset.swaraLongForms.map((f) => ({
         id: `long-${f.baseId}`,
         name: strings.longFormName(nameOf(f.baseId)),
         char:
           javaneseChar(`JAVANESE LETTER ${letterFor(f.baseId)}`) + f.tarungChar,
         subtitle: `${f.latinPujl} / ${f.latinJgst}`,
       })),
-      ...swaraCatalogue.map((s) => ({
+      ...ruleset.swaraCatalogue.map((s) => ({
         id: s.id,
         name: nameOf(s.id),
         char: s.char,
@@ -213,7 +211,7 @@ export function buildChartSections({
 
   result.push({
     title: strings.rekan,
-    entries: rekan.map((r) => ({
+    entries: ruleset.rekan.map((r) => ({
       id: r.id,
       name: nameOf(r.id),
       char: rekanChar(r.id),

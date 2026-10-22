@@ -17,6 +17,7 @@
   import ClusterResult from "./ClusterResult.svelte";
   import { ClusterPartTable, clusterReading } from "./cluster-parts.ts";
   import { splitAtIndex } from "./error-echo.ts";
+  import { ambiguityTitleKey } from "./engine-messages.ts";
   import ErrorNotice from "./ErrorNotice.svelte";
   import { LatinToAksaraConverter } from "./latin-to-aksara-state.ts";
   import ResultCard from "./ResultCard.svelte";
@@ -28,7 +29,7 @@
   const { content } = getServices();
   const partTable = ClusterPartTable.build(content);
   // The page keys this panel on direction: a fresh converter, empty input (P-U02).
-  const converter = new LatinToAksaraConverter();
+  const converter = new LatinToAksaraConverter(content.ruleset.id);
   const result = converter.state;
   let value = $state("");
   let chartEntry = $state<ChartEntry | null>(null);
@@ -73,6 +74,7 @@
         aksara: content.aksara,
         sandhangan: content.sandhangan,
         strings: chartStrings($t),
+        ruleset: content.ruleset,
       }),
       id,
     );
@@ -113,7 +115,7 @@
       {/snippet}
     </ErrorNotice>
   {:else if $result.kind === "ambiguous"}
-    <ResultCard label={$t("ambiguousTitle")}>
+    <ResultCard label={$t(ambiguityTitleKey($result.reason))}>
       <div class="chips">
         {#each $result.candidates as candidate, index (index)}
           <Chip variant="choice" onclick={() => converter.choose(index)}>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { getServices } from "../../app/services.ts";
   import { getI18n } from "../../l10n/context.ts";
   import { nglegenaById, sandhanganById } from "../../engine/index.ts";
   import type { Word } from "../../content/word.ts";
@@ -21,9 +22,12 @@
   let { entry, examples, onclose }: Props = $props();
 
   const { t } = getI18n();
+  const { content } = getServices();
 
   const nglegena = $derived(
-    nglegenaById(entry.id) === null ? null : detailForNglegena(entry.id),
+    nglegenaById(entry.id) === null
+      ? null
+      : detailForNglegena(entry.id, content.ruleset),
   );
   const sandhangan = $derived(
     sandhanganById(entry.id) === null ? null : detailForSandhangan(entry.id),

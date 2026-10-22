@@ -10,6 +10,8 @@
   "copyButton": "Salin",
   "copyWarning": "Catatan: aplikasi lain tanpa font aksara akan menampilkan kotak-kotak.",
   "ambiguousTitle": "Huruf “e” bisa dibaca dua cara — pilih salah satu:",
+  "ambiguousTitleVowelPair": "“ai”/“au” bisa ditulis dua cara — pilih salah satu:",
+  "ambiguousTitleMixed": "Huruf “e” dan “ai”/“au” bisa dibaca beberapa cara — pilih salah satu:",
   "errorTitle": "Tidak bisa mengubah:",
   "clusterHint": "Ketuk aksara untuk melihat asalnya.",
   "clusterLabel": "aksara {reading}",

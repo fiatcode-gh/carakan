@@ -1,5 +1,6 @@
 import { readonly, writable, type Readable } from "svelte/store";
 import type { Services } from "../../app/services.ts";
+import { containsGlyph } from "../../content/glyph-universe.ts";
 import type { SrsItemRow } from "../../core/db/schema.ts";
 import type { Emitter } from "../../core/emitter.ts";
 import type { ReviewQueue } from "../../core/srs/review-queue.ts";
@@ -43,11 +44,16 @@ export class ReviewSession {
   #listed = new Set<string>();
   #tail: Promise<unknown> = Promise.resolve();
 
+  readonly #shows: (itemId: string) => boolean;
+
   constructor(deps: {
     queue: ReviewQueue;
     erased: Emitter;
     now: () => number;
+    /** Display-only filter: cards the active ruleset lacks stay stored. */
+    shows: (itemId: string) => boolean;
   }) {
+    this.#shows = deps.shows;
     this.#queue = deps.queue;
     this.#now = deps.now;
     // Lives for the app's lifetime, so the subscription is never released.
@@ -101,10 +107,12 @@ export class ReviewSession {
   async #publish(): Promise<void> {
     const items: { itemId: string; kind: ReviewItemKind }[] = [];
     for (const s of await this.#queue.dueStates(this.#now())) {
-      items.push({ itemId: s.itemId, kind: kindOf(s) });
+      if (this.#shows(s.itemId)) {
+        items.push({ itemId: s.itemId, kind: kindOf(s) });
+      }
     }
     for (const id of this.#retryIds) {
-      if (!items.some((i) => i.itemId === id)) {
+      if (this.#shows(id) && !items.some((i) => i.itemId === id)) {
         items.push({ itemId: id, kind: "retry" });
       }
     }
@@ -133,13 +141,18 @@ function kindOf(s: SrsItemRow): ReviewItemKind {
 
 /** The app-lifetime review session; the first query runs at creation. */
 export function reviewSession(
-  services: Pick<Services, "singleton" | "reviewQueue" | "progress" | "now">,
+  services: Pick<
+    Services,
+    "singleton" | "reviewQueue" | "progress" | "now" | "content"
+  >,
 ): ReviewSession {
   return services.singleton("review", () => {
     const session = new ReviewSession({
       queue: services.reviewQueue,
       erased: services.progress.erased,
       now: services.now,
+      // Pasangan items are not universe ids, so they always show.
+      shows: (id) => !containsGlyph(id) || services.content.glyphIds.has(id),
     });
     void session.refresh();
     return session;

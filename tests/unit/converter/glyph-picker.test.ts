@@ -1,6 +1,15 @@
 import { describe, expect, test } from "vitest";
-import { loadContent } from "../../../src/content/content-repository.ts";
-import { javaneseChar, kajRulesetId } from "../../../src/engine/index.ts";
+import {
+  contentFor,
+  loadContent,
+  readContent,
+} from "../../../src/content/content-repository.ts";
+import {
+  javaneseChar,
+  kajRulesetId,
+  pedomanRulesetId,
+  rulesetById,
+} from "../../../src/engine/index.ts";
 import { pickerSections } from "../../../src/features/converter/glyph-picker.ts";
 import en from "../../../src/l10n/en.json";
 import { formatMessage, type MessageKey } from "../../../src/l10n/i18n.ts";
@@ -14,7 +23,8 @@ const translator =
   (key: MessageKey, params?: Record<string, string | number>) =>
     formatMessage(catalog[key], params);
 
-const sections = pickerSections(aksara, translator(id));
+const kaj = rulesetById(kajRulesetId);
+const sections = pickerSections(aksara, kaj, translator(id));
 const section = (key: MessageKey) => {
   const found = sections.find((s) => s.titleKey === key);
   if (found === undefined) throw new Error(`no section ${key}`);
@@ -22,6 +32,21 @@ const section = (key: MessageKey) => {
 };
 
 describe("pickerSections", () => {
+  test("[P-C08] a Pedoman picker has 7 swara (no long forms) and 7 murda", async () => {
+    const pedomanContent = contentFor(
+      await readContent(loadFromPublic),
+      pedomanRulesetId,
+    );
+    const pedomanSections = pickerSections(
+      pedomanContent.aksara,
+      pedomanContent.ruleset,
+      translator(id),
+    );
+    expect(pedomanSections.map((s) => s.entries.length)).toEqual([
+      20, 7, 7, 10, 15,
+    ]);
+  });
+
   test("[P-U08] has the five sections with the source sizes", () => {
     expect(sections.map((s) => s.entries.length)).toEqual([20, 11, 11, 10, 15]);
   });
@@ -37,7 +62,7 @@ describe("pickerSections", () => {
     expect(sections.map((s) => s.title)).toEqual(
       sections.map((s) => id[s.titleKey!]),
     );
-    const english = pickerSections(aksara, translator(en));
+    const english = pickerSections(aksara, kaj, translator(en));
     expect(english.map((s) => s.title)).toEqual(
       english.map((s) => en[s.titleKey!]),
     );
@@ -88,7 +113,7 @@ describe("pickerSections", () => {
 
   test("[P-U08] [W13] long forms use longFormName on the base name, per locale", () => {
     const labels = (cat: Record<MessageKey, string>) =>
-      pickerSections(aksara, translator(cat))[1]!
+      pickerSections(aksara, kaj, translator(cat))[1]!
         .entries.slice(7)
         .map((e) => e.label);
     expect(labels(id)).toEqual([

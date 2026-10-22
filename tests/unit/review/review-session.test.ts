@@ -1,7 +1,13 @@
 import { get } from "svelte/store";
 import { expect, test, vi } from "vitest";
+import { rulesetGlyphIds } from "../../../src/content/glyph-universe.ts";
 import { LearnerProgress } from "../../../src/core/db/learner-progress.ts";
 import { ReviewQueue } from "../../../src/core/srs/review-queue.ts";
+import {
+  kajRulesetId,
+  pedomanRulesetId,
+  rulesetById,
+} from "../../../src/engine/index.ts";
 import { ReviewSession } from "../../../src/features/review/review-session.ts";
 import { openFreshDb } from "../core/db-helpers.ts";
 
@@ -9,11 +15,19 @@ const T0 = Date.UTC(2026, 7, 12, 9);
 const DAY = 86_400_000;
 const MINUTE = 60_000;
 
-async function setup(now: () => number = () => T0) {
+async function setup(
+  now: () => number = () => T0,
+  shows: (itemId: string) => boolean = () => true,
+) {
   const db = await openFreshDb();
   const queue = new ReviewQueue(db);
   const progress = new LearnerProgress(db);
-  const session = new ReviewSession({ queue, erased: progress.erased, now });
+  const session = new ReviewSession({
+    queue,
+    erased: progress.erased,
+    now,
+    shows,
+  });
   return { queue, session, progress };
 }
 
@@ -155,4 +169,31 @@ test("[P-T07] a grade racing the erase ends in the empty state", async () => {
   await racing;
   await session.refresh();
   expect(get(session.state)).toEqual({ kind: "empty" });
+});
+
+test("[P-R16] cards the active ruleset lacks stay queued but are not listed", async () => {
+  const pedoman = rulesetGlyphIds(rulesetById(pedomanRulesetId));
+  const kaj = rulesetGlyphIds(rulesetById(kajRulesetId));
+  const hidden = await setup(undefined, (id) => pedoman.has(id));
+  await hidden.queue.enqueue("caMurda", T0);
+  await hidden.queue.enqueue("ka", T0);
+  await hidden.session.refresh();
+  expect(ids(hidden.session)).toEqual(["ka"]);
+  expect(
+    (await hidden.queue.dueStates(T0)).map((s) => s.itemId).sort(),
+  ).toEqual(["caMurda", "ka"]);
+
+  const shown = await setup(undefined, (id) => kaj.has(id));
+  await shown.queue.enqueue("caMurda", T0);
+  await shown.queue.enqueue("ka", T0);
+  await shown.session.refresh();
+  expect(ids(shown.session)).toEqual(["caMurda", "ka"]);
+});
+
+test("[P-R16] a retry of a hidden card is not listed", async () => {
+  const pedoman = rulesetGlyphIds(rulesetById(pedomanRulesetId));
+  const { queue, session } = await setup(undefined, (id) => pedoman.has(id));
+  await queue.enqueue("caMurda", T0);
+  await session.grade("caMurda", "again");
+  expect(ids(session)).toEqual([]);
 });

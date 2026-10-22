@@ -55,6 +55,7 @@ const sectionsFor = (c: Record<string, string>): ChartSection[] =>
     aksara: content.aksara,
     sandhangan: content.sandhangan,
     strings: stringsFor(c),
+    ruleset: content.ruleset,
   });
 const sections = sectionsFor(id);
 

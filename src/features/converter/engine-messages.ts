@@ -124,3 +124,15 @@ export function localizeEngineMessage(text: string): {
   }
   return { key: "engineErrorGeneric" };
 }
+
+/** The heading above an ambiguity's candidates, by what is ambiguous. */
+export function ambiguityTitleKey(reason: string): MessageKey {
+  switch (localizeEngineMessage(reason).key) {
+    case "engineAmbiguousVowelPair":
+      return "ambiguousTitleVowelPair";
+    case "engineAmbiguousBareEAndVowelPair":
+      return "ambiguousTitleMixed";
+    default:
+      return "ambiguousTitle";
+  }
+}

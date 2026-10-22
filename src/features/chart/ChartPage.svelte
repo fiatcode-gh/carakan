@@ -18,6 +18,7 @@
       aksara: content.aksara,
       sandhangan: content.sandhangan,
       strings: chartStrings($t),
+      ruleset: content.ruleset,
     }),
   );
 
