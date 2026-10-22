@@ -99,10 +99,14 @@
                     ? "current"
                     : "upcoming"}
               >
-                <AksaraText
-                  text={glyphInfo.byId.get(glyphId)?.char ?? ""}
-                  size="sm"
-                />
+                {#if position < index}
+                  <Icon name="check" />
+                {:else}
+                  <AksaraText
+                    text={glyphInfo.byId.get(glyphId)?.char ?? ""}
+                    size="sm"
+                  />
+                {/if}
               </li>
             {/each}
           </ol>
@@ -273,10 +277,26 @@
     background: var(--accent-chip, var(--color-coral));
   }
 
+  /* Done: card fill and a check. Current: accent fill, lifted by a shadow.
+     Upcoming: dashed. Shape and mark carry the state, not colour alone. */
+  .chip[data-state="done"] {
+    background: var(--color-card);
+  }
+
+  .chip[data-state="current"] {
+    box-shadow: var(--shadow-tile);
+  }
+
   .chip[data-state="upcoming"] {
     border: var(--border-dashed);
     background: var(--color-card);
     color: var(--color-ink-subtle);
+  }
+
+  .chip :global(.icon) {
+    width: 1.125rem;
+    height: 1.125rem;
+    stroke-width: 3;
   }
 
   .chip :global(.aksara) {

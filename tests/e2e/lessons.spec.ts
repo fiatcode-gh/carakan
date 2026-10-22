@@ -287,6 +287,26 @@ test("[P-B19] unit 1 goes glyph by glyph: meet, trace, that glyph's question, ne
     await expect(page.locator(".meet .visually-hidden")).toHaveText(
       fmt(id["meetProgressLabel"]!, { number: i + 1, total: glyphs.length }),
     );
+    const chips = await page
+      .locator(".meet-progress .chip")
+      .evaluateAll((els: HTMLElement[]) =>
+        els.map((el) => ({
+          state: el.dataset["state"],
+          mark: el.querySelector("svg") !== null,
+          lifted: getComputedStyle(el).boxShadow !== "none",
+          dashed: getComputedStyle(el).borderStyle === "dashed",
+        })),
+      );
+    // Each state differs by more than colour: a check, a shadow, a dashed frame.
+    expect(chips).toEqual(
+      glyphs.map((_, p) =>
+        p < i
+          ? { state: "done", mark: true, lifted: false, dashed: false }
+          : p === i
+            ? { state: "current", mark: false, lifted: true, dashed: false }
+            : { state: "upcoming", mark: false, lifted: false, dashed: true },
+      ),
+    );
     await expect(page.locator(".meet__glyph .aksara")).toHaveText(info.char);
     await page.getByRole("button", { name: id["tryWritingButton"]! }).click();
 
