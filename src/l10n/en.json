@@ -157,5 +157,12 @@
   "stampLetsStart": "Let's start",
   "ladderTitle": "Learn aksara.",
   "chartNote": "Tap for details",
+  "chartTabsLabel": "Aksara type",
+  "chartTabSandhangan": "Sandhangan",
+  "chartLegendLabel": "Unit colours",
+  "chartDetailTitle": "{name} · {section} {number} / {total}",
+  "readingLabel": "Reads",
+  "baseLetterLabel": "Base letter",
+  "aksaraName": "aksara {reading}",
   "reviewNote": "a little, but often"
 }

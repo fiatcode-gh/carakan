@@ -130,6 +130,59 @@ button {
   text-transform: uppercase;
 }
 
+/* SegmentedTabs frame, shared by SegmentedControl (radios) and Tabs (tabs).
+   A selected cell is aria-selected or holds the checked radio. */
+.segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  border: var(--border);
+  background: var(--color-card);
+}
+
+.segmented__cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--touch-min);
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  text-align: center;
+  line-height: var(--leading-snug);
+}
+
+.segmented__cell + .segmented__cell {
+  border-inline-start: var(--border);
+}
+
+.segmented__cell[aria-selected="true"],
+.segmented__cell:has(:checked) {
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+  font-weight: var(--weight-black);
+}
+
+.segmented__cell:focus-visible,
+.segmented__cell:has(:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: calc(var(--focus-offset) * -1);
+}
+
+.segmented__cell input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
 .aksara {
   font-family: var(--font-aksara);
   font-weight: var(--weight-regular);

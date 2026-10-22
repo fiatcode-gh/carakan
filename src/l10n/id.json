@@ -157,5 +157,12 @@
   "stampLetsStart": "Ayo mulai",
   "ladderTitle": "Sinau aksara.",
   "chartNote": "Ketuk untuk detail",
+  "chartTabsLabel": "Jenis aksara",
+  "chartTabSandhangan": "Sandhangan",
+  "chartLegendLabel": "Warna unit",
+  "chartDetailTitle": "{name} · {section} {number} / {total}",
+  "readingLabel": "Dibaca",
+  "baseLetterLabel": "Aksara dasar",
+  "aksaraName": "aksara {reading}",
   "reviewNote": "sedikit tapi rutin"
 }

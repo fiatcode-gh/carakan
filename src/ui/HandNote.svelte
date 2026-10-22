@@ -2,7 +2,7 @@
   import type { Snippet } from "svelte";
 
   interface Props {
-    tag?: "p" | "span" | "h2";
+    tag?: "p" | "span" | "h2" | "h3";
     /** A slight anticlockwise tilt, as if written in by hand. */
     tilt?: boolean;
     children?: Snippet;

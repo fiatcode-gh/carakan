@@ -5,6 +5,8 @@
 
   interface Props {
     title: string;
+    /** `eyebrow` shows the title as a small caps label; it still labels the dialog. */
+    titleStyle?: "heading" | "eyebrow";
     /** Id of the element that describes the dialog (`aria-describedby`). */
     describedby?: string;
     /** Fires once the dialog has closed (button, Esc or Android back). */
@@ -13,7 +15,14 @@
     footer?: Snippet;
   }
 
-  let { title, describedby, onclose, children, footer }: Props = $props();
+  let {
+    title,
+    titleStyle = "heading",
+    describedby,
+    onclose,
+    children,
+    footer,
+  }: Props = $props();
 
   const { t } = getI18n();
   const uid = $props.id();
@@ -56,8 +65,18 @@
   {onclose}
 >
   <span class="sheet__grab" aria-hidden="true"></span>
-  <div class="sheet__head">
-    <h2 class="sheet__title" id={titleId} tabindex="-1" bind:this={heading}>
+  <div class={["sheet__head", titleStyle === "eyebrow" && "sheet__head--bare"]}>
+    <h2
+      class={[
+        "sheet__title",
+        titleStyle === "eyebrow"
+          ? "eyebrow sheet__title--eyebrow"
+          : "sheet__title--heading",
+      ]}
+      id={titleId}
+      tabindex="-1"
+      bind:this={heading}
+    >
       {title}
     </h2>
     <IconButton
@@ -127,6 +146,12 @@
     border-bottom: var(--border);
   }
 
+  /* The eyebrow title sits on the paper with no rule under it. */
+  .sheet__head--bare {
+    padding: var(--space-2) var(--gutter) 0;
+    border-bottom: 0;
+  }
+
   .sheet__grab {
     position: absolute;
     top: var(--space-1);
@@ -140,7 +165,14 @@
   .sheet__title {
     flex: 1;
     min-width: 0;
+  }
+
+  .sheet__title--heading {
     font-size: var(--text-lg);
+  }
+
+  .sheet__title--eyebrow {
+    color: var(--color-ink-muted);
   }
 
   /* The title takes initial focus when a sheet opens; it is not a control. */

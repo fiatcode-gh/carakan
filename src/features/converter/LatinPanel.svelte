@@ -8,9 +8,9 @@
   import TextField from "../../ui/TextField.svelte";
   import ChartDetailSheet from "../chart/ChartDetailSheet.svelte";
   import {
-    buildChartSections,
+    buildChartTabs,
     findChartEntry,
-    type ChartEntry,
+    type ChartLocation,
   } from "../chart/chart-catalog.ts";
   import { chartStrings } from "../chart/chart-strings.ts";
   import ClusterBreakdown from "./ClusterBreakdown.svelte";
@@ -32,7 +32,7 @@
   const converter = new LatinToAksaraConverter(content.ruleset.id);
   const result = converter.state;
   let value = $state("");
-  let chartEntry = $state<ChartEntry | null>(null);
+  let chartLocation = $state<ChartLocation | null>(null);
 
   const detail = $derived.by(() => {
     const state = $result;
@@ -69,8 +69,8 @@
   }
 
   function openChart(id: string): void {
-    chartEntry = findChartEntry(
-      buildChartSections({
+    chartLocation = findChartEntry(
+      buildChartTabs({
         aksara: content.aksara,
         sandhangan: content.sandhangan,
         strings: chartStrings($t),
@@ -154,11 +154,11 @@
   {/if}
 </div>
 
-{#if chartEntry}
+{#if chartLocation}
   <ChartDetailSheet
-    entry={chartEntry}
-    examples={content.chartExamples.get(chartEntry.id) ?? []}
-    onclose={() => (chartEntry = null)}
+    location={chartLocation}
+    examples={content.chartExamples.get(chartLocation.entry.id) ?? []}
+    onclose={() => (chartLocation = null)}
   />
 {/if}
 
