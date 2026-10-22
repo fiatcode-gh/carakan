@@ -6,27 +6,30 @@
 
   const { t } = getI18n();
 
-  // Each dot sits next to its own text: the color is never the only cue.
+  // Each marker sits next to its own text: the color is never the only cue.
   const grades = $derived([
-    { dot: "var(--color-coral)", text: $t("reviewHelpGradeAgain") },
-    { dot: "var(--color-ink-muted)", text: $t("reviewHelpGradeHard") },
-    { dot: "var(--color-butter)", text: $t("reviewHelpGradeGood") },
-    { dot: "var(--color-sage)", text: $t("reviewHelpGradeEasy") },
+    { fill: "var(--color-coral)", text: $t("reviewHelpGradeAgain") },
+    { fill: "var(--color-neutral)", text: $t("reviewHelpGradeHard") },
+    { fill: "var(--color-butter)", text: $t("reviewHelpGradeGood") },
+    { fill: "var(--color-periwinkle)", text: $t("reviewHelpGradeEasy") },
   ]);
 </script>
 
 <Page title={$t("reviewHelpTitle")} onback={back}>
   <div class="stack">
-    <Surface shadow="none" tag="article">
+    <Surface tag="article">
       <h2 class="slip__title">{$t("reviewHelpWhyHeading")}</h2>
       <p class="slip__body">{$t("reviewHelpWhyBody")}</p>
     </Surface>
-    <Surface shadow="none" tag="article">
+    <Surface tag="article">
       <h2 class="slip__title">{$t("reviewHelpGradeHeading")}</h2>
       <ul class="grades">
-        {#each grades as { dot, text }}
+        {#each grades as { fill, text }}
           <li class="grade">
-            <span class="grade__dot" style:background={dot} aria-hidden="true"
+            <span
+              class="grade__marker"
+              style:background={fill}
+              aria-hidden="true"
             ></span>
             <span>{text}</span>
           </li>
@@ -62,11 +65,11 @@
     line-height: var(--leading-body);
   }
 
-  .grade__dot {
+  .grade__marker {
     flex: none;
-    width: 0.75rem;
-    height: 0.75rem;
-    margin-top: 0.4em;
+    width: 14px;
+    height: 14px;
+    margin-top: 0.3em;
     border: var(--border);
   }
 </style>

@@ -44,7 +44,7 @@
   <div class="update" role="status">
     <p class="update__text">{$t("updateAvailable")}</p>
     <div class="update__actions">
-      <Button variant="primary" onclick={reload}>
+      <Button variant="secondary" onclick={reload}>
         {$t("updateReloadButton")}
       </Button>
       <Button variant="quiet" onclick={() => (later = true)}>
@@ -68,8 +68,8 @@
     width: min(calc(100% - var(--space-8)), 26rem);
     padding: var(--space-3) var(--space-4);
     border: var(--border);
-    background: var(--color-card);
-    color: var(--color-ink);
+    background: var(--color-ink);
+    color: var(--color-on-ink);
     translate: -50% 0;
     animation: rise var(--dur-base) var(--ease-out) both;
   }
@@ -84,6 +84,10 @@
   .update__actions {
     display: flex;
     gap: var(--space-2);
+  }
+
+  .update__actions :global(.btn--quiet) {
+    color: var(--color-on-ink);
   }
 
   :global(body[data-chrome="none"]) .update {

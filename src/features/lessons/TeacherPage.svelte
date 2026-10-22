@@ -12,7 +12,7 @@
 
 <Page title={$t("teacherTitle")} onback={back}>
   <div class="stack">
-    <Surface shadow="none" tag="article">
+    <Surface tag="article">
       <h2 class="slip__title">{$t("deviationTitle")}</h2>
       <p class="slip__body">
         {$t("deviationBody", {
@@ -20,7 +20,7 @@
         })}
       </p>
     </Surface>
-    <Surface shadow="none" tag="article">
+    <Surface tag="article">
       <h2 class="slip__title">{$t("unitOrderHeading")}</h2>
       <p class="slip__body slip__body--lines">{$t("unitOrderBody")}</p>
     </Surface>

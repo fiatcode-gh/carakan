@@ -15,7 +15,7 @@ import {
   expectNoHorizontalOverflow,
   expectTouchTargets,
 } from "./support/a11y.ts";
-import { gotoRoute, seedLocale } from "./support/app.ts";
+import { gotoRoute, seedLocale, tokenColor } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
 import { readStore, unitButton, writeRows } from "./support/lesson.ts";
 import { createSolver, type Solver } from "./support/solver.ts";
@@ -129,6 +129,63 @@ test("[P-T05] about shows version, ruleset, sources, fonts and corpus", async ({
   await expect(main).toContainText(id["ruleSourceBodyKaj"]!);
   await expect(main).toContainText(id["fontBody"]!);
   await expect(main).toContainText(id["corpusBody"]!);
+});
+
+test("[P-T01][P-T05][P-T07] sections are tile surfaces with eyebrow headings; the reset keeps its danger signals", async ({
+  page,
+}) => {
+  await gotoRoute(page, "#/settings");
+  const surfaces = page.locator("main .surface:visible");
+  await expect(surfaces).toHaveCount(4);
+  const [ink, stamp] = [
+    await tokenColor(page, "--color-ink"),
+    await tokenColor(page, "--color-stamp"),
+  ];
+  const tile = await page.evaluate(() => {
+    const probe = document.createElement("span");
+    probe.style.boxShadow = "var(--shadow-tile)";
+    document.body.append(probe);
+    const shadow = getComputedStyle(probe).boxShadow;
+    probe.remove();
+    return shadow;
+  });
+  for (let i = 0; i < 3; i++) {
+    const surface = surfaces.nth(i);
+    expect(await surface.evaluate((el) => getComputedStyle(el).boxShadow)).toBe(
+      tile,
+    );
+    await expect(surface.locator(".eyebrow").first()).toBeVisible();
+  }
+  for (const radio of await page.getByRole("radio").all()) {
+    expect(await radio.evaluate((el) => getComputedStyle(el).accentColor)).toBe(
+      ink,
+    );
+    expect(await radio.evaluate((el) => getComputedStyle(el).opacity)).toBe(
+      "1",
+    );
+    const row = radio.locator("xpath=ancestor::label");
+    expect((await row.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  }
+  const reset = surfaces.nth(3);
+  const style = await reset.evaluate((el) => {
+    const s = getComputedStyle(el);
+    return {
+      borderStyle: s.borderTopStyle,
+      borderWidth: s.borderTopWidth,
+      borderColor: s.borderTopColor,
+    };
+  });
+  expect(style).toEqual({
+    borderStyle: "dashed",
+    borderWidth: "2px",
+    borderColor: stamp,
+  });
+  const heading = reset.getByRole("heading", { name: id["resetHeading"]! });
+  await expect(heading).toHaveClass(/eyebrow/);
+  expect(await heading.evaluate((el) => getComputedStyle(el).color)).toBe(
+    stamp,
+  );
+  await expect(heading.locator("svg")).toHaveCount(1);
 });
 
 test("[W09] the licence and corpus links resolve on the server", async ({

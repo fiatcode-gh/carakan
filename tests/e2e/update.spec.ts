@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { kajRulesetId } from "../../src/engine/index.ts";
-import { gotoRoute } from "./support/app.ts";
+import { gotoRoute, tokenColor } from "./support/app.ts";
 import { expect, test, trackForeignRequests } from "./support/fixtures.ts";
 import { id, walkMeet } from "./support/lesson.ts";
 import { createSolver, type Solver } from "./support/solver.ts";
@@ -108,6 +108,29 @@ test("an update never interrupts a lesson, is offered on the ladder, can wait, a
   });
   await expect(page.locator(".ladder")).toBeVisible();
   await expect(banner(page)).toBeVisible();
+  const bar = page.getByRole("status").filter({ has: banner(page) });
+  const barStyle = await bar.evaluate((el) => {
+    const s = getComputedStyle(el);
+    return { background: s.backgroundColor, color: s.color };
+  });
+  expect(barStyle).toEqual({
+    background: await tokenColor(page, "--color-ink"),
+    color: await tokenColor(page, "--color-on-ink"),
+  });
+  expect(
+    await page
+      .getByRole("button", { name: id["updateReloadButton"]! })
+      .evaluate((el) => getComputedStyle(el).backgroundColor),
+  ).toBe(await tokenColor(page, "--color-card"));
+  expect(
+    await page
+      .getByRole("button", { name: id["updateLaterButton"]! })
+      .evaluate((el) => getComputedStyle(el).color),
+  ).toBe(await tokenColor(page, "--color-on-ink"));
+  const nav = page.locator("nav:visible").first();
+  expect(
+    (await bar.boundingBox())!.y + (await bar.boundingBox())!.height,
+  ).toBeLessThanOrEqual((await nav.boundingBox())!.y);
   await expect(
     page.getByRole("status").filter({ has: banner(page) }),
   ).toBeVisible();

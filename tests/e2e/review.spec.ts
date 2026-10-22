@@ -14,7 +14,7 @@ import {
   expectNoHorizontalOverflow,
   expectTouchTargets,
 } from "./support/a11y.ts";
-import { gotoRoute } from "./support/app.ts";
+import { gotoRoute, tokenColor } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
 import { writeRows } from "./support/lesson.ts";
 import {
@@ -148,14 +148,36 @@ test("[P-R01][P-R12] the help button opens the help page with both slips and fou
   ];
   for (const [i, text] of expected.entries()) {
     await expect(lines.nth(i)).toHaveText(text);
-    await expect(lines.nth(i).locator(".grade__dot")).toBeVisible();
+    await expect(lines.nth(i).locator(".grade__marker")).toBeVisible();
   }
-  const dots = await lines
-    .locator(".grade__dot")
-    .evaluateAll((els) =>
-      els.map((el) => getComputedStyle(el).backgroundColor),
-    );
-  expect(new Set(dots).size, "one color per grade").toBe(4);
+  const markers = await lines.locator(".grade__marker").evaluateAll((els) =>
+    els.map((el) => {
+      const s = getComputedStyle(el);
+      return {
+        width: s.width,
+        height: s.height,
+        borderWidth: s.borderTopWidth,
+        borderColor: s.borderTopColor,
+        background: s.backgroundColor,
+      };
+    }),
+  );
+  const ink = await tokenColor(page, "--color-ink");
+  const fills = [
+    await tokenColor(page, "--color-coral"),
+    await tokenColor(page, "--color-neutral"),
+    await tokenColor(page, "--color-butter"),
+    await tokenColor(page, "--color-periwinkle"),
+  ];
+  expect(markers).toEqual(
+    fills.map((background) => ({
+      width: "14px",
+      height: "14px",
+      borderWidth: "2px",
+      borderColor: ink,
+      background,
+    })),
+  );
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);

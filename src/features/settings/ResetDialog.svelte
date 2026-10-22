@@ -23,7 +23,7 @@
     <p class="failure" role="alert">{$t("resetFailed")}</p>
   {/if}
   {#snippet footer()}
-    <Button variant="quiet" data-autofocus onclick={onclose}>
+    <Button variant="secondary" data-autofocus onclick={onclose}>
       {$t("cancelButton")}
     </Button>
     <Button variant="danger" onclick={onconfirm}>

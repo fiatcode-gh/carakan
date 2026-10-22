@@ -116,64 +116,71 @@
 
 <Page title={$t("settingsTitle")} onback={back}>
   <div class="stack stack--loose">
-    <fieldset class="choice-group">
-      <legend class="choice-group__legend">{$t("languageHeading")}</legend>
-      <div class="choice-group__options">
-        {#each options as option, index (option.value)}
-          <label class="choice-group__option">
-            <input
-              type="radio"
-              name="ui-language"
-              value={option.value}
-              checked={$setting === option.value}
-              bind:this={radios[index]}
-              onchange={() => choose(option.value)}
-            />
-            <span class="choice-group__label">{option.label}</span>
-          </label>
-        {/each}
-      </div>
-    </fieldset>
+    <Surface>
+      <fieldset class="choice-group">
+        <legend class="choice-group__legend eyebrow">
+          {$t("languageHeading")}
+        </legend>
+        <div class="choice-group__options">
+          {#each options as option, index (option.value)}
+            <label class="choice-group__option">
+              <input
+                type="radio"
+                name="ui-language"
+                value={option.value}
+                checked={$setting === option.value}
+                bind:this={radios[index]}
+                onchange={() => choose(option.value)}
+              />
+              <span>{option.label}</span>
+            </label>
+          {/each}
+        </div>
+      </fieldset>
+    </Surface>
 
-    <fieldset class="choice-group">
-      <legend class="choice-group__legend">{$t("rulesetSettingHeading")}</legend
-      >
-      <p class="muted choice-group__hint">{$t("rulesetSettingHint")}</p>
-      <div class="choice-group__options">
-        {#each rulesets as r, index (r.id)}
-          <label class="choice-group__option">
-            <input
-              type="radio"
-              name="ruleset"
-              value={r.id}
-              checked={$active === r.id}
-              bind:this={rulesetRadios[index]}
-              onchange={() => chooseRuleset(r.id)}
-            />
-            <span class="choice-group__label"
-              >{$t(RULESET_MESSAGES[r.id].name)}</span
-            >
-          </label>
-        {/each}
-      </div>
-    </fieldset>
+    <Surface>
+      <fieldset class="choice-group">
+        <legend class="choice-group__legend eyebrow">
+          {$t("rulesetSettingHeading")}
+        </legend>
+        <p class="muted choice-group__hint">{$t("rulesetSettingHint")}</p>
+        <div class="choice-group__options">
+          {#each rulesets as r, index (r.id)}
+            <label class="choice-group__option">
+              <input
+                type="radio"
+                name="ruleset"
+                value={r.id}
+                checked={$active === r.id}
+                bind:this={rulesetRadios[index]}
+                onchange={() => chooseRuleset(r.id)}
+              />
+              <span>{$t(RULESET_MESSAGES[r.id].name)}</span>
+            </label>
+          {/each}
+        </div>
+      </fieldset>
+    </Surface>
 
-    <section class="stack" aria-labelledby="about-heading">
-      <h2 id="about-heading">{$t("aboutSectionHeading")}</h2>
-      <Surface shadow="none">
+    <Surface tag="section" class="section" aria-labelledby="about-heading">
+      <h2 id="about-heading" class="eyebrow">
+        {$t("aboutSectionHeading")}
+      </h2>
+      <div>
         <p class="about__title">{$t("appTitle")}</p>
         <p class="muted">{$t("appSubtitle")}</p>
         <p>{$t("versionLabel", { version: appVersion })}</p>
-      </Surface>
-      <Surface shadow="none" tag="section" aria-labelledby="about-ruleset">
+      </div>
+      <section class="about__block" aria-labelledby="about-ruleset">
         <h3 id="about-ruleset">{$t("rulesetHeading")}</h3>
         <p>{$active}</p>
-      </Surface>
-      <Surface shadow="none" tag="section" aria-labelledby="about-sources">
+      </section>
+      <section class="about__block" aria-labelledby="about-sources">
         <h3 id="about-sources">{$t("ruleSourceHeading")}</h3>
         <p>{$t(RULESET_MESSAGES[$active].sources)}</p>
-      </Surface>
-      <Surface shadow="none" tag="section" aria-labelledby="about-fonts">
+      </section>
+      <section class="about__block" aria-labelledby="about-fonts">
         <h3 id="about-fonts">{$t("fontHeading")}</h3>
         <p>{$t("fontBody")}</p>
         <ul class="links">
@@ -181,8 +188,8 @@
             <li><a href={path}>{fileName(path)}</a></li>
           {/each}
         </ul>
-      </Surface>
-      <Surface shadow="none" tag="section" aria-labelledby="about-corpus">
+      </section>
+      <section class="about__block" aria-labelledby="about-corpus">
         <h3 id="about-corpus">{$t("corpusHeading")}</h3>
         <p>{$t("corpusBody")}</p>
         <ul class="links">
@@ -190,22 +197,22 @@
             <li><a href={path}>{fileName(path)}</a></li>
           {/each}
         </ul>
-      </Surface>
-    </section>
+      </section>
+    </Surface>
 
     <Button variant="secondary" block onclick={() => (reportOpen = true)}>
       {$t("reportButton")}
     </Button>
 
-    <section class="reset" aria-labelledby="reset-heading">
-      <h2 id="reset-heading" class="reset__heading">
+    <Surface tag="section" class="reset" aria-labelledby="reset-heading">
+      <h2 id="reset-heading" class="reset__heading eyebrow">
         <Icon name="triangle-alert" />{$t("resetHeading")}
       </h2>
       <p>{$t("resetBody")}</p>
       <Button variant="danger" block onclick={openReset}>
         {$t("resetButton")}
       </Button>
-    </section>
+    </Surface>
   </div>
 </Page>
 
@@ -238,12 +245,11 @@
     gap: var(--space-6);
   }
 
-  .reset {
+  .stack > :global(.surface.reset) {
     display: grid;
     gap: var(--space-3);
-    padding: var(--space-4);
     border: 2px dashed var(--color-stamp);
-    background: var(--color-card);
+    box-shadow: none;
   }
 
   .reset__heading {
@@ -251,6 +257,11 @@
     align-items: center;
     gap: var(--space-2);
     color: var(--color-stamp);
+  }
+
+  .stack > :global(.surface.section) {
+    display: grid;
+    gap: var(--space-3);
   }
 
   .choice-group {
@@ -263,7 +274,6 @@
   .choice-group__legend {
     margin-bottom: var(--space-2);
     padding: 0;
-    font-weight: var(--weight-bold);
   }
 
   .choice-group__hint {
@@ -272,48 +282,40 @@
 
   .choice-group__options {
     display: grid;
-    gap: var(--space-1);
-    padding: var(--space-1);
-    border: var(--border);
-    background: var(--color-neutral);
   }
 
   .choice-group__option {
-    position: relative;
     display: flex;
-  }
-
-  .choice-group__option input {
-    position: absolute;
-    inset: 0;
-    margin: 0;
-    opacity: 0;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--touch-min);
+    font-weight: var(--weight-bold);
     cursor: pointer;
   }
 
-  .choice-group__label {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-height: var(--touch-min);
-    padding: var(--space-1) var(--space-4);
-    font-weight: var(--weight-bold);
-  }
-
-  .choice-group__option input:checked + .choice-group__label {
-    background: var(--color-coral);
-    color: var(--color-ink);
-    box-shadow: 0 2px 0 var(--color-ink);
-  }
-
-  .choice-group__option input:focus-visible + .choice-group__label {
-    outline: var(--focus-ring);
-    outline-offset: 2px;
+  .choice-group__option input {
+    flex: none;
+    width: 1.375rem;
+    height: 1.375rem;
+    margin: 0;
+    accent-color: var(--color-ink);
+    cursor: pointer;
   }
 
   .about__title {
     font-size: var(--text-lg);
     font-weight: var(--weight-bold);
+  }
+
+  .about__block {
+    display: grid;
+    gap: var(--space-1);
+    padding-top: var(--space-3);
+    border-top: var(--border-dashed);
+  }
+
+  .about__block h3 {
+    font-size: var(--text-md);
   }
 
   .muted {
@@ -323,7 +325,7 @@
   .links {
     display: grid;
     gap: var(--space-1);
-    margin: var(--space-3) 0 0;
+    margin: var(--space-2) 0 0;
     padding: 0;
     list-style: none;
   }
@@ -333,5 +335,7 @@
     align-items: center;
     min-height: var(--touch-min);
     color: var(--color-ink);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
 </style>

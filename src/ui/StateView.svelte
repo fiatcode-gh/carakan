@@ -95,11 +95,9 @@
   }
 
   .spinner {
-    width: 3rem;
-    height: 3rem;
-    border: 4px solid var(--color-neutral);
-    border-top-color: var(--color-ink);
-    border-radius: 50%;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: var(--border);
     animation: spin 900ms linear infinite;
   }
 
