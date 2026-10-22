@@ -2,7 +2,6 @@ import { get } from "svelte/store";
 import { describe, expect, test, vi } from "vitest";
 import {
   contentFor,
-  loadContent,
   readContent,
 } from "../../../src/content/content-repository.ts";
 import { GlyphInfoTable } from "../../../src/content/glyph-info-table.ts";
@@ -18,7 +17,7 @@ import {
   ladderPreview,
   unitsCompletedByRetired,
 } from "../../../src/features/lessons/ladder.ts";
-import { loadFromPublic } from "../../support/content-files.ts";
+import { loadFromPublic, loadView } from "../../support/content-files.ts";
 import { openFreshDb } from "../core/db-helpers.ts";
 
 const units = [
@@ -46,7 +45,7 @@ const statusesOf = (done: string[]) =>
   computeLadder(units, new Set(done)).statuses.map((e) => e.status);
 
 async function content() {
-  const loaded = await loadContent(loadFromPublic, kajRulesetId);
+  const loaded = await loadView(kajRulesetId);
   return { loaded, table: GlyphInfoTable.build(loaded) };
 }
 

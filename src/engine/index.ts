@@ -1,6 +1,6 @@
 // Pure TypeScript transliteration engine for the Javanese script (aksara Jawa).
 //
-// Rulesets: `pedoman-2002-v1` (Pedoman Ejaan Bahasa Jawa yang Disempurnakan
+// Rulesets: `pedoman-2002-v1` (Pedoman Penulisan Aksara Jawa
 // 2002, the app default) and `kaj1-2021-simplified-v3` (Kongres Aksara Jawa I
 // Yogyakarta 2021, Tata Tulis Simplified, the frozen differential ruleset);
 // transliteration per JGST (canonical) and PUJL (user-facing). See

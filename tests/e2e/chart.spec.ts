@@ -1,6 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
-import { loadContent } from "../../src/content/content-repository.ts";
 import {
   kajRulesetId,
   murdaFor,
@@ -12,7 +11,7 @@ import {
   type ChartSection,
   type ChartStrings,
 } from "../../src/features/chart/chart-catalog.ts";
-import { loadFromPublic } from "../support/content-files.ts";
+import { loadView } from "../support/content-files.ts";
 import {
   expectAccessible,
   expectNoHorizontalOverflow,
@@ -49,7 +48,7 @@ const stringsFor = (c: Record<string, string>): ChartStrings => ({
   longFormName: (name) => fmt(c["longFormName"]!, { name }),
 });
 
-const content = await loadContent(loadFromPublic, kajRulesetId);
+const content = await loadView(kajRulesetId);
 const sectionsFor = (c: Record<string, string>): ChartSection[] =>
   buildChartSections({
     aksara: content.aksara,

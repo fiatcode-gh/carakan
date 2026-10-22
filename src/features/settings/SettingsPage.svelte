@@ -116,11 +116,11 @@
 
 <Page title={$t("settingsTitle")} onback={back}>
   <div class="stack stack--loose">
-    <fieldset class="language">
-      <legend class="language__legend">{$t("languageHeading")}</legend>
-      <div class="language__options">
+    <fieldset class="choice-group">
+      <legend class="choice-group__legend">{$t("languageHeading")}</legend>
+      <div class="choice-group__options">
         {#each options as option, index (option.value)}
-          <label class="language__option">
+          <label class="choice-group__option">
             <input
               type="radio"
               name="ui-language"
@@ -129,18 +129,19 @@
               bind:this={radios[index]}
               onchange={() => choose(option.value)}
             />
-            <span class="language__label">{option.label}</span>
+            <span class="choice-group__label">{option.label}</span>
           </label>
         {/each}
       </div>
     </fieldset>
 
-    <fieldset class="language">
-      <legend class="language__legend">{$t("rulesetSettingHeading")}</legend>
-      <p class="muted language__hint">{$t("rulesetSettingHint")}</p>
-      <div class="language__options">
+    <fieldset class="choice-group">
+      <legend class="choice-group__legend">{$t("rulesetSettingHeading")}</legend
+      >
+      <p class="muted choice-group__hint">{$t("rulesetSettingHint")}</p>
+      <div class="choice-group__options">
         {#each rulesets as r, index (r.id)}
-          <label class="language__option">
+          <label class="choice-group__option">
             <input
               type="radio"
               name="ruleset"
@@ -149,7 +150,7 @@
               bind:this={rulesetRadios[index]}
               onchange={() => chooseRuleset(r.id)}
             />
-            <span class="language__label"
+            <span class="choice-group__label"
               >{$t(RULESET_MESSAGES[r.id].name)}</span
             >
           </label>
@@ -253,24 +254,24 @@
     color: var(--color-danger);
   }
 
-  .language {
+  .choice-group {
     min-width: 0;
     margin: 0;
     padding: 0;
     border: 0;
   }
 
-  .language__legend {
+  .choice-group__legend {
     margin-bottom: var(--space-2);
     padding: 0;
     font-weight: var(--weight-bold);
   }
 
-  .language__hint {
+  .choice-group__hint {
     margin: 0 0 var(--space-2);
   }
 
-  .language__options {
+  .choice-group__options {
     display: grid;
     gap: var(--space-1);
     padding: var(--space-1);
@@ -279,12 +280,12 @@
     background: var(--color-surface-sunken);
   }
 
-  .language__option {
+  .choice-group__option {
     position: relative;
     display: flex;
   }
 
-  .language__option input {
+  .choice-group__option input {
     position: absolute;
     inset: 0;
     margin: 0;
@@ -292,7 +293,7 @@
     cursor: pointer;
   }
 
-  .language__label {
+  .choice-group__label {
     display: flex;
     align-items: center;
     width: 100%;
@@ -302,13 +303,13 @@
     font-weight: var(--weight-bold);
   }
 
-  .language__option input:checked + .language__label {
+  .choice-group__option input:checked + .choice-group__label {
     background: var(--color-accent);
     color: var(--color-on-accent);
     box-shadow: 0 2px 0 var(--color-accent-pressed);
   }
 
-  .language__option input:focus-visible + .language__label {
+  .choice-group__option input:focus-visible + .choice-group__label {
     outline: var(--focus-ring);
     outline-offset: 2px;
   }

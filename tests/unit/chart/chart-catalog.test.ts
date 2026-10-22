@@ -2,7 +2,6 @@ import { describe, expect, test } from "vitest";
 import { AksaraItem } from "../../../src/content/aksara-item.ts";
 import {
   contentFor,
-  loadContent,
   readContent,
 } from "../../../src/content/content-repository.ts";
 import { SandhanganItem } from "../../../src/content/sandhangan-item.ts";
@@ -27,7 +26,7 @@ import {
   type ChartStrings,
 } from "../../../src/features/chart/chart-catalog.ts";
 import { ak } from "../../engine/support/aksara-builder.ts";
-import { loadFromPublic } from "../../support/content-files.ts";
+import { loadFromPublic, loadView } from "../../support/content-files.ts";
 
 const aksara = [
   new AksaraItem({
@@ -124,7 +123,7 @@ describe("chart lookups for the converter", () => {
   });
 
   test("[P-U10] findChartEntry resolves real content ids in section order", async () => {
-    const content = await loadContent(loadFromPublic, kajRulesetId);
+    const content = await loadView(kajRulesetId);
     const real = buildChartSections({
       aksara: content.aksara,
       sandhangan: content.sandhangan,
@@ -248,7 +247,7 @@ describe("buildChartSections", () => {
   });
 
   test("[P-C01] the real content yields no empty name, char or subtitle", async () => {
-    const content = await loadContent(loadFromPublic, kajRulesetId);
+    const content = await loadView(kajRulesetId);
     const real = buildChartSections({
       aksara: content.aksara,
       sandhangan: content.sandhangan,

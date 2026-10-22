@@ -1,14 +1,10 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import {
-  loadContent,
-  type ContentData,
-} from "../../../src/content/content-repository.ts";
+import { type ContentData } from "../../../src/content/content-repository.ts";
 import {
   GlyphInfoTable,
   type GlyphInfo,
 } from "../../../src/content/glyph-info-table.ts";
 import type { RulesetId } from "../../../src/engine/index.ts";
+import { loadView } from "../../support/content-files.ts";
 
 /**
  * Answers lesson and drill questions from outside the page. It rebuilds the
@@ -35,10 +31,7 @@ export type QuestionPrompt =
   { readonly glyph: string } | { readonly sound: string };
 
 export async function createSolver(rulesetId: RulesetId): Promise<Solver> {
-  const content = await loadContent(
-    async (path) => readFileSync(join("public", path), "utf8"),
-    rulesetId,
-  );
+  const content = await loadView(rulesetId);
   const table = GlyphInfoTable.build(content);
   const entries: GlyphInfo[] = [...table.byId.values()];
   const byChar = (char: string) => entries.filter((e) => e.char === char);

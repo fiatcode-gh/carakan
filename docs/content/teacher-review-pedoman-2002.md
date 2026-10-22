@@ -48,13 +48,13 @@ Lembar ini memuat hal yang masih perlu keputusan Ibu atau Bapak Guru. Untuk seti
 
 ### 4. A ganda, `oa`, `ia`
 
-| Isi                        | Keterangan                                                                                                                                |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Pertanyaan                 | Pedoman tidak mengatur a ganda (`maaf`, `taat`, `saat`) dan `oa`, `ia`. Apakah cara Kongres Aksara Jawa I dipertahankan?                  |
-| Jawaban sementara aplikasi | `maaf`, `taat`, `saat`: aksara swara A di tengah kata. `oa` dan `ia` memakai wa dan ya sebagai penghubung, seperti Kongres Aksara Jawa I. |
-| Contoh kata                | `maaf`, `taat`, `saat`, `buwaya`, `pasien`                                                                                                |
-| Halaman Pedoman            | tidak diatur; aturan serapan umum hlm. 13                                                                                                 |
-| Jawaban guru               |                                                                                                                                           |
+| Isi                        | Keterangan                                                                                                                                                                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Pertanyaan                 | Pedoman tidak mengatur a ganda (`maaf`, `taat`, `saat`), `ā` setelah konsonan (`pāku`), dan `oa`, `ia`. Apakah cara Kongres Aksara Jawa I dipertahankan?                                                                             |
+| Jawaban sementara aplikasi | `maaf`, `taat`, `saat`: aksara swara A di tengah kata. `ā` setelah konsonan (`pāku`) ditulis sebagai a ganda: pa, aksara swara A, ka dengan suku. `oa` dan `ia` memakai wa dan ya sebagai penghubung, seperti Kongres Aksara Jawa I. |
+| Contoh kata                | `maaf`, `taat`, `saat`, `pāku`, `buwaya`, `pasien`                                                                                                                                                                                   |
+| Halaman Pedoman            | tidak diatur; aturan serapan umum hlm. 13                                                                                                                                                                                            |
+| Jawaban guru               |                                                                                                                                                                                                                                      |
 
 ### 5. fa dan va
 
@@ -150,15 +150,15 @@ Hal berikut tidak ada di Pedoman. Aplikasi mengambil keputusan sementara.
 | Halaman Pedoman            | hlm. 33, hlm. 59 no. 2                                                                                                                                                  |
 | Jawaban guru               |                                                                                                                                                                         |
 
-### B. `ii`, `uu`, dan vokal panjang adalah galat
+### B. `ii`, `uu`, `ī`, `ū`, dan aksara swara A panjang adalah galat
 
-| Isi                        | Keterangan                                                                                                                                                                        |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pertanyaan                 | Pedoman tidak punya tanda vokal panjang. Aplikasi tidak menebak, jadi `ii`, `uu`, dan aksara swara A panjang ditolak dengan pesan galat. Bagaimana Guru menulis kata seperti itu? |
-| Jawaban sementara aplikasi | Ditolak dengan pesan "Pedoman 2002 tidak memakai tanda vokal panjang."                                                                                                            |
-| Contoh kata                | `pii`, `ngajak Aan`                                                                                                                                                               |
-| Halaman Pedoman            | hlm. 18 sampai 28 (tanda yang ada)                                                                                                                                                |
-| Jawaban guru               |                                                                                                                                                                                   |
+| Isi                        | Keterangan                                                                                                                                                                                                                     |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Pertanyaan                 | Pedoman tidak punya tanda vokal panjang. Aplikasi tidak menebak, jadi `ii`, `uu`, `ī`, `ū`, dan aksara swara A panjang tanpa konsonan di depannya (`Aan`) ditolak dengan pesan galat. Bagaimana Guru menulis kata seperti itu? |
+| Jawaban sementara aplikasi | Ditolak dengan pesan "Pedoman 2002 tidak memakai tanda vokal panjang."                                                                                                                                                         |
+| Contoh kata                | `pii`, `ngajak Aan`                                                                                                                                                                                                            |
+| Halaman Pedoman            | hlm. 18 sampai 28 (tanda yang ada)                                                                                                                                                                                             |
+| Jawaban guru               |                                                                                                                                                                                                                                |
 
 ### C. `vila` dan `vakum` terbaca `fila` dan `fakum`
 

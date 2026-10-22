@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
   contentFor,
-  loadContent,
   readContent,
 } from "../../../src/content/content-repository.ts";
 import {
@@ -15,9 +14,9 @@ import en from "../../../src/l10n/en.json";
 import { formatMessage, type MessageKey } from "../../../src/l10n/i18n.ts";
 import id from "../../../src/l10n/id.json";
 import { ak } from "../../engine/support/aksara-builder.ts";
-import { loadFromPublic } from "../../support/content-files.ts";
+import { loadFromPublic, loadView } from "../../support/content-files.ts";
 
-const { aksara } = await loadContent(loadFromPublic, kajRulesetId);
+const { aksara } = await loadView(kajRulesetId);
 const translator =
   (catalog: Record<MessageKey, string>) =>
   (key: MessageKey, params?: Record<string, string | number>) =>

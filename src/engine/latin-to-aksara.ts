@@ -73,7 +73,7 @@ function spansOf(
 const isAsciiDigit = (ch: string): boolean => /^[0-9]$/.test(ch);
 
 /**
- * Latin -> aksara converter. Ruleset kaj1-2021-simplified-v3. Vowel signs,
+ * Latin -> aksara converter. Default ruleset. Vowel signs,
  * taling included, are stored after their base in Unicode order; the shaper
  * draws taling before it. Word-initial vowels take the ha carrier (KAJ I
  * p.5 3.b; Tradisional p.124 8.b); only a capitalized vowel-initial word inside a
@@ -522,7 +522,7 @@ function render(
         }
       }
       w.write(
-        swaraFor(syll.vowelToken, ruleset),
+        swaraFor(syll.vowelToken, ruleset, wordStart),
         spansOf(wordStart, syll.vowelToken),
       );
       writeCoda(w, syll.coda, wordStart);
@@ -714,11 +714,15 @@ function codaText(coda: LatinToken | null): string {
   return javaneseChar(coda.aksaraUnicodeName!) + sandhanganPangkon.char;
 }
 
-function swaraFor(t: LatinToken | null, ruleset: RulesetId): string {
+function swaraFor(
+  t: LatinToken | null,
+  ruleset: RulesetId,
+  wordStart: number,
+): string {
   if (ruleset === pedomanRulesetId && t?.vowel === "aa") {
     // A vowel-only aa would be the long swara A + tarung (Ped p.13-15).
     throw new LatinParseError(
-      t.sourceIndex,
+      wordStart + t.sourceIndex,
       "Long vowels have no sign in Pedoman 2002",
     );
   }

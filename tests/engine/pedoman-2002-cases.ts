@@ -176,7 +176,16 @@ export const pedomanCases: readonly PedomanCase[] = [
   {
     input: "ngajak Aan",
     cite: "Ped p.13-15 (no long swara)",
-    expect: { kind: "error", message: longVowel },
+    expect: { kind: "error", message: longVowel, index: 7 },
+  },
+  {
+    input: "pāku",
+    cite: "Pedoman silent: KAJ I kept (a ganda)",
+    expect: {
+      kind: "success",
+      aksara: ak("PA A KA SUKU"),
+      roundTrip: false,
+    },
   },
   {
     input: "maaf/",

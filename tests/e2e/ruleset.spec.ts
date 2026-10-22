@@ -1,6 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
-import { loadContent } from "../../src/content/content-repository.ts";
 import { GlyphInfoTable } from "../../src/content/glyph-info-table.ts";
 import { SRS_ITEMS, UNIT_COMPLETIONS } from "../../src/core/db/schema.ts";
 import { RULESET_STORAGE_KEY } from "../../src/core/ruleset/ruleset-controller.ts";
@@ -14,7 +13,7 @@ import {
   buildFeedbackReport,
   FEEDBACK_RULE_SOURCES,
 } from "../../src/features/settings/feedback-report.ts";
-import { loadFromPublic } from "../support/content-files.ts";
+import { loadView } from "../support/content-files.ts";
 import { expectAccessible } from "./support/a11y.ts";
 import { gotoRoute } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
@@ -31,7 +30,7 @@ const { version } = JSON.parse(readFileSync("package.json", "utf8")) as {
   version: string;
 };
 
-const kajContent = await loadContent(loadFromPublic, kajRulesetId);
+const kajContent = await loadView(kajRulesetId);
 const kajGlyphs = GlyphInfoTable.build(kajContent);
 const kajUnitIds = kajContent.units.map((u) => u.id);
 const eighthUnitIds = kajUnitIds.slice(0, 8);

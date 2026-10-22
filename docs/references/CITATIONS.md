@@ -206,10 +206,11 @@ book examples in the app needs the publisher's or the teacher's permission.
    the first aksara of a word". With the opt-in `useMurda`, only a capitalized
    word's first consonant takes murda, and only if the Pedoman has it.
 3. No long-vowel or diphthong signs: no dirga mure, no long swara forms. `ii`,
-   `uu`, the long marks and a long swara A (`Aan`) are the error "Long vowels
+   `uu`, `ī`, `ū` and a vowel-only long A (`Aan`) are the error "Long vowels
    have no sign in Pedoman 2002". The Pedoman has no sign for them and the
-   engine never guesses. A ganda after a consonant (`maaf`) is unchanged (see
-   the silent points).
+   engine never guesses. A ganda after a consonant (`maaf`) and `ā` after a
+   consonant (`pāku`, written as a ganda) are unchanged (see the silent
+   points).
 4. `ai` and `au` are two aksara, so they are ambiguous (Ped p.33 `baé` with ha
    between the vowels; Ped p.59 no.2-3 `trailer`, `aula` with a swara letter).
    The converter never picks. Candidate 1 is the ha reading (`sinahu`),
@@ -251,6 +252,9 @@ listed on the teacher review sheet.
 
 - Pedoman silent: KAJ I behaviour kept — a ganda swara A (`maaf`, `taat`,
   `saat`): mid-word swara A after a consonant.
+- Pedoman silent: KAJ I behaviour kept — `ā` after a consonant (`pāku`) is
+  written as a ganda (pa, swara A, ka with suku). The Pedoman has no long-vowel
+  sign and does not mention it.
 - Pedoman silent: KAJ I behaviour kept — `oa`, `ia` and the other KAJ hiatus
   glides (y after i/é, w after u/o).
 - Pedoman silent: KAJ I behaviour kept — the ha carrier on lowercase

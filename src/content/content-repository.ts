@@ -116,13 +116,6 @@ export function contentFor(
   };
 }
 
-export async function loadContent(
-  load: (path: string) => Promise<string>,
-  rulesetId: RulesetId,
-): Promise<ContentData> {
-  return contentFor(await readContent(load), rulesetId);
-}
-
 function resolveChartExamples(
   data: Record<string, unknown>,
   words: readonly Word[],

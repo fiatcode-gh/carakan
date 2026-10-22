@@ -8,7 +8,11 @@ import {
   pedomanRulesetId,
   rulesetById,
 } from "../../../src/engine/index.ts";
-import { ReviewSession } from "../../../src/features/review/review-session.ts";
+import {
+  ReviewSession,
+  reviewSession,
+} from "../../../src/features/review/review-session.ts";
+import { loadView } from "../../support/content-files.ts";
 import { openFreshDb } from "../core/db-helpers.ts";
 
 const T0 = Date.UTC(2026, 7, 12, 9);
@@ -196,4 +200,21 @@ test("[P-R16] a retry of a hidden card is not listed", async () => {
   await queue.enqueue("caMurda", T0);
   await session.grade("caMurda", "again");
   expect(ids(session)).toEqual([]);
+});
+
+test("[P-R16] reviewSession under Pedoman lists a pasangan card and hides a murda card", async () => {
+  const db = await openFreshDb();
+  const queue = new ReviewQueue(db);
+  const progress = new LearnerProgress(db);
+  const session = reviewSession({
+    singleton: (_key, make) => make(),
+    reviewQueue: queue,
+    progress,
+    now: () => T0,
+    content: await loadView(pedomanRulesetId),
+  });
+  await queue.enqueue("pasangan-ka", T0);
+  await queue.enqueue("caMurda", T0);
+  await session.refresh();
+  expect(ids(session)).toEqual(["pasangan-ka"]);
 });

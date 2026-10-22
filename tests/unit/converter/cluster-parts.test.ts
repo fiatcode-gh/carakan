@@ -1,7 +1,6 @@
 import { readFileSync } from "node:fs";
 import { beforeAll, describe, expect, test } from "vitest";
 import type { ContentData } from "../../../src/content/content-repository.ts";
-import { loadContent } from "../../../src/content/content-repository.ts";
 import {
   kajRulesetId,
   toAksara,
@@ -18,7 +17,7 @@ import {
   clusterReading,
 } from "../../../src/features/converter/cluster-parts.ts";
 import { ak } from "../../engine/support/aksara-builder.ts";
-import { loadFromPublic } from "../../support/content-files.ts";
+import { loadView } from "../../support/content-files.ts";
 
 const strings: ChartStrings = {
   carakan: "carakan",
@@ -40,7 +39,7 @@ let content: ContentData;
 let table: ClusterPartTable;
 
 beforeAll(async () => {
-  content = await loadContent(loadFromPublic, kajRulesetId);
+  content = await loadView(kajRulesetId);
   table = ClusterPartTable.build(content);
 });
 

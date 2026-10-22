@@ -3,12 +3,15 @@ import { AksaraItem } from "../../src/content/aksara-item.ts";
 import { ContentFormatError } from "../../src/content/content-format-error.ts";
 import {
   contentFor,
-  loadContent,
   readContent,
 } from "../../src/content/content-repository.ts";
 import { kajRulesetId, pedomanRulesetId } from "../../src/engine/index.ts";
 import { ak } from "../engine/support/aksara-builder.ts";
-import { loadFromPublic } from "../support/content-files.ts";
+import {
+  loadContent,
+  loadFromPublic,
+  loadView,
+} from "../support/content-files.ts";
 
 describe("[P-D04] content repository", () => {
   test("parses a minimal aksara item", () => {
@@ -43,7 +46,7 @@ describe("[P-D04] content repository", () => {
     }
 
     test("resolve to words in file order", async () => {
-      const content = await loadContent(loadFromPublic, kajRulesetId);
+      const content = await loadView(kajRulesetId);
       const file = JSON.parse(
         await loadFromPublic("content/v1/chart_examples.json"),
       ) as { examples: Record<string, string[]> };
@@ -78,7 +81,7 @@ describe("[P-D04] content repository", () => {
     }
 
     test("the loaded content lists the retired row units", async () => {
-      const content = await loadContent(loadFromPublic, kajRulesetId);
+      const content = await loadView(kajRulesetId);
       expect(content.retiredUnits.map((r) => r.id)).toEqual([
         "u1",
         "u3",

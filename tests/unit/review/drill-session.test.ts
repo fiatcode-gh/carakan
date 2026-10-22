@@ -1,9 +1,6 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { get } from "svelte/store";
 import { expect, test, vi } from "vitest";
 import { ConfusionPair } from "../../../src/content/confusion-pair.ts";
-import { loadContent } from "../../../src/content/content-repository.ts";
 import { GlyphInfoTable } from "../../../src/content/glyph-info-table.ts";
 import { Word } from "../../../src/content/word.ts";
 import { LearnerProgress } from "../../../src/core/db/learner-progress.ts";
@@ -13,6 +10,7 @@ import {
   DrillSession,
   type DrillState,
 } from "../../../src/features/review/drill-session.ts";
+import { loadView } from "../../support/content-files.ts";
 import { openFreshDb } from "../core/db-helpers.ts";
 
 const NOW = Date.UTC(2026, 7, 12);
@@ -177,10 +175,7 @@ test("[P-R13] a pair-readable corpus of 4 or more words yields word readings fro
 });
 
 test("[P-R09] a suku-wulu drill never shows a bare combining mark", async () => {
-  const content = await loadContent(
-    async (path) => readFileSync(join("public", path), "utf8"),
-    kajRulesetId,
-  );
+  const content = await loadView(kajRulesetId);
   const { mistakes, session } = await setup({
     pairs: content.confusionPairs,
     corpus: content.words,

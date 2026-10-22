@@ -9,7 +9,7 @@ const carried: ReadonlyArray<readonly [string, string]> = [
   [
     "docs/references/CITATIONS.md",
     // Pedoman 2002 ruleset (pedoman-2002-ruleset)
-    "ec534ffab61f4c31237f0bb2d7b9635b65a3f6ffe3541457687568dde20d9221",
+    "5b5e9e7c84e041331de9ad86670679e14f6897dd0efa521a1d4413a188208ffd",
   ],
   [
     "docs/references/unicode-javanese-block.txt",
