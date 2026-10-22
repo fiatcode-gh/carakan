@@ -183,17 +183,46 @@ test("[P-S06] unavailable storage shows the storage error", async ({
   ).toBeVisible();
 });
 
-test("[P-S07] the UI font is MPLUS Rounded 1c and loads", async ({ page }) => {
+test("[P-S07] the UI font is Bricolage Grotesque, aksara use MPLUS then Jejeg, and both load", async ({
+  page,
+}) => {
   await gotoRoute(page, "");
   const family = await page.evaluate(
     () => getComputedStyle(document.body).fontFamily,
   );
-  expect(family.replaceAll('"', "").startsWith("MPLUS Rounded 1c")).toBe(true);
+  expect(family.replaceAll('"', "").startsWith("Bricolage Grotesque")).toBe(
+    true,
+  );
   const loaded = await page.evaluate(async () => {
     await document.fonts.ready;
-    return document.fonts.check('16px "MPLUS Rounded 1c"');
+    return document.fonts.check('700 16px "Bricolage Grotesque"');
   });
   expect(loaded).toBe(true);
+
+  await gotoRoute(page, "#/chart");
+  const strip = await page
+    .locator('#tab-chart [data-entry="pa"] .reading')
+    .evaluate((el) => getComputedStyle(el).fontFamily);
+  expect(strip.replaceAll('"', "").startsWith("Bricolage Grotesque")).toBe(
+    true,
+  );
+  const aksara = await page
+    .locator("#tab-chart .aksara")
+    .first()
+    .evaluate((el) => getComputedStyle(el).fontFamily);
+  expect(aksara.replaceAll('"', "")).toMatch(/^MPLUS Rounded 1c, Jejeg\b/);
+
+  // The KAJ murda subtitle carries a code point Bricolage lacks (U+1E33), so the
+  // whole reading falls back to MPLUS.
+  await page.locator('#tab-chart [data-entry="kaMurda"]').click();
+  const subtitle = page.getByRole("dialog").locator(".subtitle .reading");
+  await expect(subtitle).toContainText("\u1e33");
+  const subtitleFamily = await subtitle.evaluate(
+    (el) => getComputedStyle(el).fontFamily,
+  );
+  expect(
+    subtitleFamily.replaceAll('"', "").startsWith("MPLUS Rounded 1c"),
+  ).toBe(true);
 });
 
 test("[P-S08] the document title is appTitle", async ({ page }) => {

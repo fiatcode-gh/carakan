@@ -58,7 +58,7 @@
   .update {
     position: fixed;
     left: 50%;
-    bottom: calc(var(--tab-height) + var(--space-4));
+    bottom: calc(var(--nav-height) + var(--space-4));
     z-index: 70;
     display: flex;
     flex-wrap: wrap;
@@ -67,11 +67,9 @@
     gap: var(--space-2) var(--space-4);
     width: min(calc(100% - var(--space-8)), 26rem);
     padding: var(--space-3) var(--space-4);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface-raised);
-    color: var(--color-text);
-    box-shadow: var(--shadow-sheet);
+    border: var(--border);
+    background: var(--color-card);
+    color: var(--color-ink);
     translate: -50% 0;
     animation: rise var(--dur-base) var(--ease-out) both;
   }

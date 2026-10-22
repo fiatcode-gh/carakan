@@ -98,7 +98,7 @@
   />
 
   {#if detail}
-    <p class="source-echo">
+    <p class="source-echo latin">
       <span class="source-echo__label">{$t("sourceEchoLabel")}</span>
       {#each detail.echoParts as part, index (index)}
         {#if part.marked}<mark>{part.text}</mark>{:else}{part.text}{/if}
@@ -176,8 +176,7 @@
 
   .source-echo {
     padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
-    background: var(--color-surface-raised);
+    background: var(--color-card);
     font-size: var(--text-lg);
     overflow-wrap: anywhere;
   }
@@ -185,14 +184,13 @@
   .source-echo__label {
     display: block;
     font-size: var(--text-sm);
-    color: var(--color-text-muted);
+    color: var(--color-ink-muted);
   }
 
   .source-echo mark {
     padding-inline: 2px;
-    border-radius: 4px;
-    background: var(--color-reward-soft);
-    color: var(--color-text);
+    background: var(--color-butter);
+    color: var(--color-ink);
     font-weight: var(--weight-bold);
     text-decoration: underline;
     text-decoration-thickness: 3px;

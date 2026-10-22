@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import AksaraText from "./AksaraText.svelte";
+  import Reading from "./Reading.svelte";
 
   interface Props {
     /** Aksara string, built from engine or content data, never typed. */
@@ -30,7 +31,7 @@
   </p>
   {#if name !== undefined}
     <span class="flashcard__rule"></span>
-    <h2 class="flashcard__name">{name}</h2>
+    <h2 class="flashcard__name"><Reading text={name} /></h2>
   {/if}
   {@render children?.()}
 </div>
@@ -42,10 +43,9 @@
     justify-items: center;
     gap: var(--space-4);
     padding: var(--space-7) var(--space-6) var(--space-6);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    background: var(--color-surface-raised);
-    box-shadow: var(--shadow-slip);
+    border: var(--border);
+    background: var(--color-card);
+    box-shadow: var(--shadow-tile);
     text-align: center;
   }
 
@@ -54,8 +54,7 @@
     content: "";
     position: absolute;
     inset: var(--space-2);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border: 1px solid var(--color-neutral);
     pointer-events: none;
   }
 
@@ -69,13 +68,12 @@
   .flashcard__rule {
     width: 6rem;
     height: 2px;
-    background: var(--color-border-strong);
-    opacity: 0.4;
+    background: var(--color-ink);
   }
 
   .flashcard__name {
     font-size: var(--text-2xl);
-    font-weight: var(--weight-bold);
+    font-weight: var(--weight-black);
     line-height: var(--leading-tight);
   }
 

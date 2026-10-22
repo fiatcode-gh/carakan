@@ -4,7 +4,8 @@
   import AksaraText from "../../ui/AksaraText.svelte";
   import Button from "../../ui/Button.svelte";
   import Icon from "../../ui/Icon.svelte";
-  import Slip from "../../ui/Slip.svelte";
+  import Reading from "../../ui/Reading.svelte";
+  import Surface from "../../ui/Surface.svelte";
   import type { DrillSession, DrillState } from "./drill-session.ts";
   import WordReadingPrompt from "./WordReadingPrompt.svelte";
 
@@ -47,7 +48,7 @@
         ? exercise.glossOptions
         : exercise.options}
     {@const correct = drill.answered.get(i)}
-    <Slip tag="article" raised class="drill">
+    <Surface tag="article" class="drill">
       {#if exercise.kind === "glyphToSound"}
         <p class="drill__prompt">
           <AksaraText
@@ -57,7 +58,7 @@
         </p>
       {:else if exercise.kind === "soundToGlyph"}
         <p class="drill__prompt drill__prompt--sound">
-          {glyphInfo.byId.get(exercise.glyphId)?.pujl ?? ""}
+          <Reading text={glyphInfo.byId.get(exercise.glyphId)?.pujl ?? ""} />
         </p>
       {:else}
         <WordReadingPrompt aksara={exercise.word.aksara} />
@@ -78,7 +79,7 @@
                     : undefined}
               onclick={() => void pick(i, index)}
             >
-              {option}
+              {#if aksaraOptions}{option}{:else}<Reading text={option} />{/if}
             </Button>
           </li>
         {/each}
@@ -101,7 +102,7 @@
           <span>{correct ? $t("answerCorrect") : $t("answerWrong")}</span>
         </p>
       {/if}
-    </Slip>
+    </Surface>
   {/each}
 </section>
 
@@ -145,19 +146,18 @@
     gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
     border: 2px solid currentcolor;
-    border-radius: var(--radius-lg);
     font-weight: var(--weight-bold);
     line-height: var(--leading-snug);
   }
 
   .feedback--correct {
-    background: var(--color-success-soft);
-    color: var(--color-success);
+    background: var(--color-sage);
+    color: var(--color-ink);
   }
 
   .feedback--wrong {
     border-style: dashed;
-    background: var(--color-danger-soft);
-    color: var(--color-danger);
+    background: var(--color-card);
+    color: var(--color-stamp);
   }
 </style>

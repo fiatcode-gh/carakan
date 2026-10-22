@@ -24,10 +24,10 @@
     place-items: center;
     width: 3rem;
     height: 3rem;
-    border: 3px solid var(--color-border-strong);
-    border-radius: var(--radius-full);
-    background: var(--color-surface-raised);
-    color: var(--color-text);
+    border: 3px solid var(--color-ink);
+    border-radius: 50%;
+    background: var(--color-card);
+    color: var(--color-ink);
     font-size: var(--text-lg);
     font-weight: var(--weight-bold);
     line-height: 1;
@@ -41,10 +41,10 @@
     place-items: center;
     width: 1.375rem;
     height: 1.375rem;
-    border: 2px solid var(--color-bg);
-    border-radius: var(--radius-full);
-    background: var(--color-text);
-    color: var(--color-bg);
+    border: 2px solid var(--color-paper);
+    border-radius: 50%;
+    background: var(--color-ink);
+    color: var(--color-on-ink);
   }
 
   .medallion__badge :global(.icon) {
@@ -54,27 +54,26 @@
   }
 
   .medallion--completed {
-    border-color: var(--color-reward);
-    background: var(--color-reward-fill);
+    background: var(--color-butter);
   }
 
   .medallion--ready {
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 4px var(--color-accent-soft);
+    background: var(--color-coral);
+    box-shadow: 0 0 0 4px var(--color-neutral);
   }
 
   .medallion--ready .medallion__badge {
-    background: var(--color-accent);
-    color: var(--color-on-accent);
+    background: var(--color-ink);
+    color: var(--color-on-ink);
   }
 
   .medallion--locked {
     border-style: dashed;
-    background: var(--color-surface-sunken);
-    color: var(--color-text-muted);
+    background: var(--color-neutral);
+    color: var(--color-ink-muted);
   }
 
   .medallion--locked .medallion__badge {
-    background: var(--color-text-muted);
+    background: var(--color-ink-muted);
   }
 </style>

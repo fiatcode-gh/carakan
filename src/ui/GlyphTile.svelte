@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { HTMLButtonAttributes } from "svelte/elements";
   import AksaraText from "./AksaraText.svelte";
+  import Reading from "./Reading.svelte";
 
   interface Props extends Omit<HTMLButtonAttributes, "children"> {
     /** Aksara string, built from engine or content data, never typed. */
@@ -14,7 +15,7 @@
 
 <button {...rest} type="button" class={["glyph-tile", className]}>
   <AksaraText text={glyph} aria-hidden="true" />
-  <span class="glyph-tile__name">{name}</span>
+  <span class="glyph-tile__name"><Reading text={name} /></span>
 </button>
 
 <style>
@@ -25,16 +26,15 @@
     width: 100%;
     min-height: 5.25rem;
     padding: var(--space-1) var(--space-1) var(--space-2);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-slip);
-    color: var(--color-text);
+    border: var(--border);
+    background: var(--color-card);
+    box-shadow: var(--shadow-tile);
+    color: var(--color-ink);
     text-align: center;
   }
 
   .glyph-tile:active {
-    background: var(--color-surface-sunken);
+    background: var(--color-neutral);
   }
 
   .glyph-tile__name {
@@ -44,7 +44,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: var(--text-xs);
-    color: var(--color-text-muted);
+    color: var(--color-ink-muted);
     line-height: 1.2;
   }
 </style>

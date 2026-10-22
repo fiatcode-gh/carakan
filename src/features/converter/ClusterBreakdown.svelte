@@ -2,6 +2,7 @@
   import { getI18n } from "../../l10n/context.ts";
   import AksaraText from "../../ui/AksaraText.svelte";
   import Icon from "../../ui/Icon.svelte";
+  import Reading from "../../ui/Reading.svelte";
   import type { ClusterPart } from "./cluster-parts.ts";
   import ResultCard from "./ResultCard.svelte";
 
@@ -31,23 +32,25 @@
             onclick={() => onopen(chartId)}
           >
             <AksaraText text={part.char} size="md" />
-            <span class="part__name">{names[index]}</span>
-            {#if part.sound !== ""}<span class="part__sound">{part.sound}</span
+            <span class="part__name"><Reading text={names[index]!} /></span>
+            {#if part.sound !== ""}<span class="part__sound"
+                ><Reading text={part.sound} /></span
               >{/if}
             <Icon name="chevron-right" />
           </button>
         {:else}
           <div class="part">
             <AksaraText text={part.char} size="md" />
-            <span class="part__name">{names[index]}</span>
-            {#if part.sound !== ""}<span class="part__sound">{part.sound}</span
+            <span class="part__name"><Reading text={names[index]!} /></span>
+            {#if part.sound !== ""}<span class="part__sound"
+                ><Reading text={part.sound} /></span
               >{/if}
           </div>
         {/if}
       </li>
     {/each}
   </ol>
-  <p class="reading">{$t("breakdownReading", { reading })}</p>
+  <p class="reading latin">{$t("breakdownReading", { reading })}</p>
 </ResultCard>
 
 <style>
@@ -67,10 +70,9 @@
     width: 100%;
     min-height: 48px;
     padding: var(--space-2) var(--space-3);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface);
-    color: var(--color-text);
+    border: var(--border);
+    background: var(--color-card);
+    color: var(--color-ink);
     font: inherit;
     text-align: start;
   }
@@ -85,7 +87,7 @@
   }
 
   .part__sound {
-    color: var(--color-text-muted);
+    color: var(--color-ink-muted);
   }
 
   .reading {

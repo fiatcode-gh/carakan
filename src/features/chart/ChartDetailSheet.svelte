@@ -4,7 +4,7 @@
   import { nglegenaById, sandhanganById } from "../../engine/index.ts";
   import type { Word } from "../../content/word.ts";
   import AksaraText from "../../ui/AksaraText.svelte";
-  import OrnamentDivider from "../../ui/OrnamentDivider.svelte";
+  import Reading from "../../ui/Reading.svelte";
   import Sheet from "../../ui/Sheet.svelte";
   import type { ChartEntry } from "./chart-catalog.ts";
   import {
@@ -37,15 +37,14 @@
 <Sheet title={entry.name} {onclose}>
   <div class="head">
     <span class="frame"><AksaraText text={entry.char} size="xl" /></span>
-    <p class="subtitle">{entry.subtitle}</p>
+    <p class="subtitle"><Reading text={entry.subtitle} /></p>
   </div>
 
   {#if nglegena || sandhangan}
-    <OrnamentDivider />
     <dl class="rows">
       {#if nglegena}
         <dt>{$t("soundLabel")}</dt>
-        <dd>{nglegena.pujl} (JGST {nglegena.jgst})</dd>
+        <dd><Reading text={`${nglegena.pujl} (JGST ${nglegena.jgst})`} /></dd>
         <dt>{$t("pasanganLabel")}</dt>
         <dd><AksaraText text={nglegena.pasanganDemo} size="lg" /></dd>
         {#if nglegena.murda !== null}
@@ -60,13 +59,12 @@
   {/if}
 
   {#if examples.length > 0}
-    <OrnamentDivider />
     <section class="examples">
       <h3>{$t("exampleWordsHeading")}</h3>
       <ul class="words">
         {#each examples as word (word.id)}
           <li>
-            <span class="reading">{word.display}</span>
+            <Reading class="word-reading" text={word.display} />
             <AksaraText text={word.aksara} size="lg" />
           </li>
         {/each}
@@ -88,13 +86,12 @@
     min-width: 5rem;
     min-height: 5rem;
     padding: 0 var(--space-2);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface-sunken);
+    border: var(--border);
+    background: var(--color-neutral);
   }
 
   .subtitle {
-    color: var(--color-text-muted);
+    color: var(--color-ink-muted);
   }
 
   .rows {
@@ -105,7 +102,7 @@
   }
 
   .rows dt {
-    color: var(--color-text-muted);
+    color: var(--color-ink-muted);
   }
 
   .rows dd {
@@ -137,7 +134,7 @@
     align-items: center;
   }
 
-  .reading {
+  .words :global(.word-reading) {
     font-weight: var(--weight-bold);
   }
 </style>

@@ -2,7 +2,6 @@
   import { getServices } from "../../app/services.ts";
   import { getI18n } from "../../l10n/context.ts";
   import GlyphTile from "../../ui/GlyphTile.svelte";
-  import OrnamentDivider from "../../ui/OrnamentDivider.svelte";
   import Page from "../../ui/Page.svelte";
   import ChartDetailSheet from "./ChartDetailSheet.svelte";
   import { buildChartSections, type ChartEntry } from "./chart-catalog.ts";
@@ -30,7 +29,6 @@
     {#each sections as section, index (index)}
       <section class="section" aria-labelledby={`${uid}-h-${index}`}>
         <h2 class="section-title" id={`${uid}-h-${index}`}>{section.title}</h2>
-        <OrnamentDivider />
         <div class="grid">
           {#each section.entries as entry (entry.id)}
             <GlyphTile

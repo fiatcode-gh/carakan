@@ -11,7 +11,7 @@
   import Button from "../../ui/Button.svelte";
   import Icon from "../../ui/Icon.svelte";
   import Page from "../../ui/Page.svelte";
-  import Slip from "../../ui/Slip.svelte";
+  import Surface from "../../ui/Surface.svelte";
   import Toast from "../../ui/Toast.svelte";
   import { CORPUS_LINKS, FONT_LINKS, fileName } from "./about-links.ts";
   import {
@@ -160,20 +160,20 @@
 
     <section class="stack" aria-labelledby="about-heading">
       <h2 id="about-heading">{$t("aboutSectionHeading")}</h2>
-      <Slip>
+      <Surface shadow="none">
         <p class="about__title">{$t("appTitle")}</p>
         <p class="muted">{$t("appSubtitle")}</p>
         <p>{$t("versionLabel", { version: appVersion })}</p>
-      </Slip>
-      <Slip tag="section" aria-labelledby="about-ruleset">
+      </Surface>
+      <Surface shadow="none" tag="section" aria-labelledby="about-ruleset">
         <h3 id="about-ruleset">{$t("rulesetHeading")}</h3>
         <p>{$active}</p>
-      </Slip>
-      <Slip tag="section" aria-labelledby="about-sources">
+      </Surface>
+      <Surface shadow="none" tag="section" aria-labelledby="about-sources">
         <h3 id="about-sources">{$t("ruleSourceHeading")}</h3>
         <p>{$t(RULESET_MESSAGES[$active].sources)}</p>
-      </Slip>
-      <Slip tag="section" aria-labelledby="about-fonts">
+      </Surface>
+      <Surface shadow="none" tag="section" aria-labelledby="about-fonts">
         <h3 id="about-fonts">{$t("fontHeading")}</h3>
         <p>{$t("fontBody")}</p>
         <ul class="links">
@@ -181,8 +181,8 @@
             <li><a href={path}>{fileName(path)}</a></li>
           {/each}
         </ul>
-      </Slip>
-      <Slip tag="section" aria-labelledby="about-corpus">
+      </Surface>
+      <Surface shadow="none" tag="section" aria-labelledby="about-corpus">
         <h3 id="about-corpus">{$t("corpusHeading")}</h3>
         <p>{$t("corpusBody")}</p>
         <ul class="links">
@@ -190,7 +190,7 @@
             <li><a href={path}>{fileName(path)}</a></li>
           {/each}
         </ul>
-      </Slip>
+      </Surface>
     </section>
 
     <Button variant="secondary" block onclick={() => (reportOpen = true)}>
@@ -242,16 +242,15 @@
     display: grid;
     gap: var(--space-3);
     padding: var(--space-4);
-    border: 2px dashed var(--color-danger);
-    border-radius: var(--radius-lg);
-    background: var(--color-surface);
+    border: 2px dashed var(--color-stamp);
+    background: var(--color-card);
   }
 
   .reset__heading {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    color: var(--color-danger);
+    color: var(--color-stamp);
   }
 
   .choice-group {
@@ -275,9 +274,8 @@
     display: grid;
     gap: var(--space-1);
     padding: var(--space-1);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    background: var(--color-surface-sunken);
+    border: var(--border);
+    background: var(--color-neutral);
   }
 
   .choice-group__option {
@@ -299,14 +297,13 @@
     width: 100%;
     min-height: var(--touch-min);
     padding: var(--space-1) var(--space-4);
-    border-radius: var(--radius-md);
     font-weight: var(--weight-bold);
   }
 
   .choice-group__option input:checked + .choice-group__label {
-    background: var(--color-accent);
-    color: var(--color-on-accent);
-    box-shadow: 0 2px 0 var(--color-accent-pressed);
+    background: var(--color-coral);
+    color: var(--color-ink);
+    box-shadow: 0 2px 0 var(--color-ink);
   }
 
   .choice-group__option input:focus-visible + .choice-group__label {
@@ -320,7 +317,7 @@
   }
 
   .muted {
-    color: var(--color-text-muted);
+    color: var(--color-ink-muted);
   }
 
   .links {
@@ -335,6 +332,6 @@
     display: inline-flex;
     align-items: center;
     min-height: var(--touch-min);
-    color: var(--color-link);
+    color: var(--color-ink);
   }
 </style>

@@ -215,7 +215,7 @@ test("[P-B06][P-B07] the teacher button opens the teacher page with both cards",
   await expect(
     page.getByRole("heading", { level: 1, name: id["teacherTitle"]! }),
   ).toBeVisible();
-  const slips = page.locator("main .slip");
+  const slips = page.locator("main .surface");
   await expect(slips).toHaveCount(2);
   await expect(slips.nth(0).getByRole("heading")).toHaveText(
     id["deviationTitle"]!,

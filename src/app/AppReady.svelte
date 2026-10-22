@@ -69,9 +69,8 @@
     left: var(--space-2);
     z-index: 100;
     padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
-    background: var(--color-text);
-    color: var(--color-bg);
+    background: var(--color-ink);
+    color: var(--color-on-ink);
     font-weight: var(--weight-bold);
     transform: translateY(-200%);
   }

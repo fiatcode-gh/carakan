@@ -23,7 +23,7 @@ export async function expectAccessible(page: Page): Promise<void> {
 const TARGETS =
   'a[href], button, input, select, textarea, summary, [role=button], [role=radio], [role=tab], [tabindex]:not([tabindex="-1"])';
 
-/** Visible interactive elements are at least 48x48 CSS px; links in text are exempt. */
+/** Visible interactive elements are at least 44x44 CSS px (contract invariant); links in text are exempt. */
 export async function expectTouchTargets(page: Page): Promise<void> {
   const small = await page.evaluate((selector) => {
     const out: string[] = [];
@@ -41,10 +41,10 @@ export async function expectTouchTargets(page: Page): Promise<void> {
       if (el instanceof HTMLInputElement && el.type === "radio") {
         const wrapper = el.closest("label") ?? el;
         const box = wrapper.getBoundingClientRect();
-        if (box.width >= 47.5 && box.height >= 47.5) continue;
+        if (box.width >= 43.5 && box.height >= 43.5) continue;
       }
       const box = el.getBoundingClientRect();
-      if (box.width < 47.5 || box.height < 47.5) {
+      if (box.width < 43.5 || box.height < 43.5) {
         out.push(
           `${el.tagName.toLowerCase()}.${el.className} ${Math.round(box.width)}x${Math.round(box.height)}`,
         );
@@ -52,7 +52,7 @@ export async function expectTouchTargets(page: Page): Promise<void> {
     }
     return out;
   }, TARGETS);
-  expect(small, "interactive targets under 48x48 CSS px").toEqual([]);
+  expect(small, "interactive targets under 44x44 CSS px").toEqual([]);
 }
 
 export async function expectNoHorizontalOverflow(page: Page): Promise<void> {

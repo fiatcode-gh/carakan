@@ -8,7 +8,8 @@
   import Button from "../../ui/Button.svelte";
   import IconButton from "../../ui/IconButton.svelte";
   import Page from "../../ui/Page.svelte";
-  import Slip from "../../ui/Slip.svelte";
+  import Reading from "../../ui/Reading.svelte";
+  import Surface from "../../ui/Surface.svelte";
   import StateView from "../../ui/StateView.svelte";
   import { drillSession } from "./drill-session.ts";
   import DrillSection from "./DrillSection.svelte";
@@ -124,12 +125,14 @@
               {#each run.items as item (item.itemId)}
                 {@const info = glyphInfo.byId.get(item.itemId)}
                 <li>
-                  <Slip raised class="card">
+                  <Surface class="card">
                     <p class="card__glyph">
                       <AksaraText text={info?.char ?? item.itemId} size="xl" />
                     </p>
                     {#if item.revealed}
-                      <p class="card__name">{info?.name ?? item.itemId}</p>
+                      <p class="card__name">
+                        <Reading text={info?.name ?? item.itemId} />
+                      </p>
                       <div class="grades">
                         {#each grades as grade}
                           <Button
@@ -158,7 +161,7 @@
                         {$t("revealAnswerButton")}
                       </Button>
                     {/if}
-                  </Slip>
+                  </Surface>
                 </li>
               {/each}
             </ul>
@@ -221,26 +224,23 @@
     flex: none;
     width: 0.75rem;
     height: 0.75rem;
-    border: 2px solid var(--color-text);
-    border-radius: var(--radius-full);
+    border: 2px solid var(--color-ink);
   }
 
   .grade-dot--again {
-    border-radius: 2px;
-    background: var(--color-accent);
+    background: var(--color-coral);
     rotate: 45deg;
   }
 
   .grade-dot--hard {
-    background: var(--color-text-muted);
+    background: var(--color-ink-muted);
   }
 
   .grade-dot--good {
-    background: var(--color-reward-fill);
+    background: var(--color-butter);
   }
 
   .grade-dot--easy {
-    border-radius: 2px;
-    background: var(--color-link);
+    background: var(--color-ink);
   }
 </style>

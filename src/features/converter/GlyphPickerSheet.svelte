@@ -1,6 +1,7 @@
 <script lang="ts">
   import { getI18n } from "../../l10n/context.ts";
   import AksaraText from "../../ui/AksaraText.svelte";
+  import Reading from "../../ui/Reading.svelte";
   import Sheet from "../../ui/Sheet.svelte";
   import type { PickerSection } from "./glyph-picker.ts";
 
@@ -29,7 +30,9 @@
             onclick={() => onpick(entry.char)}
           >
             <AksaraText text={entry.char} size="md" />
-            <span class="entry__label" aria-hidden="true">{entry.label}</span>
+            <span class="entry__label" aria-hidden="true"
+              ><Reading text={entry.label} /></span
+            >
           </button>
         {/each}
       </div>
@@ -45,7 +48,7 @@
 
   .section__title {
     font-size: var(--text-md);
-    color: var(--color-text-muted);
+    color: var(--color-ink-muted);
   }
 
   .grid {
@@ -61,13 +64,12 @@
     gap: var(--space-1);
     min-height: 6rem;
     padding: var(--space-2);
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-md);
-    background: var(--color-surface-sunken);
+    border: var(--border);
+    background: var(--color-neutral);
   }
 
   .entry__label {
-    color: var(--color-text-muted);
+    color: var(--color-ink-muted);
     font-size: var(--text-xs);
     text-align: center;
     overflow-wrap: anywhere;

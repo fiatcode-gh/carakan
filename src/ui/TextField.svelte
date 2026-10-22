@@ -111,25 +111,23 @@
     width: 100%;
     min-height: 5.5rem;
     padding: var(--space-3) var(--space-4);
-    border: 2px solid var(--color-border-strong);
-    border-radius: var(--radius-md);
-    background: var(--color-surface-sunken);
-    color: var(--color-text);
+    border: var(--border);
+    background: var(--color-card);
+    color: var(--color-ink);
+    font-family: var(--font-latin);
     font-size: var(--text-lg);
     line-height: var(--leading-snug);
     resize: vertical;
   }
 
   .field__input::placeholder {
-    color: var(--color-text-muted);
+    color: var(--color-ink-subtle);
     opacity: 1;
   }
 
   .field__input:focus-visible {
-    border-color: var(--color-link);
-    background: var(--color-surface-raised);
     outline: var(--focus-ring);
-    outline-offset: 2px;
+    outline-offset: var(--focus-offset);
   }
 
   .field__input--aksara {
@@ -139,12 +137,11 @@
   }
 
   .field__input--error {
-    border-color: var(--color-danger);
-    border-style: dashed;
+    border: 2px dashed var(--color-stamp);
   }
 
   .field__hint {
-    color: var(--color-text-muted);
+    color: var(--color-ink-muted);
     font-size: var(--text-sm);
   }
 </style>

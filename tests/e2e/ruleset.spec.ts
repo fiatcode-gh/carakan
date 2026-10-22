@@ -251,7 +251,7 @@ test("[P-T05] [P-T06] About and the report name the active ruleset", async ({
   );
 
   await gotoRoute(page, "#/teacher");
-  await expect(page.locator("main .slip").nth(0)).toContainText(
+  await expect(page.locator("main .surface").nth(0)).toContainText(
     id["deviationBody"]!.replace("{ruleset}", id["rulesetNamePedoman"]!),
   );
 });

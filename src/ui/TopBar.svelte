@@ -32,8 +32,8 @@
     position: sticky;
     top: 0;
     z-index: 20;
-    background: var(--color-bg);
-    border-bottom: 1px solid var(--color-border);
+    background: var(--color-paper);
+    border-bottom: var(--border);
   }
 
   .top-bar__inner {
@@ -54,7 +54,7 @@
     flex: 1;
     min-width: 0;
     font-size: var(--text-xl);
-    letter-spacing: -0.02em;
+    letter-spacing: var(--tracking-title);
   }
 
   .top-bar__actions {

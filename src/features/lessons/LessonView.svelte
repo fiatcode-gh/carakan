@@ -6,8 +6,8 @@
   import Chip from "../../ui/Chip.svelte";
   import Flashcard from "../../ui/Flashcard.svelte";
   import Icon from "../../ui/Icon.svelte";
-  import OrnamentDivider from "../../ui/OrnamentDivider.svelte";
-  import Slip from "../../ui/Slip.svelte";
+  import Reading from "../../ui/Reading.svelte";
+  import Surface from "../../ui/Surface.svelte";
   import type { LessonSession } from "./lesson-session.ts";
 
   let { session }: { session: LessonSession } = $props();
@@ -133,9 +133,11 @@
             label={promptName(exercise.glyphId)}
           />
         {:else if exercise.kind === "soundToGlyph"}
-          <Slip raised class="prompt">
-            <p class="prompt__sound">{promptPujl(exercise.glyphId)}</p>
-          </Slip>
+          <Surface class="prompt">
+            <p class="prompt__sound">
+              <Reading text={promptPujl(exercise.glyphId)} />
+            </p>
+          </Surface>
         {:else}
           <Flashcard compact glyph={exercise.word.aksara} />
         {/if}
@@ -148,7 +150,9 @@
                   data-autofocus={index === 0 ? "" : undefined}
                   onclick={() => void session.answer(index)}
                 >
-                  {option}
+                  {#if aksaraOptions}{option}{:else}<Reading
+                      text={option}
+                    />{/if}
                 </Button>
               {:else}
                 <Button
@@ -160,7 +164,9 @@
                       ? "wrong"
                       : undefined}
                 >
-                  {option}
+                  {#if aksaraOptions}{option}{:else}<Reading
+                      text={option}
+                    />{/if}
                 </Button>
               {/if}
             </li>
@@ -189,7 +195,6 @@
             total: current.total,
           })}
         </h2>
-        <OrnamentDivider />
       </div>
       <div class="lesson__foot">
         <Button variant="primary" block onclick={back}>
@@ -227,10 +232,9 @@
     justify-items: start;
     gap: var(--space-3);
     padding: var(--space-4);
-    border: 2px dashed var(--color-danger);
-    border-radius: var(--radius-lg);
-    background: var(--color-danger-soft);
-    color: var(--color-danger);
+    border: 2px dashed var(--color-stamp);
+    background: var(--color-card);
+    color: var(--color-stamp);
     font-weight: var(--weight-bold);
     line-height: var(--leading-snug);
   }
@@ -244,22 +248,20 @@
     bottom: 0;
     z-index: 10;
     padding: var(--space-4) 0;
-    background: linear-gradient(to bottom, transparent, var(--color-bg) 28%);
+    background: linear-gradient(to bottom, transparent, var(--color-paper) 28%);
   }
 
   .progress {
     height: 0.5rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-full);
-    background: var(--color-surface-sunken);
+    border: var(--border);
+    background: var(--color-neutral);
     overflow: hidden;
   }
 
   .progress__bar {
     width: var(--value, 0%);
     height: 100%;
-    border-radius: var(--radius-full);
-    background: var(--color-accent);
+    background: var(--color-coral);
   }
 
   .feedback {
@@ -268,21 +270,20 @@
     gap: var(--space-3);
     padding: var(--space-4);
     border: 2px solid currentcolor;
-    border-radius: var(--radius-lg);
     font-size: var(--text-lg);
     font-weight: var(--weight-bold);
     line-height: var(--leading-snug);
   }
 
   .feedback--correct {
-    background: var(--color-success-soft);
-    color: var(--color-success);
+    background: var(--color-sage);
+    color: var(--color-ink);
   }
 
   .feedback--wrong {
     border-style: dashed;
-    background: var(--color-danger-soft);
-    color: var(--color-danger);
+    background: var(--color-coral);
+    color: var(--color-ink);
   }
 
   .prompt__sound {
@@ -304,10 +305,6 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .lesson__body--done :global(.ornament) {
-    width: min(100%, 14rem);
-  }
-
   /* The heading takes focus when the lesson ends; it is not a control. */
   .done__title:focus {
     outline: none;
@@ -322,11 +319,11 @@
     place-items: center;
     width: 7rem;
     height: 7rem;
-    border: 3px solid var(--color-reward);
-    border-radius: var(--radius-full);
-    background: var(--color-reward-fill);
-    box-shadow: 0 0 0 8px var(--color-reward-soft);
-    color: var(--color-text);
+    border: var(--border);
+    border-radius: 50%;
+    background: var(--color-butter);
+    box-shadow: var(--shadow-tile);
+    color: var(--color-ink);
   }
 
   .trophy :global(.icon) {

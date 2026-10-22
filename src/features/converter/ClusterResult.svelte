@@ -166,9 +166,8 @@
     position: absolute;
     z-index: -1;
     pointer-events: none;
-    border-radius: var(--radius-sm);
-    background: var(--color-reward-soft);
-    box-shadow: inset 0 -3px 0 var(--color-text);
+    background: var(--color-butter);
+    box-shadow: inset 0 -3px 0 var(--color-ink);
   }
 
   .cluster-result__hits {
@@ -188,6 +187,6 @@
 
   .cluster-result__hint {
     font-size: var(--text-sm);
-    color: var(--color-text-muted);
+    color: var(--color-ink-muted);
   }
 </style>

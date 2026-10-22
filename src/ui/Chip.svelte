@@ -45,33 +45,29 @@
     gap: var(--space-2);
     min-height: 2rem;
     padding: var(--space-1) var(--space-3);
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
-    background: var(--color-surface-sunken);
-    color: var(--color-text);
+    border: var(--border);
+    background: var(--color-neutral);
+    color: var(--color-ink);
     font-size: var(--text-sm);
     font-weight: var(--weight-bold);
   }
 
   .chip--count {
-    border-radius: var(--radius-full);
-    background: var(--color-surface-raised);
+    background: var(--color-card);
   }
 
   .chip--choice {
     min-height: var(--touch-min);
     padding-inline: var(--space-4);
-    border-width: 2px;
-    background: var(--color-surface-raised);
+    background: var(--color-card);
     font-family: var(--font-aksara);
     font-size: var(--aksara-md);
     line-height: var(--aksara-leading);
   }
 
   .chip--choice[aria-pressed="true"] {
-    border-color: var(--color-link);
-    box-shadow: inset 0 0 0 1px var(--color-link);
-    color: var(--color-link);
+    background: var(--color-butter);
+    box-shadow: var(--shadow-tile);
   }
 
   .chip--choice :global(.icon) {

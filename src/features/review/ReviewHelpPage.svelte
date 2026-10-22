@@ -2,26 +2,26 @@
   import { back } from "../../app/router.ts";
   import { getI18n } from "../../l10n/context.ts";
   import Page from "../../ui/Page.svelte";
-  import Slip from "../../ui/Slip.svelte";
+  import Surface from "../../ui/Surface.svelte";
 
   const { t } = getI18n();
 
   // Each dot sits next to its own text: the color is never the only cue.
   const grades = $derived([
-    { dot: "var(--color-accent)", text: $t("reviewHelpGradeAgain") },
-    { dot: "var(--color-text-muted)", text: $t("reviewHelpGradeHard") },
-    { dot: "var(--color-reward)", text: $t("reviewHelpGradeGood") },
-    { dot: "var(--color-link)", text: $t("reviewHelpGradeEasy") },
+    { dot: "var(--color-coral)", text: $t("reviewHelpGradeAgain") },
+    { dot: "var(--color-ink-muted)", text: $t("reviewHelpGradeHard") },
+    { dot: "var(--color-butter)", text: $t("reviewHelpGradeGood") },
+    { dot: "var(--color-sage)", text: $t("reviewHelpGradeEasy") },
   ]);
 </script>
 
 <Page title={$t("reviewHelpTitle")} onback={back}>
   <div class="stack">
-    <Slip tag="article">
+    <Surface shadow="none" tag="article">
       <h2 class="slip__title">{$t("reviewHelpWhyHeading")}</h2>
       <p class="slip__body">{$t("reviewHelpWhyBody")}</p>
-    </Slip>
-    <Slip tag="article">
+    </Surface>
+    <Surface shadow="none" tag="article">
       <h2 class="slip__title">{$t("reviewHelpGradeHeading")}</h2>
       <ul class="grades">
         {#each grades as { dot, text }}
@@ -32,7 +32,7 @@
           </li>
         {/each}
       </ul>
-    </Slip>
+    </Surface>
   </div>
 </Page>
 
@@ -67,7 +67,6 @@
     width: 0.75rem;
     height: 0.75rem;
     margin-top: 0.4em;
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-full);
+    border: var(--border);
   }
 </style>

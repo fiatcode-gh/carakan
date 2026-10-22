@@ -42,7 +42,7 @@ function buildMeta(): Plugin {
   };
 }
 
-const paper = "#FAF3E7"; // --color-bg
+const paper = "#F7F3EA"; // --color-paper
 
 export default defineConfig({
   plugins: [

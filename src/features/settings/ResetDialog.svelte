@@ -34,7 +34,7 @@
 
 <style>
   .failure {
-    color: var(--color-danger);
+    color: var(--color-stamp);
     font-weight: var(--weight-bold);
     line-height: var(--leading-snug);
   }
