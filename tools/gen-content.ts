@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import {
-  aksaraEngineRulesetId,
+  kajRulesetId,
   murdaLinks,
   nglegena,
   padaActive,
@@ -206,7 +206,7 @@ const sandhanganItems = sandhangan.map((s) => ({
 
 const manifest = {
   contentVersion: 1,
-  rulesetId: aksaraEngineRulesetId,
+  rulesetId: kajRulesetId,
   generatedAt: new Date().toISOString(),
 };
 

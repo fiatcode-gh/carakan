@@ -2,9 +2,9 @@ import { describe, expect, test } from "vitest";
 import { AksaraItem } from "../../src/content/aksara-item.ts";
 import { SandhanganItem } from "../../src/content/sandhangan-item.ts";
 import {
-  aksaraEngineRulesetId,
   angkaDigitToChar,
   javaneseChar,
+  kajRulesetId,
   murdaLinks,
   nglegenaById,
   padaById,
@@ -76,9 +76,7 @@ describe("[P-C07] [P-D04] content no-drift", () => {
   });
 
   test("manifest.json pins the current engine ruleset id", () => {
-    expect(readContentJson("manifest.json")["rulesetId"]).toBe(
-      aksaraEngineRulesetId,
-    );
+    expect(readContentJson("manifest.json")["rulesetId"]).toBe(kajRulesetId);
   });
 
   test("sandhangan.json matches the engine catalog exactly", () => {

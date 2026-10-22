@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { aksaraEngineRulesetId } from "../../src/engine/index.ts";
+import { kajRulesetId } from "../../src/engine/index.ts";
 
 let out: string;
 
@@ -32,7 +32,7 @@ describe("[P-D04] content generator", () => {
       readFileSync(join(out, "manifest.json"), "utf8"),
     ) as Record<string, unknown>;
     expect(manifest["contentVersion"]).toBe(1);
-    expect(manifest["rulesetId"]).toBe(aksaraEngineRulesetId);
+    expect(manifest["rulesetId"]).toBe(kajRulesetId);
     expect(typeof manifest["generatedAt"]).toBe("string");
   });
 });

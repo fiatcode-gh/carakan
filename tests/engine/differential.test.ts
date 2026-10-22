@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 import {
-  aksaraEngineRulesetId,
+  kajRulesetId,
   toAksara,
   toLatin,
   type ConvertResult,
@@ -79,7 +79,7 @@ describe("[P-D02] differential: Dart engine @ebc7cb5 vs TS engine", () => {
     expect(fixture.source.commit).toBe(
       "ebc7cb524ca7ddea8a3adca8b21939cd3da09bca",
     );
-    expect(fixture.source.rulesetId).toBe(aksaraEngineRulesetId);
+    expect(fixture.source.rulesetId).toBe(kajRulesetId);
   });
 
   // Pins the section 3.1 exception: a regenerated fixture cannot widen it
@@ -94,7 +94,8 @@ describe("[P-D02] differential: Dart engine @ebc7cb5 vs TS engine", () => {
   test("toAksara matches the Dart engine for every recorded input", () => {
     const mismatches = compare(
       fixture.toAksara,
-      (input, useMurda: boolean) => toAksara(input, { useMurda }),
+      (input, useMurda: boolean) =>
+        toAksara(input, { useMurda, ruleset: kajRulesetId }),
       (input, murda) =>
         `toAksara(${JSON.stringify(input)}, useMurda: ${murda})`,
     );

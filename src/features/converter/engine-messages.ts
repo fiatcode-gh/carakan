@@ -53,6 +53,15 @@ export const ENGINE_MESSAGES: readonly EngineMessageEntry[] = [
     "Vowel required for a vowel-only syllable",
     "engineErrorVowelOnlySyllable",
   ),
+  literal(
+    "This murda is not part of Pedoman 2002",
+    "engineErrorMurdaNotInRuleset",
+  ),
+  literal(
+    "Murda is written only on the first aksara of a word",
+    "engineErrorMurdaNotInitial",
+  ),
+  literal("Long vowels have no sign in Pedoman 2002", "engineErrorLongVowel"),
   // An internal invariant, unreachable from the UI: generic on purpose.
   literal(
     "Bare e reached the renderer; ambiguity must be resolved first",

@@ -3,7 +3,7 @@
   import { getServices } from "../../app/services.ts";
   import { appVersion } from "../../core/app-info.ts";
   import type { LocaleSetting } from "../../core/locale/locale-controller.ts";
-  import { aksaraEngineRulesetId } from "../../engine/index.ts";
+  import { kajRulesetId } from "../../engine/index.ts";
   import { getI18n } from "../../l10n/context.ts";
   import type { MessageKey } from "../../l10n/i18n.ts";
   import Button from "../../ui/Button.svelte";
@@ -48,7 +48,7 @@
         buildFeedbackReport({
           description,
           appVersion,
-          rulesetId: aksaraEngineRulesetId,
+          rulesetId: kajRulesetId,
         }),
       );
       return true;
@@ -130,7 +130,7 @@
       </Slip>
       <Slip tag="section" aria-labelledby="about-ruleset">
         <h3 id="about-ruleset">{$t("rulesetHeading")}</h3>
-        <p>{aksaraEngineRulesetId}</p>
+        <p>{kajRulesetId}</p>
       </Slip>
       <Slip tag="section" aria-labelledby="about-sources">
         <h3 id="about-sources">{$t("ruleSourceHeading")}</h3>
