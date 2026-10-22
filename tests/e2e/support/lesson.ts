@@ -23,18 +23,18 @@ export interface Question {
 /** Reads the open question; scoped to `.lesson` (hidden tabs stay mounted). */
 export async function readQuestion(page: Page): Promise<Question> {
   const lesson = page.locator(".lesson");
-  const options = lesson.locator(".options button:not([disabled])");
+  const options = lesson.locator(".answers button:not([disabled])");
   await options.first().waitFor();
   const bar = lesson.getByRole("progressbar");
   const number = Number(await bar.getAttribute("aria-valuenow"));
   const total = Number(await bar.getAttribute("aria-valuemax"));
-  const sound = lesson.locator(".prompt__sound");
+  const sound = lesson.locator(".quiz__sound");
   const prompt: QuestionPrompt =
     (await sound.count()) > 0
       ? { sound: ((await sound.textContent()) ?? "").trim() }
       : {
           glyph: (
-            (await lesson.locator(".flashcard .aksara").textContent()) ?? ""
+            (await lesson.locator(".quiz__prompt .aksara").textContent()) ?? ""
           ).trim(),
         };
   const texts = (await options.allTextContents()).map((s) => s.trim());
@@ -48,19 +48,19 @@ export async function answerCurrentQuestion(
 ): Promise<Question> {
   const q = await readQuestion(page);
   const index = solver.correctIndex(q.prompt, q.options);
-  await page.locator(".lesson .options button").nth(index).click();
-  await page.locator(".lesson .feedback").waitFor();
+  await page.locator(".lesson .answers button").nth(index).click();
+  await page.locator(".lesson .feedback-row").waitFor();
   return q;
 }
 
 type LessonView = "meet" | "trace" | "question" | "feedback" | "done";
 
 const viewSelectors: Record<LessonView, string> = {
-  meet: ".lesson .chip--count",
+  meet: ".lesson .meet",
   trace: ".lesson .trace",
-  question: ".lesson .options button:not([disabled])",
-  feedback: ".lesson .feedback",
-  done: ".lesson .trophy",
+  question: ".lesson .answers button:not([disabled])",
+  feedback: ".lesson .feedback-row",
+  done: ".lesson .lesson-done",
 };
 
 /** Waits for a lesson view to be on screen and says which one it is. */
@@ -108,7 +108,7 @@ async function playUntil(
     // next look, or a slow step (the completion write) is acted on twice.
     const step = await page.locator(".lesson").first().elementHandle();
     if (view === "meet") {
-      await page.locator(".lesson__foot button").click();
+      await page.locator(".meet .bar__action--primary").click();
     } else if (view === "trace") {
       await page.getByRole("button", { name: messages["traceSkip"]! }).click();
     } else if (view === "question") {
@@ -116,7 +116,7 @@ async function playUntil(
         await answerCurrentQuestion(page, solver);
       } else {
         await onQuestion(page, await readQuestion(page));
-        await page.locator(".lesson .feedback").waitFor();
+        await page.locator(".lesson .feedback-row").waitFor();
       }
       continue;
     } else if (view === "feedback") {
@@ -147,7 +147,7 @@ export async function playLesson(
   }
   await expect(page.locator(".lesson")).toBeVisible();
   await playUntil(page, solver, "done", options);
-  await expect(page.locator(".trophy")).toBeVisible();
+  await expect(page.locator(".lesson-done")).toBeVisible();
 }
 
 /** Plays a whole lesson, right answers only, ending on the done view. */

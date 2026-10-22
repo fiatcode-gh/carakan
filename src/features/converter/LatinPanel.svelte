@@ -128,7 +128,7 @@
     <ResultCard label={$t(ambiguityTitleKey($result.reason))}>
       <div class="chips">
         {#each $result.candidates as candidate, index (index)}
-          <Chip variant="choice" onclick={() => converter.choose(index)}>
+          <Chip onclick={() => converter.choose(index)}>
             <AksaraText text={candidate.output} size="md" />
           </Chip>
         {/each}

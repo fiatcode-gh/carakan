@@ -99,7 +99,7 @@ test("an update never interrupts a lesson, is offered on the ladder, can wait, a
   await advanceToQuestion(page, solver);
   await publishV2(page);
   await expect(banner(page)).toHaveCount(0);
-  await expect(page.locator(".options button").first()).toBeVisible();
+  await expect(page.locator(".answers button").first()).toBeVisible();
 
   // (b) back on the ladder the banner shows; Later hides it.
   await page.evaluate(() => {

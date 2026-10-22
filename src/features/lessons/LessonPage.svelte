@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { get } from "svelte/store";
-  import { back, navigate } from "../../app/router.ts";
+  import { navigate } from "../../app/router.ts";
   import { getServices } from "../../app/services.ts";
   import { getI18n } from "../../l10n/context.ts";
   import Page from "../../ui/Page.svelte";
@@ -19,6 +19,7 @@
   // popping the Flutter route.
   let session = $state<LessonSession | null>(null);
   let storageFailed = $state(false);
+  let unitName = $state<string | null>(null);
   let cancelled = false;
 
   async function load(): Promise<void> {
@@ -53,6 +54,7 @@
       now: services.now,
       seedSource: services.seedSource,
     });
+    unitName = entry.unit.name;
     lesson.start(entry.unit, ladderState.taughtGlyphIds);
     session = lesson;
   }
@@ -65,7 +67,7 @@
   });
 </script>
 
-<Page title={$t("lessonTitle")} onback={back}>
+<Page title={unitName ?? $t("navLadder")} chrome="none">
   {#if session !== null}
     <LessonView {session} />
   {:else if storageFailed}

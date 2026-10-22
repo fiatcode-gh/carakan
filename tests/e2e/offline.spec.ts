@@ -84,7 +84,7 @@ test("[P-S05] unit 1 can be completed offline", async ({ page, context }) => {
   await context.setOffline(true);
   await page.reload();
   await completeLesson(page, solver, solver.content.units[0]!.id);
-  await page.locator(".lesson__foot").getByRole("button").click();
+  await page.locator(".lesson-done .bar").getByRole("button").click();
   await expect(unitButton(page, solver.content.units[0]!.id)).toContainText(
     id["unitStatusCompleted"]!,
   );

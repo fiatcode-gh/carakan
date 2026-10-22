@@ -169,15 +169,15 @@ async function meetAll(page: Page, glyphs: number): Promise<void> {
 
 /** Reads the current question the way a learner sees it. */
 async function readQuestion(page: Page) {
-  const options = page.locator(".options button:not([disabled])");
+  const options = page.locator(".answers button:not([disabled])");
   await options.first().waitFor();
-  const sound = page.locator(".prompt__sound");
+  const sound = page.locator(".quiz__sound");
   const prompt =
     (await sound.count()) > 0
       ? { sound: ((await sound.textContent()) ?? "").trim() }
       : {
           glyph: (
-            (await page.locator(".flashcard .aksara").textContent()) ?? ""
+            (await page.locator(".quiz__prompt .aksara").textContent()) ?? ""
           ).trim(),
         };
   const texts = (await options.allTextContents()).map((s) => s.trim());
@@ -192,8 +192,8 @@ async function answer(
   const { prompt, texts } = await readQuestion(page);
   const right = solver.correctIndex(prompt, texts);
   const index = correct ? right : (right + 1) % texts.length;
-  await page.locator(".options button").nth(index).click();
-  await page.locator(".feedback").waitFor();
+  await page.locator(".answers button").nth(index).click();
+  await page.locator(".feedback-row").waitFor();
 }
 
 async function startLesson(page: Page, solver: Solver): Promise<void> {
@@ -352,10 +352,10 @@ const screens: Screen[] = [
             await answer(page, solver, true);
             await button(page, id["continueButton"]!).click();
             await page
-              .locator(".trophy, .options button:not([disabled])")
+              .locator(".lesson-done, .answers button:not([disabled])")
               .first()
               .waitFor();
-            if ((await page.locator(".trophy").count()) > 0) break;
+            if ((await page.locator(".lesson-done").count()) > 0) break;
           }
         },
       },
@@ -408,7 +408,7 @@ const screens: Screen[] = [
         fit: "page",
         prepare: async (page) => {
           const drill = page.locator("#tab-review .drill").first();
-          await drill.locator(".options button, button").first().click();
+          await drill.locator(".answers button, button").first().click();
           const reveal = page.getByRole("button", {
             name: id["revealAnswerButton"]!,
           });

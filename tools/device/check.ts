@@ -130,7 +130,7 @@ async function lesson(page: Page, unitId: string) {
 
   await goto(page, `#/lesson/${unitId}`);
   await playLesson(page, solver, unitId, { messages, navigate: false });
-  await page.locator(".lesson__foot").getByRole("button").click();
+  await page.locator(".lesson-done .bar").getByRole("button").click();
   await ready(page);
   return { unitId, completed: true };
 }

@@ -496,7 +496,7 @@ test("[P-R11] a mistake made in a lesson surfaces the drill without a reload", a
           index = sukuIndex;
           logged = true;
         }
-        await p.locator(".lesson .options button").nth(index).click();
+        await p.locator(".lesson .answers button").nth(index).click();
         await expect(p.locator(".lesson").getByRole("status")).toBeVisible();
       },
     });
@@ -506,8 +506,8 @@ test("[P-R11] a mistake made in a lesson surfaces the drill without a reload", a
   // The done view and the top bar both carry a "Kembali" button; click the
   // done view's own button once it is shown, as lessons.spec.ts does.
   const backFromDone = async () => {
-    await expect(page.locator(".trophy")).toBeVisible();
-    await page.locator(".lesson__foot").getByRole("button").click();
+    await expect(page.locator(".lesson-done")).toBeVisible();
+    await page.locator(".lesson-done .bar").getByRole("button").click();
   };
 
   await play(units[0]!.id, false);
