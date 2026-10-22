@@ -132,10 +132,12 @@ test.describe("with a clip in the manifest", () => {
     await expect(button).toHaveAttribute("data-state", "playing", {
       timeout: 2000,
     });
+    await expect(button).toHaveAttribute("aria-busy", "true");
     await expect(toast(page)).toHaveCount(0);
     await expect(button).toHaveAttribute("data-state", "idle", {
       timeout: 5000,
     });
+    await expect(button).not.toHaveAttribute("aria-busy", /.*/);
     await expect(toast(page)).toHaveCount(0);
   });
 

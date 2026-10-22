@@ -51,6 +51,7 @@
     text !== undefined && "sound--text",
   ]}
   data-state={playing ? "playing" : "idle"}
+  aria-busy={playing ? "true" : undefined}
   aria-label={text === undefined ? label : undefined}
   onclick={tap}
 >
