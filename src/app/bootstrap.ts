@@ -1,16 +1,16 @@
-import { derived, readable, writable } from "svelte/store";
-import { loadContent } from "../content/content-repository.ts";
-import { GlyphInfoTable } from "../content/glyph-info-table.ts";
+import { derived, get, readable, writable } from "svelte/store";
+import { contentFor, readContent } from "../content/content-repository.ts";
 import { openCarakanDb, type CarakanDb } from "../core/db/database.ts";
 import { LearnerProgress } from "../core/db/learner-progress.ts";
 import { MistakeLogRepository } from "../core/db/mistake-log-repository.ts";
 import { UnitCompletionRepository } from "../core/db/unit-completion-repository.ts";
 import { LocaleController } from "../core/locale/locale-controller.ts";
+import { RulesetController } from "../core/ruleset/ruleset-controller.ts";
 import { ReviewQueue } from "../core/srs/review-queue.ts";
-import { kajRulesetId } from "../engine/index.ts";
+import { rulesets } from "../engine/index.ts";
 import { createI18n } from "../l10n/i18n.ts";
 import type { TabId } from "./router.ts";
-import { createSingletons, type Services } from "./services.ts";
+import { createRulesetScopes, type Services } from "./services.ts";
 
 export type BootResult =
   | {
@@ -86,6 +86,9 @@ export function createBootstrap(
 ): () => Promise<BootResult> {
   let db: CarakanDb | null = null;
   let storageLost = Promise.resolve();
+  // Read once, kept across retries.
+  const ruleset = new RulesetController(storage());
+  ruleset.load();
   return async () => {
     if (db === null) {
       let lose = () => {};
@@ -99,28 +102,31 @@ export function createBootstrap(
         return { kind: "storage-error" };
       }
     }
-    let content;
+    let views;
     try {
-      content = await loadContent(fetchText, kajRulesetId);
+      const source = await readContent(fetchText);
+      views = new Map(rulesets.map((r) => [r.id, contentFor(source, r.id)]));
     } catch {
       return { kind: "content-error" };
     }
     const activeTab = writable<TabId>("ladder");
-    const services: Services = {
-      completions: new UnitCompletionRepository(db),
-      mistakes: new MistakeLogRepository(db),
-      progress: new LearnerProgress(db),
-      reviewQueue: new ReviewQueue(db),
-      content,
-      glyphInfo: GlyphInfoTable.build(content),
-      locale: runtime.locale,
-      i18n: runtime.i18n,
-      activeTab: derived(activeTab, (tab) => tab),
-      setActiveTab: (tab) => activeTab.set(tab),
-      now: () => Date.now(),
-      seedSource: () => Math.floor(Math.random() * 0x7fffffff),
-      singleton: createSingletons(),
-    };
+    const forRuleset = createRulesetScopes(
+      {
+        completions: new UnitCompletionRepository(db),
+        mistakes: new MistakeLogRepository(db),
+        progress: new LearnerProgress(db),
+        reviewQueue: new ReviewQueue(db),
+        locale: runtime.locale,
+        ruleset,
+        i18n: runtime.i18n,
+        activeTab: derived(activeTab, (tab) => tab),
+        setActiveTab: (tab) => activeTab.set(tab),
+        now: () => Date.now(),
+        seedSource: () => Math.floor(Math.random() * 0x7fffffff),
+      },
+      views,
+    );
+    const services = forRuleset(get(ruleset.setting));
     void requestPersistentStorage();
     return { kind: "ready", services, storageLost };
   };

@@ -34,5 +34,9 @@ describe("[P-B07] teacher page order copy follows units.json", () => {
     test(`${locale}: deviationBody names the first group`, () => {
       expect(copy["deviationBody"]).toContain(allUnits[0]!.glyphs.join(" "));
     });
+
+    test(`${locale}: deviationBody takes the active ruleset name`, () => {
+      expect(copy["deviationBody"]).toContain("{ruleset}");
+    });
   }
 });

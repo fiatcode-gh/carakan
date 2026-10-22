@@ -5,8 +5,9 @@ import { swaraCatalogue, swaraLongForms, type SwaraLongForm } from "./swara.ts";
 
 export type RulesetId = "pedoman-2002-v1" | "kaj1-2021-simplified-v3";
 
-export const pedomanRulesetId: RulesetId = "pedoman-2002-v1";
-export const kajRulesetId: RulesetId = "kaj1-2021-simplified-v3";
+export const pedomanRulesetId = "pedoman-2002-v1" as const satisfies RulesetId;
+export const kajRulesetId =
+  "kaj1-2021-simplified-v3" as const satisfies RulesetId;
 /** The ruleset a device without a saved choice uses (contract 2.1). */
 export const defaultRulesetId: RulesetId = pedomanRulesetId;
 

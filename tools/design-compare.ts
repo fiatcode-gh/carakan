@@ -19,7 +19,7 @@ import {
   SRS_ITEMS,
   UNIT_COMPLETIONS,
 } from "../src/core/db/schema.ts";
-import { kajRulesetId, toAksara } from "../src/engine/index.ts";
+import { defaultRulesetId, toAksara } from "../src/engine/index.ts";
 import { createSolver, type Solver } from "../tests/e2e/support/solver.ts";
 
 const BASE = process.env["DESIGN_BASE_URL"] ?? "http://localhost:4173/";
@@ -581,7 +581,7 @@ const notCaptured: ReadonlyArray<readonly [string, string]> = [
 // ---- run ------------------------------------------------------------------
 
 mkdirSync(OUT, { recursive: true });
-const solver = await createSolver(kajRulesetId);
+const solver = await createSolver(defaultRulesetId);
 const browser = await chromium.launch();
 
 async function withContext<T>(

@@ -220,7 +220,9 @@ test("[P-B06][P-B07] the teacher button opens the teacher page with both cards",
   await expect(slips.nth(0).getByRole("heading")).toHaveText(
     id["deviationTitle"]!,
   );
-  await expect(slips.nth(0)).toContainText(id["deviationBody"]!);
+  await expect(slips.nth(0)).toContainText(
+    id["deviationBody"]!.replace("{ruleset}", id["rulesetNameKaj"]!),
+  );
   await expect(slips.nth(1).getByRole("heading")).toHaveText(
     id["unitOrderHeading"]!,
   );

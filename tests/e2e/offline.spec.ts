@@ -9,7 +9,7 @@ import {
   type SrsItemRow,
   type UnitCompletionRow,
 } from "../../src/core/db/schema.ts";
-import { kajRulesetId } from "../../src/engine/index.ts";
+import { defaultRulesetId } from "../../src/engine/index.ts";
 import { gotoRoute } from "./support/app.ts";
 import { expect, test, trackForeignRequests } from "./support/fixtures.ts";
 import {
@@ -23,7 +23,7 @@ import { createSolver, type Solver } from "./support/solver.ts";
 
 let solver: Solver;
 test.beforeAll(async () => {
-  solver = await createSolver(kajRulesetId);
+  solver = await createSolver(defaultRulesetId);
 });
 
 /** Loads the app, waits for the worker to be active, then reloads under it. */

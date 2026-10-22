@@ -6,14 +6,17 @@
   import ReviewHelpPage from "../features/review/ReviewHelpPage.svelte";
   import SettingsPage from "../features/settings/SettingsPage.svelte";
   import AppShell from "./AppShell.svelte";
+  import RulesetScope from "./RulesetScope.svelte";
   import { route, tabOf } from "./router.ts";
   import { setServices, type Services } from "./services.ts";
   import type { TabId } from "./router.ts";
 
   let { services }: { services: Services } = $props();
 
-  setServices(untrack(() => services));
+  const initial = untrack(() => services);
+  setServices(initial);
   const { t } = getI18n();
+  const active = initial.ruleset.setting;
 
   // The tab behind a pushed page: the last tab root seen.
   let lastTab: TabId = "ladder";
@@ -41,17 +44,22 @@
 <a class="skip-link" href="#main" onclick={skipToContent}>
   {$t("skipToContent")}
 </a>
-<AppShell activeTab={tab} {covered} />
+{#key $active}
+  <RulesetScope services={services.forRuleset($active)}>
+    <AppShell activeTab={tab} {covered} />
+    {#if $route.kind === "teacher"}
+      <TeacherPage />
+    {:else if $route.kind === "reviewHelp"}
+      <ReviewHelpPage />
+    {:else if $route.kind === "lesson"}
+      {#key $route.unitId}
+        <LessonPage unitId={$route.unitId} />
+      {/key}
+    {/if}
+  </RulesetScope>
+{/key}
 {#if $route.kind === "settings"}
   <SettingsPage />
-{:else if $route.kind === "teacher"}
-  <TeacherPage />
-{:else if $route.kind === "reviewHelp"}
-  <ReviewHelpPage />
-{:else if $route.kind === "lesson"}
-  {#key $route.unitId}
-    <LessonPage unitId={$route.unitId} />
-  {/key}
 {/if}
 
 <style>

@@ -1,24 +1,30 @@
 <script lang="ts">
+  import { get } from "svelte/store";
   import { back } from "../../app/router.ts";
   import { getServices } from "../../app/services.ts";
   import { appVersion } from "../../core/app-info.ts";
   import type { LocaleSetting } from "../../core/locale/locale-controller.ts";
-  import { kajRulesetId } from "../../engine/index.ts";
+  import { rulesets, type RulesetId } from "../../engine/index.ts";
   import { getI18n } from "../../l10n/context.ts";
   import type { MessageKey } from "../../l10n/i18n.ts";
+  import { RULESET_MESSAGES } from "../../l10n/ruleset-messages.ts";
   import Button from "../../ui/Button.svelte";
   import Icon from "../../ui/Icon.svelte";
   import Page from "../../ui/Page.svelte";
   import Slip from "../../ui/Slip.svelte";
   import Toast from "../../ui/Toast.svelte";
   import { CORPUS_LINKS, FONT_LINKS, fileName } from "./about-links.ts";
-  import { buildFeedbackReport } from "./feedback-report.ts";
+  import {
+    buildFeedbackReport,
+    FEEDBACK_RULE_SOURCES,
+  } from "./feedback-report.ts";
   import ReportDialog from "./ReportDialog.svelte";
   import ResetDialog from "./ResetDialog.svelte";
 
   const { t } = getI18n();
-  const { locale, progress } = getServices();
+  const { locale, progress, ruleset } = getServices();
   const setting = locale.setting;
+  const active = ruleset.setting;
 
   const options = $derived<readonly { value: LocaleSetting; label: string }[]>([
     { value: "system", label: $t("languageSystem") },
@@ -32,6 +38,13 @@
     if (locale.select(value)) return;
     // Not persisted, so not applied: put the checked radio back.
     for (const radio of radios) radio.checked = radio.value === $setting;
+  }
+
+  let rulesetRadios: HTMLInputElement[] = [];
+
+  function chooseRuleset(value: RulesetId): void {
+    if (ruleset.select(value)) return;
+    for (const radio of rulesetRadios) radio.checked = radio.value === $active;
   }
 
   // The description belongs to this page: kept across dialog openings,
@@ -48,7 +61,8 @@
         buildFeedbackReport({
           description,
           appVersion,
-          rulesetId: kajRulesetId,
+          rulesetId: get(active),
+          sources: FEEDBACK_RULE_SOURCES[get(active)],
         }),
       );
       return true;
@@ -121,6 +135,28 @@
       </div>
     </fieldset>
 
+    <fieldset class="language">
+      <legend class="language__legend">{$t("rulesetSettingHeading")}</legend>
+      <p class="muted language__hint">{$t("rulesetSettingHint")}</p>
+      <div class="language__options">
+        {#each rulesets as r, index (r.id)}
+          <label class="language__option">
+            <input
+              type="radio"
+              name="ruleset"
+              value={r.id}
+              checked={$active === r.id}
+              bind:this={rulesetRadios[index]}
+              onchange={() => chooseRuleset(r.id)}
+            />
+            <span class="language__label"
+              >{$t(RULESET_MESSAGES[r.id].name)}</span
+            >
+          </label>
+        {/each}
+      </div>
+    </fieldset>
+
     <section class="stack" aria-labelledby="about-heading">
       <h2 id="about-heading">{$t("aboutSectionHeading")}</h2>
       <Slip>
@@ -130,11 +166,11 @@
       </Slip>
       <Slip tag="section" aria-labelledby="about-ruleset">
         <h3 id="about-ruleset">{$t("rulesetHeading")}</h3>
-        <p>{kajRulesetId}</p>
+        <p>{$active}</p>
       </Slip>
       <Slip tag="section" aria-labelledby="about-sources">
         <h3 id="about-sources">{$t("ruleSourceHeading")}</h3>
-        <p>{$t("ruleSourceBody")}</p>
+        <p>{$t(RULESET_MESSAGES[$active].sources)}</p>
       </Slip>
       <Slip tag="section" aria-labelledby="about-fonts">
         <h3 id="about-fonts">{$t("fontHeading")}</h3>
@@ -228,6 +264,10 @@
     margin-bottom: var(--space-2);
     padding: 0;
     font-weight: var(--weight-bold);
+  }
+
+  .language__hint {
+    margin: 0 0 var(--space-2);
   }
 
   .language__options {
