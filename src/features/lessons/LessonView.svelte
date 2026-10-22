@@ -9,6 +9,7 @@
   import IconButton from "../../ui/IconButton.svelte";
   import PrimaryBar from "../../ui/PrimaryBar.svelte";
   import Reading from "../../ui/Reading.svelte";
+  import SoundButton from "../../ui/SoundButton.svelte";
   import Surface from "../../ui/Surface.svelte";
   import Tape from "../../ui/Tape.svelte";
   import TracePractice from "../tracing/TracePractice.svelte";
@@ -19,7 +20,7 @@
   let { session }: { session: LessonSession } = $props();
 
   const { t, locale } = getI18n();
-  const { glyphInfo, content } = getServices();
+  const { glyphInfo, content, clips } = getServices();
   const lesson = $derived(session.state);
   const current = $derived($lesson);
   const failedStore = $derived(session.failed);
@@ -127,7 +128,12 @@
                 <Reading text={glyph.pujl || glyph.name} />
               </p>
             </div>
-            <span class="meet__sound"></span>
+            <SoundButton
+              player={clips}
+              clipKey={glyph.pujl || glyph.name}
+              label={$t("playSound", { reading: glyph.pujl || glyph.name })}
+              size="lg"
+            />
           </div>
         </Surface>
 
@@ -155,7 +161,18 @@
         backIcon="chevron-left"
         onback={back}
         onfinish={() => void session.finishTrace()}
-      />
+      >
+        {#snippet sound()}
+          <SoundButton
+            player={clips}
+            clipKey={current.glyph.pujl || current.glyph.name}
+            label={$t("playSound", {
+              reading: current.glyph.pujl || current.glyph.name,
+            })}
+            size="lg"
+          />
+        {/snippet}
+      </TracePractice>
     {:else if current.kind === "question" || current.kind === "feedback"}
       <QuizStep
         exercise={current.exercise}
@@ -320,12 +337,6 @@
     font-weight: var(--weight-black);
     line-height: 0.9;
     letter-spacing: var(--tracking-title);
-  }
-
-  /* Room for the sound button. */
-  .meet__sound {
-    flex: none;
-    min-width: var(--sound-button-lg);
   }
 
   .meet__note {

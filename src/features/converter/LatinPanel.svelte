@@ -21,13 +21,14 @@
   import { ambiguityTitleKey } from "./engine-messages.ts";
   import ErrorNotice from "./ErrorNotice.svelte";
   import { LatinToAksaraConverter } from "./latin-to-aksara-state.ts";
+  import SoundButton from "../../ui/SoundButton.svelte";
   import ResultCard from "./ResultCard.svelte";
   import { markSpans } from "./source-echo.ts";
 
   let { oncopied }: { oncopied: () => void } = $props();
 
   const { t } = getI18n();
-  const { content } = getServices();
+  const { content, clips } = getServices();
   const partTable = ClusterPartTable.build(content);
   // The page keys this panel on direction: a fresh converter, empty input (P-U02).
   const converter = new LatinToAksaraConverter(content.ruleset.id);
@@ -147,6 +148,12 @@
         <button type="button" onclick={copy}>
           <Icon name="copy" />{$t("copyButton")}
         </button>
+        <SoundButton
+          player={clips}
+          clipKey={$result.input.trim()}
+          label={$t("playSound", { reading: $result.input.trim() })}
+          text={$t("listenButton")}
+        />
       {/snippet}
     </ResultCard>
     {#if detail.selection}

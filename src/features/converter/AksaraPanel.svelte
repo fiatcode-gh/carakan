@@ -11,12 +11,13 @@
   import GlyphPickerSheet from "./GlyphPickerSheet.svelte";
   import { pickerSections } from "./glyph-picker.ts";
   import { insertAtCursor } from "./insert-at-cursor.ts";
+  import SoundButton from "../../ui/SoundButton.svelte";
   import ResultCard from "./ResultCard.svelte";
 
   let { oncopied }: { oncopied: () => void } = $props();
 
   const { t } = getI18n();
-  const { content } = getServices();
+  const { content, clips } = getServices();
   // The page keys this panel on direction: a fresh converter, empty input (P-U02).
   const converter = new AksaraToLatinConverter();
   const result = converter.state;
@@ -107,6 +108,12 @@
         <button type="button" onclick={copy}>
           <Icon name="copy" />{$t("copyButton")}
         </button>
+        <SoundButton
+          player={clips}
+          clipKey={$result.output}
+          label={$t("playSound", { reading: $result.output })}
+          text={$t("listenButton")}
+        />
       {/snippet}
     </ResultCard>
   {/if}

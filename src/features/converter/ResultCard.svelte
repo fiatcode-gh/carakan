@@ -88,4 +88,19 @@
   .result__actions :global(button + button) {
     border-inline-start: var(--border);
   }
+
+  /* A sound cell reads like its siblings (reference 07), not like the butter tile. */
+  .result__actions :global(.sound.sound--text) {
+    height: auto;
+    min-height: 50px;
+    padding: 0;
+    background: var(--color-card);
+    box-shadow: none;
+    --press-depth: 0px;
+  }
+
+  .result__actions :global(.sound.sound--text[data-state="playing"]) {
+    background: var(--color-ink);
+    color: var(--color-on-ink);
+  }
 </style>

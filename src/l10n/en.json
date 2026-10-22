@@ -184,5 +184,8 @@
   "traceEmpty": "Write in the box first.",
   "practiceLabel": "Practice",
   "writeLetterButton": "Write {name}",
+  "audioComingSoon": "Audio is coming soon",
+  "playSound": "Play sound {reading}",
+  "listenButton": "Listen",
   "tryWritingButton": "Try writing"
 }

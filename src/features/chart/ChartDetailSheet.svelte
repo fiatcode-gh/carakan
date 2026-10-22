@@ -8,6 +8,7 @@
   import HandNote from "../../ui/HandNote.svelte";
   import Reading from "../../ui/Reading.svelte";
   import Sheet from "../../ui/Sheet.svelte";
+  import SoundButton from "../../ui/SoundButton.svelte";
   import { accentVar, glyphUnits } from "../lessons/unit-display.ts";
   import { isTraceable } from "../tracing/traceable.ts";
   import { pasanganBaseId, type ChartLocation } from "./chart-catalog.ts";
@@ -28,7 +29,7 @@
   let { location, examples, onclose, ontrace }: Props = $props();
 
   const { t, locale } = getI18n();
-  const { content } = getServices();
+  const { content, clips } = getServices();
   const units = glyphUnits(content.units);
 
   const entry = $derived(location.entry);
@@ -83,6 +84,14 @@
           >
         </HandNote>
       {/if}
+      <div class="listen">
+        <SoundButton
+          player={clips}
+          clipKey={reading}
+          label={$t("playSound", { reading })}
+          text={$t("listenButton")}
+        />
+      </div>
     </div>
   </div>
 
@@ -202,6 +211,11 @@
 
   .shape-note :global(.icon) {
     margin-block-start: 0.15em;
+  }
+
+  .listen {
+    display: flex;
+    margin-block-start: var(--space-2);
   }
 
   .subtitle {

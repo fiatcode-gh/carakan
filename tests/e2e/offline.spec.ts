@@ -79,6 +79,28 @@ test("[P-S05][P-S09] cold start offline boots to the ladder; every route loads b
   }
 });
 
+test("[P-S11] the clip manifest is precached and answered offline", async ({
+  page,
+  context,
+}) => {
+  await installAndControl(page);
+  const cached = await page.evaluate(async () => {
+    const urls: string[] = [];
+    for (const name of await caches.keys()) {
+      for (const request of await (await caches.open(name)).keys()) {
+        urls.push(new URL(request.url).pathname);
+      }
+    }
+    return urls;
+  });
+  expect(cached.some((path) => path.endsWith("/audio/clips.json"))).toBe(true);
+  await context.setOffline(true);
+  const status = await page.evaluate(
+    async () => (await fetch("audio/clips.json")).status,
+  );
+  expect(status).toBe(200);
+});
+
 test("[P-S05] unit 1 can be completed offline", async ({ page, context }) => {
   await installAndControl(page);
   await context.setOffline(true);

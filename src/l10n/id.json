@@ -184,5 +184,8 @@
   "traceEmpty": "Tulis dulu di kotak.",
   "practiceLabel": "Latihan",
   "writeLetterButton": "Tulis {name}",
+  "audioComingSoon": "Suara segera hadir",
+  "playSound": "Putar suara {reading}",
+  "listenButton": "Dengar",
   "tryWritingButton": "Coba tulis"
 }
