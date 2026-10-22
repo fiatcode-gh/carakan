@@ -15,6 +15,10 @@ export const icons = {
     { tag: "path", d: "m16 21 4-4-4-4" },
     { tag: "path", d: "M20 17H4" },
   ],
+  "arrow-right": [
+    { tag: "path", d: "M5 12h14" },
+    { tag: "path", d: "m12 5 7 7-7 7" },
+  ],
   "book-open": [
     { tag: "path", d: "M12 5v16" },
     {

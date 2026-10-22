@@ -5,6 +5,7 @@
   import TeacherPage from "../features/lessons/TeacherPage.svelte";
   import ReviewHelpPage from "../features/review/ReviewHelpPage.svelte";
   import SettingsPage from "../features/settings/SettingsPage.svelte";
+  import TracePage from "../features/tracing/TracePage.svelte";
   import AppShell from "./AppShell.svelte";
   import RulesetScope from "./RulesetScope.svelte";
   import { route, tabOf } from "./router.ts";
@@ -54,6 +55,10 @@
     {:else if $route.kind === "lesson"}
       {#key $route.unitId}
         <LessonPage unitId={$route.unitId} />
+      {/key}
+    {:else if $route.kind === "trace"}
+      {#key $route.glyphId}
+        <TracePage glyphId={$route.glyphId} />
       {/key}
     {/if}
   </RulesetScope>

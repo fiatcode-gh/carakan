@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { tick } from "svelte";
+  import { navigate } from "../../app/router.ts";
   import { getServices } from "../../app/services.ts";
   import { getI18n } from "../../l10n/context.ts";
   import type { MessageKey } from "../../l10n/i18n.ts";
@@ -50,6 +52,13 @@
   // Page state: it survives a switch to another tab of the app (keep-alive).
   let selectedTab = $state<ChartTabId>("carakan");
   let opened = $state<ChartLocation | null>(null);
+
+  /** The modal sheet must be closed before the shell goes inert for the pushed page. */
+  async function trace(glyphId: string): Promise<void> {
+    opened = null;
+    await tick();
+    navigate({ kind: "trace", glyphId });
+  }
 
   /** Units that colour at least one tile of the tab, in ladder order. */
   function legendOf(tab: ChartTab): LegendItem[] {
@@ -133,6 +142,7 @@
     location={opened}
     examples={content.chartExamples.get(opened.entry.id) ?? []}
     onclose={() => (opened = null)}
+    ontrace={(glyphId) => void trace(glyphId)}
   />
 {/if}
 

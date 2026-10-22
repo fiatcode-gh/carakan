@@ -166,5 +166,18 @@
   "readingLabel": "Reads",
   "baseLetterLabel": "Base letter",
   "aksaraName": "aksara {reading}",
-  "reviewNote": "a little, but often"
+  "reviewNote": "a little, but often",
+  "traceEyebrow": "Write the letter",
+  "traceHint": "Follow the dotted lines ↓",
+  "traceClear": "Clear",
+  "traceCheck": "Done",
+  "traceSkip": "Skip",
+  "tracePadLabel": "Writing area for {name}",
+  "traceSlotsLabel": "{count} of 3 done",
+  "tracePass": "Nice! Write it once more.",
+  "tracePassLast": "Nice! Three times done.",
+  "traceFail": "Not quite. Follow the lines again.",
+  "traceEmpty": "Write in the box first.",
+  "practiceLabel": "Practice",
+  "writeLetterButton": "Write {name}"
 }

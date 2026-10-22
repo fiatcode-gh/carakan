@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { tick } from "svelte";
+  import { navigate } from "../../app/router.ts";
   import { getServices } from "../../app/services.ts";
   import { getI18n } from "../../l10n/context.ts";
   import AksaraText from "../../ui/AksaraText.svelte";
@@ -32,6 +34,13 @@
   const result = converter.state;
   let value = $state("");
   let chartLocation = $state<ChartLocation | null>(null);
+
+  /** The modal sheet must be closed before the shell goes inert for the pushed page. */
+  async function trace(glyphId: string): Promise<void> {
+    chartLocation = null;
+    await tick();
+    navigate({ kind: "trace", glyphId });
+  }
 
   const detail = $derived.by(() => {
     const state = $result;
@@ -162,6 +171,7 @@
     location={chartLocation}
     examples={content.chartExamples.get(chartLocation.entry.id) ?? []}
     onclose={() => (chartLocation = null)}
+    ontrace={(glyphId) => void trace(glyphId)}
   />
 {/if}
 

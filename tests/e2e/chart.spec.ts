@@ -361,6 +361,7 @@ test("[P-C04] a nglegena detail lists pasangan and murda boxes", async ({
   await expect(boxes.locator(".box__label")).toHaveText([
     id["pasanganLabel"]!,
     id["murdaLabel"]!,
+    id["practiceLabel"]!,
   ]);
   await expect(boxes.locator(".aksara")).toHaveText([
     pasanganString("na"),
@@ -375,6 +376,7 @@ test("[P-C04] a nglegena without a murda form has no murda box", async ({
   await (await tile(page, "wa")).click();
   await expect(sheet(page, "wa").locator(".box__label")).toHaveText([
     id["pasanganLabel"]!,
+    id["practiceLabel"]!,
   ]);
 });
 
@@ -602,6 +604,7 @@ test("[P-L04] English tabs, section headings and box labels", async ({
   await expect(dialog.locator(".box__label")).toHaveText([
     en["pasanganLabel"]!,
     en["murdaLabel"]!,
+    en["practiceLabel"]!,
   ]);
   await expect(dialog.locator(".head .eyebrow")).toHaveText(
     en["readingLabel"]!,

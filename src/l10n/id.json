@@ -166,5 +166,18 @@
   "readingLabel": "Dibaca",
   "baseLetterLabel": "Aksara dasar",
   "aksaraName": "aksara {reading}",
-  "reviewNote": "sedikit tapi rutin"
+  "reviewNote": "sedikit tapi rutin",
+  "traceEyebrow": "Tulis huruf",
+  "traceHint": "Ikuti garis titik-titiknya ↓",
+  "traceClear": "Hapus",
+  "traceCheck": "Selesai",
+  "traceSkip": "Lewati",
+  "tracePadLabel": "Tempat menulis {name}",
+  "traceSlotsLabel": "{count} dari 3 berhasil",
+  "tracePass": "Bagus! Tulis sekali lagi.",
+  "tracePassLast": "Bagus! Tiga kali berhasil.",
+  "traceFail": "Belum pas. Ikuti garisnya lagi.",
+  "traceEmpty": "Tulis dulu di kotak.",
+  "practiceLabel": "Latihan",
+  "writeLetterButton": "Tulis {name}"
 }

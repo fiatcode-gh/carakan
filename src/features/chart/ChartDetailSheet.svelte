@@ -9,6 +9,7 @@
   import Reading from "../../ui/Reading.svelte";
   import Sheet from "../../ui/Sheet.svelte";
   import { accentVar, glyphUnits } from "../lessons/unit-display.ts";
+  import { isTraceable } from "../tracing/traceable.ts";
   import { pasanganBaseId, type ChartLocation } from "./chart-catalog.ts";
   import {
     detailForNglegena,
@@ -20,9 +21,11 @@
     location: ChartLocation;
     examples: readonly Word[];
     onclose: () => void;
+    /** Opens the tracing practice of a base letter; the caller closes the sheet first. */
+    ontrace?: (glyphId: string) => void;
   }
 
-  let { location, examples, onclose }: Props = $props();
+  let { location, examples, onclose, ontrace }: Props = $props();
 
   const { t, locale } = getI18n();
   const { content } = getServices();
@@ -99,6 +102,19 @@
             <p class="eyebrow box__label">{$t("murdaLabel")}</p>
             <AksaraText class="box__aksara" text={nglegena.murda} size="lg" />
           </div>
+        {/if}
+        {#if ontrace && isTraceable(entry.id)}
+          <button
+            type="button"
+            class="box box--practice press"
+            onclick={() => ontrace(entry.id)}
+          >
+            <span class="eyebrow box__label">{$t("practiceLabel")}</span>
+            <span class="practice__action">
+              {$t("writeLetterButton", { name: entry.name })}
+              <Icon name="arrow-right" small />
+            </span>
+          </button>
         {/if}
       {:else if sandhangan}
         <div class="box">
@@ -218,6 +234,31 @@
     display: block;
     line-height: 1.5;
     padding-block-end: 0.3em;
+  }
+
+  .box--practice {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: var(--touch-min);
+    border: var(--border);
+    background: var(--color-periwinkle);
+    color: var(--color-ink);
+    font: inherit;
+    text-align: start;
+  }
+
+  .box--practice .box__label {
+    color: var(--color-ink);
+  }
+
+  .practice__action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-black);
   }
 
   .examples {

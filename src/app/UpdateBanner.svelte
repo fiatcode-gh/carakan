@@ -2,7 +2,7 @@
   import { useRegisterSW } from "virtual:pwa-register/svelte";
   import { getI18n } from "../l10n/context.ts";
   import Button from "../ui/Button.svelte";
-  import { route } from "./router.ts";
+  import { isActivityRoute, route } from "./router.ts";
 
   const { t } = getI18n();
 
@@ -36,8 +36,8 @@
   // "Later" lasts for this page lifetime; the next launch asks again.
   let later = $state(false);
 
-  // A lesson is never interrupted.
-  const visible = $derived($needRefresh && !later && $route.kind !== "lesson");
+  // A lesson or a tracing practice is never interrupted.
+  const visible = $derived($needRefresh && !later && !isActivityRoute($route));
 </script>
 
 {#if visible}
