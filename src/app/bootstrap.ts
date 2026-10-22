@@ -7,6 +7,7 @@ import { MistakeLogRepository } from "../core/db/mistake-log-repository.ts";
 import { UnitCompletionRepository } from "../core/db/unit-completion-repository.ts";
 import { LocaleController } from "../core/locale/locale-controller.ts";
 import { ReviewQueue } from "../core/srs/review-queue.ts";
+import { kajRulesetId } from "../engine/index.ts";
 import { createI18n } from "../l10n/i18n.ts";
 import type { TabId } from "./router.ts";
 import { createSingletons, type Services } from "./services.ts";
@@ -100,7 +101,7 @@ export function createBootstrap(
     }
     let content;
     try {
-      content = await loadContent(fetchText);
+      content = await loadContent(fetchText, kajRulesetId);
     } catch {
       return { kind: "content-error" };
     }

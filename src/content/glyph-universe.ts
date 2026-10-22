@@ -1,3 +1,5 @@
+import { swara, type Ruleset } from "../engine/index.ts";
+
 /**
  * Pinned bitmask universe: index = bit position (spec 7: required-glyph set
  * is a bitmask; "words this learner can read" is a single integer AND).
@@ -42,3 +44,17 @@ export function containsGlyph(id: string): boolean {
  * them all (decision 4).
  */
 export const pasanganCap = 1n << 0n;
+
+/**
+ * The universe ids one ruleset has: nglegena and sandhangan (index < 32),
+ * plus the murda, swara and rekan it teaches that are universe ids
+ * (contract 2.4). Chart-only rekan have no universe id and drop out.
+ */
+export function rulesetGlyphIds(ruleset: Ruleset): ReadonlySet<string> {
+  const own = new Set<string>([
+    ...ruleset.murda.map((m) => m.aksara.id),
+    ...swara.map((s) => s.id),
+    ...ruleset.rekan.map((r) => r.id),
+  ]);
+  return new Set(glyphUniverseIds.filter((id, i) => i < 32 || own.has(id)));
+}

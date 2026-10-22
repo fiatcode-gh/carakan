@@ -42,7 +42,8 @@ const carried: ReadonlyArray<readonly [string, string]> = [
   ],
   [
     "public/content/v1/manifest.json",
-    "4501199fded1634c791b587263277509b06800aa871f0c544434b0906010be6f",
+    // per-ruleset content (pedoman-2002-ruleset)
+    "b9552f2755b1eb09d8f6ebf286e3386ebb3f94c163bb28ad66bf3671dbbb7774",
   ],
   [
     "public/content/v1/sandhangan.json",
@@ -51,11 +52,13 @@ const carried: ReadonlyArray<readonly [string, string]> = [
   [
     "public/content/v1/units.json",
     // regrouped by shape (teacher-feedback-2 A01)
-    "5fcd8cf6411f4aeab9b0bb6c5777ac62913b77fb85234bcb86eb6b84e67f49c9",
+    // per-ruleset content (pedoman-2002-ruleset)
+    "9f598568f0c90af0a0b2f1ddd7fae0f93901817bea612285dbd58f769c64f327",
   ],
   [
     "public/content/v1/words.json",
-    "712f59dddac9d0a7375c0c6226fb3187e4c51c3a2fa71fe41d7f86f4ce9fb4df",
+    // per-ruleset content (pedoman-2002-ruleset)
+    "de5e50c2eb7b19e6373f48635c4e000b7e076cc7ab82f00043cc17b4aa4aad61",
   ],
   [
     "public/fonts/nykNgayogyanJejeg-Regular.ttf",

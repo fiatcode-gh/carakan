@@ -8,6 +8,7 @@ import {
   GlyphInfoTable,
   type GlyphInfo,
 } from "../../../src/content/glyph-info-table.ts";
+import type { RulesetId } from "../../../src/engine/index.ts";
 
 /**
  * Answers lesson and drill questions from outside the page. It rebuilds the
@@ -33,9 +34,10 @@ export interface Solver {
 export type QuestionPrompt =
   { readonly glyph: string } | { readonly sound: string };
 
-export async function createSolver(): Promise<Solver> {
-  const content = await loadContent(async (path) =>
-    readFileSync(join("public", path), "utf8"),
+export async function createSolver(rulesetId: RulesetId): Promise<Solver> {
+  const content = await loadContent(
+    async (path) => readFileSync(join("public", path), "utf8"),
+    rulesetId,
   );
   const table = GlyphInfoTable.build(content);
   const entries: GlyphInfo[] = [...table.byId.values()];

@@ -4,11 +4,11 @@ import { SandhanganItem } from "../../src/content/sandhangan-item.ts";
 import {
   angkaDigitToChar,
   javaneseChar,
-  kajRulesetId,
   murdaLinks,
   nglegenaById,
   padaById,
   rekanById,
+  rulesets,
   sandhanganById,
   swaraById,
   swaraCatalogue,
@@ -75,8 +75,10 @@ describe("[P-C07] [P-D04] content no-drift", () => {
     expect(count("pada")).toBe(15);
   });
 
-  test("manifest.json pins the current engine ruleset id", () => {
-    expect(readContentJson("manifest.json")["rulesetId"]).toBe(kajRulesetId);
+  test("[P-D08] manifest.json pins the engine ruleset ids", () => {
+    expect(readContentJson("manifest.json")["rulesetIds"]).toEqual(
+      rulesets.map((r) => r.id),
+    );
   });
 
   test("sandhangan.json matches the engine catalog exactly", () => {

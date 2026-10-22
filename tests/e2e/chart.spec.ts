@@ -1,7 +1,11 @@
 import type { Locator, Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { loadContent } from "../../src/content/content-repository.ts";
-import { murdaFor, nglegenaById } from "../../src/engine/index.ts";
+import {
+  kajRulesetId,
+  murdaFor,
+  nglegenaById,
+} from "../../src/engine/index.ts";
 import {
   buildChartSections,
   pasanganString,
@@ -45,7 +49,7 @@ const stringsFor = (c: Record<string, string>): ChartStrings => ({
   longFormName: (name) => fmt(c["longFormName"]!, { name }),
 });
 
-const content = await loadContent(loadFromPublic);
+const content = await loadContent(loadFromPublic, kajRulesetId);
 const sectionsFor = (c: Record<string, string>): ChartSection[] =>
   buildChartSections({
     aksara: content.aksara,

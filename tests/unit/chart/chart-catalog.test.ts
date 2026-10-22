@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { AksaraItem } from "../../../src/content/aksara-item.ts";
 import { loadContent } from "../../../src/content/content-repository.ts";
 import { SandhanganItem } from "../../../src/content/sandhangan-item.ts";
+import { kajRulesetId } from "../../../src/engine/index.ts";
 import {
   angkaFlanked,
   buildChartSections,
@@ -97,7 +98,7 @@ describe("chart lookups for the converter", () => {
   });
 
   test("[P-U10] findChartEntry resolves real content ids in section order", async () => {
-    const content = await loadContent(loadFromPublic);
+    const content = await loadContent(loadFromPublic, kajRulesetId);
     const real = buildChartSections({
       aksara: content.aksara,
       sandhangan: content.sandhangan,
@@ -219,7 +220,7 @@ describe("buildChartSections", () => {
   });
 
   test("[P-C01] the real content yields no empty name, char or subtitle", async () => {
-    const content = await loadContent(loadFromPublic);
+    const content = await loadContent(loadFromPublic, kajRulesetId);
     const real = buildChartSections({
       aksara: content.aksara,
       sandhangan: content.sandhangan,

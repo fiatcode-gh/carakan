@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { kajRulesetId } from "../../src/engine/index.ts";
 import { gotoRoute } from "./support/app.ts";
 import { expect, test, trackForeignRequests } from "./support/fixtures.ts";
 import { id, walkMeet } from "./support/lesson.ts";
@@ -40,7 +41,7 @@ function build(outDir: string, buildId: string): void {
 }
 
 test.beforeAll(async () => {
-  solver = await createSolver();
+  solver = await createSolver(kajRulesetId);
   build(V1, "e2e-v1");
   build(V2, "e2e-v2");
   server = await startStaticServer(V1, PORT);

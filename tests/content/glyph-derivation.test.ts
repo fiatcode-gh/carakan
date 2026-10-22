@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { deriveGlyphs } from "../../src/content/glyph-derivation.ts";
-import { toAksara } from "../../src/engine/index.ts";
+import { pedomanRulesetId, toAksara } from "../../src/engine/index.ts";
 import { ak } from "../engine/support/aksara-builder.ts";
 
 function aksara(latin: string): string {
@@ -29,6 +29,16 @@ describe("[P-C07] glyph derivation", () => {
   test("a pasangan before a post-onset taling still marks the pasangan capability", () => {
     expect(deriveGlyphs(aksara("lombok/")).caps).toEqual(["pasangan"]);
     expect(deriveGlyphs(aksara("ngombé")).caps).toEqual(["pasangan"]);
+  });
+
+  test("[P-D08] Pedoman v writes fa; sinahu derives its letters", () => {
+    const pedoman = (latin: string) => {
+      const res = toAksara(latin, { ruleset: pedomanRulesetId });
+      if (res.kind !== "success") throw new Error(`${latin} does not convert`);
+      return deriveGlyphs(res.output).ids;
+    };
+    expect(pedoman("vila")).toEqual(["la", "wulu", "fa"]);
+    expect(pedoman("sinahu")).toEqual(["ha", "na", "sa", "wulu", "suku"]);
   });
 
   test("cecak telu on an unsupported base fails fast", () => {

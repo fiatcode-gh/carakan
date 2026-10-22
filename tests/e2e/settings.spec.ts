@@ -259,7 +259,7 @@ test("settings page is accessible in Indonesian", async ({ page }) => {
 
 let solver: Solver;
 test.beforeAll(async () => {
-  solver = await createSolver();
+  solver = await createSolver(kajRulesetId);
 });
 
 const resetDialog = (page: Page, catalog = id) =>

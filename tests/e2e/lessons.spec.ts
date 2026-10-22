@@ -10,6 +10,7 @@ import {
   type SrsItemRow,
   type UnitCompletionRow,
 } from "../../src/core/db/schema.ts";
+import { kajRulesetId } from "../../src/engine/index.ts";
 import { generateExercises } from "../../src/features/lessons/exercise-generator.ts";
 import { ladderPreview } from "../../src/features/lessons/ladder.ts";
 import {
@@ -39,7 +40,7 @@ const fmt = (template: string, params: Record<string, string | number>) =>
 
 let solver: Solver;
 test.beforeAll(async () => {
-  solver = await createSolver();
+  solver = await createSolver(kajRulesetId);
 });
 
 const unit = (unitId: string): Unit => {

@@ -1,4 +1,9 @@
-import { toAksara, toLatin } from "../engine/index.ts";
+import {
+  isRulesetId,
+  toAksara,
+  toLatin,
+  type RulesetId,
+} from "../engine/index.ts";
 import {
   ContentFormatError,
   optionalString,
@@ -11,6 +16,8 @@ const vowelInitial = /^[aiueoéèěêāīū]/;
 
 /**
  * One corpus word. Canonical Latin (JGST) only — never aksara (spec 7).
+ * `canonical`, `displayPujl` and the glyph fields may differ per ruleset
+ * (`byRuleset` in words.json); a word is resolved for one ruleset.
  * `requiredGlyphs` ids and `requiredCaps` are validated by the round-trip
  * test against the engine's own output (decision 5).
  */
@@ -23,6 +30,8 @@ export class Word {
   readonly requiredCaps: readonly string[];
   readonly audioKey: string;
   readonly source: string;
+  /** The ruleset this word renders with; `canonical` and glyphs are resolved for it. */
+  readonly rulesetId: RulesetId;
 
   #aksara: string | undefined;
   #display: string | undefined;
@@ -36,6 +45,7 @@ export class Word {
     requiredCaps?: readonly string[];
     audioKey: string;
     source: string;
+    rulesetId: RulesetId;
   }) {
     this.id = init.id;
     this.canonical = init.canonical;
@@ -45,6 +55,7 @@ export class Word {
     this.requiredCaps = init.requiredCaps ?? [];
     this.audioKey = init.audioKey;
     this.source = init.source;
+    this.rulesetId = init.rulesetId;
   }
 
   /**
@@ -59,7 +70,7 @@ export class Word {
   /** Engine rendering of `canonical` (spec 7: aksara is derived, never stored). Computed once. */
   get aksara(): string {
     if (this.#aksara === undefined) {
-      const res = toAksara(this.canonical);
+      const res = toAksara(this.canonical, { ruleset: this.rulesetId });
       if (res.kind !== "success") {
         throw new Error(
           `corpus word ${this.id} does not convert: ${JSON.stringify(res)}`,
@@ -118,26 +129,82 @@ export class Word {
     );
   }
 
-  static fromJson(json: JsonObject): Word {
-    const { id, canonical, gloss } = json;
+  static fromJson(json: JsonObject, rulesetId: RulesetId): Word {
+    const { id, gloss } = json;
     if (
       typeof id !== "string" ||
-      typeof canonical !== "string" ||
+      typeof json["canonical"] !== "string" ||
       typeof gloss !== "string"
     ) {
       throw new ContentFormatError(
         `word entry needs id/canonical/gloss: ${JSON.stringify(json)}`,
       );
     }
+    const fields = {
+      ...json,
+      ...overrideFor(id, json["byRuleset"], rulesetId),
+    };
     return new Word({
       id,
-      canonical,
-      displayPujl: optionalString(json, "displayPujl"),
+      canonical: fields["canonical"] as string,
+      displayPujl: optionalString(fields, "displayPujl"),
       gloss,
-      requiredGlyphs: stringList(json, "requiredGlyphs"),
-      requiredCaps: stringList(json, "requiredCaps"),
+      requiredGlyphs: stringList(fields, "requiredGlyphs"),
+      requiredCaps: stringList(fields, "requiredCaps"),
       audioKey: optionalString(json, "audioKey") ?? id,
       source: optionalString(json, "source") ?? "author",
+      rulesetId,
     });
   }
+}
+
+const overrideKinds: Readonly<Record<string, "string" | "list">> = {
+  canonical: "string",
+  displayPujl: "string",
+  requiredGlyphs: "list",
+  requiredCaps: "list",
+};
+
+/** The validated `byRuleset` entry for `rulesetId` (empty when absent). */
+function overrideFor(
+  id: string,
+  byRuleset: unknown,
+  rulesetId: RulesetId,
+): JsonObject {
+  if (byRuleset === undefined) return {};
+  if (
+    typeof byRuleset !== "object" ||
+    byRuleset === null ||
+    Array.isArray(byRuleset)
+  ) {
+    throw new ContentFormatError(`word ${id}: byRuleset must be an object`);
+  }
+  let chosen: JsonObject = {};
+  for (const [key, raw] of Object.entries(byRuleset)) {
+    if (!isRulesetId(key)) {
+      throw new ContentFormatError(`word ${id}: unknown ruleset "${key}"`);
+    }
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+      throw new ContentFormatError(
+        `word ${id}: byRuleset.${key} must be an object`,
+      );
+    }
+    const override = raw as JsonObject;
+    for (const [field, value] of Object.entries(override)) {
+      const kind = overrideKinds[field];
+      const ok =
+        kind === "string"
+          ? typeof value === "string"
+          : kind === "list" &&
+            Array.isArray(value) &&
+            value.every((v) => typeof v === "string");
+      if (!ok) {
+        throw new ContentFormatError(
+          `word ${id}: invalid byRuleset.${key}.${field}`,
+        );
+      }
+    }
+    if (key === rulesetId) chosen = override;
+  }
+  return chosen;
 }

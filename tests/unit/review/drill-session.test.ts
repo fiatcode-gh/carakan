@@ -8,7 +8,7 @@ import { GlyphInfoTable } from "../../../src/content/glyph-info-table.ts";
 import { Word } from "../../../src/content/word.ts";
 import { LearnerProgress } from "../../../src/core/db/learner-progress.ts";
 import { MistakeLogRepository } from "../../../src/core/db/mistake-log-repository.ts";
-import { javaneseChar } from "../../../src/engine/index.ts";
+import { javaneseChar, kajRulesetId } from "../../../src/engine/index.ts";
 import {
   DrillSession,
   type DrillState,
@@ -30,6 +30,7 @@ const word = (id: string, gloss: string, requiredGlyphs: string[]) =>
     requiredGlyphs,
     audioKey: id,
     source: "author",
+    rulesetId: kajRulesetId,
   });
 
 const corpus = [
@@ -153,6 +154,7 @@ test("[P-R13] a pair-readable corpus of 4 or more words yields word readings fro
       requiredGlyphs: glyphs,
       audioKey: canonical,
       source: "author",
+      rulesetId: kajRulesetId,
     });
   const { mistakes, session } = await setup({
     corpus: [
@@ -175,8 +177,9 @@ test("[P-R13] a pair-readable corpus of 4 or more words yields word readings fro
 });
 
 test("[P-R09] a suku-wulu drill never shows a bare combining mark", async () => {
-  const content = await loadContent(async (path) =>
-    readFileSync(join("public", path), "utf8"),
+  const content = await loadContent(
+    async (path) => readFileSync(join("public", path), "utf8"),
+    kajRulesetId,
   );
   const { mistakes, session } = await setup({
     pairs: content.confusionPairs,

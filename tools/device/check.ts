@@ -24,6 +24,7 @@ import {
   UNIT_COMPLETIONS,
   type UnitCompletionRow,
 } from "../../src/core/db/schema.ts";
+import { kajRulesetId } from "../../src/engine/index.ts";
 import {
   answerCurrentQuestion,
   id,
@@ -112,7 +113,7 @@ async function tour(page: Page) {
 }
 
 async function lesson(page: Page, unitId: string) {
-  const solver = await createSolver();
+  const solver = await createSolver(kajRulesetId);
   const unit = solver.content.units.find((u) => u.id === unitId);
   if (unit === undefined) throw new Error(`no unit ${unitId}`);
 

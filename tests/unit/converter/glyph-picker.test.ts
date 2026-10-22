@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { loadContent } from "../../../src/content/content-repository.ts";
-import { javaneseChar } from "../../../src/engine/index.ts";
+import { javaneseChar, kajRulesetId } from "../../../src/engine/index.ts";
 import { pickerSections } from "../../../src/features/converter/glyph-picker.ts";
 import en from "../../../src/l10n/en.json";
 import { formatMessage, type MessageKey } from "../../../src/l10n/i18n.ts";
@@ -8,7 +8,7 @@ import id from "../../../src/l10n/id.json";
 import { ak } from "../../engine/support/aksara-builder.ts";
 import { loadFromPublic } from "../../support/content-files.ts";
 
-const { aksara } = await loadContent(loadFromPublic);
+const { aksara } = await loadContent(loadFromPublic, kajRulesetId);
 const translator =
   (catalog: Record<MessageKey, string>) =>
   (key: MessageKey, params?: Record<string, string | number>) =>

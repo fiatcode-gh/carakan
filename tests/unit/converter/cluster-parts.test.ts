@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, test } from "vitest";
 import type { ContentData } from "../../../src/content/content-repository.ts";
 import { loadContent } from "../../../src/content/content-repository.ts";
 import {
+  kajRulesetId,
   toAksara,
   type AksaraCluster,
   type ToAksaraSuccess,
@@ -39,7 +40,7 @@ let content: ContentData;
 let table: ClusterPartTable;
 
 beforeAll(async () => {
-  content = await loadContent(loadFromPublic);
+  content = await loadContent(loadFromPublic, kajRulesetId);
   table = ClusterPartTable.build(content);
 });
 

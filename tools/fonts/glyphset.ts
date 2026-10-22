@@ -100,7 +100,9 @@ export function computeGlyphSet(): number[] {
   const words = readJson("public", "content", "v1", "words.json") as {
     words: Record<string, unknown>[];
   };
-  for (const raw of words.words) addText(out, Word.fromJson(raw).display);
+  for (const raw of words.words) {
+    for (const r of rulesets) addText(out, Word.fromJson(raw, r.id).display);
+  }
 
   const catalog = [
     ...nglegena,

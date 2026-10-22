@@ -6,6 +6,7 @@ import { RetiredUnit, Unit } from "../../../src/content/unit.ts";
 import { LearnerProgress } from "../../../src/core/db/learner-progress.ts";
 import { UnitCompletionRepository } from "../../../src/core/db/unit-completion-repository.ts";
 import { createEmitter } from "../../../src/core/emitter.ts";
+import { kajRulesetId } from "../../../src/engine/index.ts";
 import {
   computeLadder,
   LadderModel,
@@ -40,7 +41,7 @@ const statusesOf = (done: string[]) =>
   computeLadder(units, new Set(done)).statuses.map((e) => e.status);
 
 async function content() {
-  const loaded = await loadContent(loadFromPublic);
+  const loaded = await loadContent(loadFromPublic, kajRulesetId);
   return { loaded, table: GlyphInfoTable.build(loaded) };
 }
 
