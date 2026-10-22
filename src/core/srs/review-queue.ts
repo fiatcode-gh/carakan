@@ -36,6 +36,11 @@ export class ReviewQueue {
     );
   }
 
+  /** Every stored card, due or not, in item id order, as stored. */
+  allStates(): Promise<SrsState[]> {
+    return this.#db.getAll("srsItems");
+  }
+
   async grade(itemId: string, g: ReviewGrade, now: number): Promise<void> {
     const tx = this.#db.transaction("srsItems", "readwrite");
     const state = await tx.store.get(itemId);

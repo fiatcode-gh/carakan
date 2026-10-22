@@ -22,6 +22,7 @@ const MINUTE = 60_000;
 async function setup(
   now: () => number = () => T0,
   shows: (itemId: string) => boolean = () => true,
+  rank: (itemId: string) => number = () => 0,
 ) {
   const db = await openFreshDb();
   const queue = new ReviewQueue(db);
@@ -31,6 +32,7 @@ async function setup(
     erased: progress.erased,
     now,
     shows,
+    rank,
   });
   return { queue, session, progress };
 }
@@ -217,4 +219,65 @@ test("[P-R16] reviewSession under Pedoman lists a pasangan card and hides a murd
   await queue.enqueue("caMurda", T0);
   await session.refresh();
   expect(ids(session)).toEqual(["pasangan-ka"]);
+});
+
+const strengths = (session: ReviewSession) =>
+  get(session.strengths).map((s) => [s.itemId, s.level]);
+
+test("[P-R18] strengths lists every shown card in rank order and follows grades, enqueues and erase", async () => {
+  const order = ["na", "ha", "ca"];
+  const { queue, session, progress } = await setup(
+    undefined,
+    (id) => id !== "hidden",
+    (id) => (order.includes(id) ? order.indexOf(id) : 99),
+  );
+  await queue.enqueue("ca", T0);
+  await queue.enqueue("hidden", T0);
+  await queue.enqueue("ha", T0);
+  await session.refresh();
+  expect(strengths(session)).toEqual([
+    ["ha", 1],
+    ["ca", 1],
+  ]);
+
+  // A card that is not due yet still shows.
+  await session.grade("ha", "good");
+  expect(strengths(session)).toEqual([
+    ["ha", 2],
+    ["ca", 1],
+  ]);
+
+  // W03: an enqueue refreshes the strengths too.
+  await queue.enqueue("na", T0);
+  await vi.waitFor(() =>
+    expect(strengths(session)).toEqual([
+      ["na", 1],
+      ["ha", 2],
+      ["ca", 1],
+    ]),
+  );
+
+  await progress.erase();
+  await vi.waitFor(() => expect(strengths(session)).toEqual([]));
+});
+
+test("[P-R18] cards of equal rank are ordered by item id", async () => {
+  const { queue, session } = await setup();
+  await queue.enqueue("pa", T0);
+  await queue.enqueue("ha", T0);
+  await session.refresh();
+  expect(strengths(session).map(([id]) => id)).toEqual(["ha", "pa"]);
+});
+
+test("[P-R17] grade resolves true when stored and false on a rejected write", async () => {
+  const { queue, session } = await setup();
+  await queue.enqueue("ha", T0);
+  await session.refresh();
+  expect(await session.grade("ha", "good")).toBe(true);
+  const write = vi
+    .spyOn(queue, "grade")
+    .mockRejectedValueOnce(new Error("idb closed"));
+  expect(await session.grade("ha", "good")).toBe(false);
+  expect(get(session.state)).toEqual({ kind: "error" });
+  write.mockRestore();
 });
