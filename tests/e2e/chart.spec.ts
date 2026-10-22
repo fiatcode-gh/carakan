@@ -335,6 +335,23 @@ test("[P-C03] the head reads the entry out, with the glyph as a named image", as
   );
 });
 
+test("[P-B21] the ha detail shows its Indonesian shape note as the hand note; wulu and angka-1 show none", async ({
+  page,
+}) => {
+  await (await tile(page, "ha")).click();
+  await expect(sheet(page, "ha").locator(".head .shape-note")).toHaveText(
+    "ha adalah pa dengan satu kaki tambahan.",
+  );
+  await page.keyboard.press("Escape");
+  for (const noteless of ["angka-1", "pasangan-ha"]) {
+    await (await tile(page, noteless)).click();
+    await expect(sheet(page, noteless).locator(".shape-note")).toHaveCount(0);
+    await page.keyboard.press("Escape");
+  }
+  await (await tile(page, "wulu")).click();
+  await expect(sheet(page, "wulu").locator(".shape-note")).toHaveCount(0);
+});
+
 test("[P-C04] a nglegena detail lists pasangan and murda boxes", async ({
   page,
 }) => {
@@ -600,4 +617,21 @@ test("[P-L04] English tabs, section headings and box labels", async ({
       })
       .locator(".box__value"),
   ).toHaveText(en["functionVowelChanging"]!);
+});
+
+test("[P-B21] the English ha detail shows the English shape note", async ({
+  page,
+}) => {
+  await seedLocale(page, "en");
+  await page.reload();
+  await page.locator('#app[data-boot="ready"]').waitFor();
+  await page.locator('#tab-chart [data-entry="ha"]').click();
+  await expect(
+    page
+      .getByRole("dialog", {
+        name: sheetName("ha", en, tabsFor(en)),
+        exact: true,
+      })
+      .locator(".head .shape-note"),
+  ).toHaveText("ha is pa with one more leg.");
 });

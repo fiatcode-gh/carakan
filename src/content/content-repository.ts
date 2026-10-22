@@ -9,6 +9,7 @@ import {
 } from "./content-format-error.ts";
 import { containsGlyph, rulesetGlyphIds } from "./glyph-universe.ts";
 import { SandhanganItem } from "./sandhangan-item.ts";
+import { parseShapeNotes, type ShapeNote } from "./shape-note.ts";
 import { RetiredUnit, Unit } from "./unit.ts";
 import { Word } from "./word.ts";
 
@@ -33,6 +34,8 @@ export interface ContentData {
    * `glyphIds` are dropped (contract 2.4: only the active ruleset's letters).
    */
   readonly chartExamples: ReadonlyMap<string, readonly Word[]>;
+  /** Shape-group hint per nglegena id (shape_notes.json, D9); the same for every ruleset. */
+  readonly shapeNotes: ReadonlyMap<string, ShapeNote>;
   /** Universe glyph ids this ruleset has (`rulesetGlyphIds`). */
   readonly glyphIds: ReadonlySet<string>;
 }
@@ -47,6 +50,7 @@ export interface ContentSource {
   readonly retiredUnits: readonly RetiredUnit[];
   readonly confusionPairs: readonly ConfusionPair[];
   readonly examples: JsonObject;
+  readonly shapeNotes: ReadonlyMap<string, ShapeNote>;
 }
 
 /** Relative to the app base (`document.baseURI`) or to `public/` on disk. */
@@ -69,6 +73,7 @@ export async function readContent(
   const unitsData = await read("units.json", "units.json");
   const pairsData = await read("confusion_pairs.json", "confusion_pairs.json");
   const examples = await read("chart_examples.json", "chart_examples.json");
+  const shapeNotes = await read("shape_notes.json", "shape_notes.json");
   const objects = (data: Record<string, unknown>, key: string) =>
     asArray(data[key], key).map((raw) => asObject(raw, `${key} entry`));
   const version = manifest["contentVersion"];
@@ -90,6 +95,7 @@ export async function readContent(
       ConfusionPair.fromJson(raw),
     ),
     examples,
+    shapeNotes: parseShapeNotes(shapeNotes),
   };
 }
 
@@ -112,6 +118,7 @@ export function contentFor(
     otherRulesetUnits: source.units.filter((u) => !u.appliesTo(rulesetId)),
     confusionPairs: source.confusionPairs,
     chartExamples: resolveChartExamples(source.examples, words, glyphIds),
+    shapeNotes: source.shapeNotes,
     glyphIds,
   };
 }

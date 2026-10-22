@@ -4,6 +4,7 @@
   import { nglegenaById, sandhanganById } from "../../engine/index.ts";
   import type { Word } from "../../content/word.ts";
   import AksaraText from "../../ui/AksaraText.svelte";
+  import Icon from "../../ui/Icon.svelte";
   import HandNote from "../../ui/HandNote.svelte";
   import Reading from "../../ui/Reading.svelte";
   import Sheet from "../../ui/Sheet.svelte";
@@ -23,7 +24,7 @@
 
   let { location, examples, onclose }: Props = $props();
 
-  const { t } = getI18n();
+  const { t, locale } = getI18n();
   const { content } = getServices();
   const units = glyphUnits(content.units);
 
@@ -42,6 +43,9 @@
     const baseId = pasanganBaseId(entry.id);
     return baseId === null ? null : nglegenaById(baseId)!.char;
   });
+  const shapeNote = $derived(
+    content.shapeNotes.get(entry.id)?.[$locale] ?? null,
+  );
 </script>
 
 <Sheet
@@ -69,6 +73,13 @@
         <Reading text={reading} />
       </p>
       <p class="subtitle"><Reading text={entry.subtitle} /></p>
+      {#if shapeNote !== null}
+        <HandNote tilt>
+          <span class="shape-note"
+            ><Icon name="lightbulb" small />{shapeNote}</span
+          >
+        </HandNote>
+      {/if}
     </div>
   </div>
 
@@ -163,6 +174,18 @@
 
   .head__reading :global(.reading) {
     font-weight: var(--weight-black);
+  }
+
+  .shape-note {
+    display: flex;
+    gap: var(--space-2);
+    align-items: flex-start;
+    font-size: var(--text-hand);
+    line-height: 1.2;
+  }
+
+  .shape-note :global(.icon) {
+    margin-block-start: 0.15em;
   }
 
   .subtitle {

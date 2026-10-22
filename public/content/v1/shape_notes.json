@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "status": "draft",
+  "notes": {
+    "pa": { "id": "Kait dan kaki.", "en": "Hook and leg." },
+    "ha": { "id": "ha adalah pa dengan satu kaki tambahan.", "en": "ha is pa with one more leg." },
+    "ya": { "id": "ya adalah dua pa berdampingan.", "en": "ya is two pa side by side." },
+    "ra": { "id": "Deretan lengkungan.", "en": "Rows of arches." },
+    "ga": { "id": "Deretan lengkungan.", "en": "Rows of arches." },
+    "la": { "id": "Deretan lengkungan.", "en": "Rows of arches." },
+    "na": { "id": "Sisir atau ikal di awal: na dan ka, ca dan sa.", "en": "Comb or curl at the start: na and ka, ca and sa." },
+    "ka": { "id": "Sisir atau ikal di awal: na dan ka, ca dan sa.", "en": "Comb or curl at the start: na and ka, ca and sa." },
+    "ca": { "id": "Sisir atau ikal di awal: na dan ka, ca dan sa.", "en": "Comb or curl at the start: na and ka, ca and sa." },
+    "sa": { "id": "Sisir atau ikal di awal: na dan ka, ca dan sa.", "en": "Comb or curl at the start: na and ka, ca and sa." },
+    "da": { "id": "Lingkaran atau ikal di dalam kotak.", "en": "A loop or curl inside a box." },
+    "dha": { "id": "Lingkaran atau ikal di dalam kotak.", "en": "A loop or curl inside a box." },
+    "ta": { "id": "Lingkaran atau ikal di dalam kotak.", "en": "A loop or curl inside a box." },
+    "wa": { "id": "Lingkaran atau ikal di dalam kotak.", "en": "A loop or curl inside a box." },
+    "ja": { "id": "ja tidak punya kerabat dekat; awalnya mirip da.", "en": "ja has no close relative; its start is like da's." },
+    "ba": { "id": "Lengkung pembuka yang sama.", "en": "Same opening curve." },
+    "nga": { "id": "Lengkung pembuka yang sama.", "en": "Same opening curve." },
+    "ma": { "id": "Lengkung pembuka yang sama.", "en": "Same opening curve." },
+    "tha": { "id": "tha adalah nga dengan ekor.", "en": "tha is nga with a tail." },
+    "nya": { "id": "nya adalah ba dengan tambahan.", "en": "nya is ba with more." }
+  }
+}
