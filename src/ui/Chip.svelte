@@ -24,7 +24,7 @@
     {...rest}
     type="button"
     aria-pressed={pressed}
-    class={["chip", "chip--choice", className]}
+    class={["chip", "chip--choice", "press", className]}
   >
     <Icon name="check" small />
     {@render children()}
@@ -67,7 +67,6 @@
 
   .chip--choice[aria-pressed="true"] {
     background: var(--color-butter);
-    box-shadow: var(--shadow-tile);
   }
 
   .chip--choice :global(.icon) {

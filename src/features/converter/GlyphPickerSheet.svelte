@@ -20,12 +20,12 @@
 <Sheet title={$t("glyphPickerTitle")} {onclose}>
   {#each sections as section (section.titleKey)}
     <section class="section">
-      <h3 class="section__title">{section.title}</h3>
+      <h2 class="section__title eyebrow">{section.title}</h2>
       <div class="grid">
         {#each section.entries as entry (entry.label)}
           <button
             type="button"
-            class="entry"
+            class="entry press"
             aria-label={entry.label}
             onclick={() => onpick(entry.char)}
           >
@@ -47,7 +47,6 @@
   }
 
   .section__title {
-    font-size: var(--text-md);
     color: var(--color-ink-muted);
   }
 
@@ -65,7 +64,8 @@
     min-height: 6rem;
     padding: var(--space-2);
     border: var(--border);
-    background: var(--color-neutral);
+    background: var(--color-card);
+    color: var(--color-ink);
   }
 
   .entry__label {

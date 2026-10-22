@@ -1,10 +1,12 @@
 <script lang="ts">
+  import { getServices } from "../../app/services.ts";
+  import { nglegenaById, sandhanganById } from "../../engine/index.ts";
   import { getI18n } from "../../l10n/context.ts";
-  import AksaraText from "../../ui/AksaraText.svelte";
-  import Icon from "../../ui/Icon.svelte";
-  import Reading from "../../ui/Reading.svelte";
+  import HandNote from "../../ui/HandNote.svelte";
+  import { sandhanganFunctionMessageKey } from "../chart/detail-data.ts";
+  import { glyphUnits } from "../lessons/unit-display.ts";
+  import BreakdownRow from "./BreakdownRow.svelte";
   import type { ClusterPart } from "./cluster-parts.ts";
-  import ResultCard from "./ResultCard.svelte";
 
   interface Props {
     parts: readonly ClusterPart[];
@@ -17,77 +19,54 @@
   let { parts, names, reading, onopen }: Props = $props();
 
   const { t } = getI18n();
+  const { content } = getServices();
+  const units = glyphUnits(content.units);
+  const uid = $props.id();
+  const titleId = `breakdown-${uid}`;
+
+  function captionOf(part: ClusterPart): string | null {
+    if (part.subjoined || part.chartId === null) return null;
+    if (nglegenaById(part.chartId) !== null) {
+      return $t("breakdownCaptionCarakan");
+    }
+    const sandhangan = sandhanganById(part.chartId);
+    return sandhangan === null
+      ? null
+      : $t(sandhanganFunctionMessageKey(sandhangan.function));
+  }
 </script>
 
-<ResultCard label={$t("breakdownTitle")}>
+<section class="breakdown" aria-labelledby={titleId}>
+  <HandNote tag="h2" id={titleId}>{$t("breakdownTitle")}</HandNote>
   <ol class="parts">
     {#each parts as part, index (index)}
+      {@const chartId = part.chartId}
       <li>
-        {#if part.chartId !== null}
-          {@const chartId = part.chartId}
-          <button
-            type="button"
-            class="part part--link"
-            aria-label={$t("breakdownOpenChart", { name: names[index]! })}
-            onclick={() => onopen(chartId)}
-          >
-            <AksaraText text={part.char} size="md" />
-            <span class="part__name"><Reading text={names[index]!} /></span>
-            {#if part.sound !== ""}<span class="part__sound"
-                ><Reading text={part.sound} /></span
-              >{/if}
-            <Icon name="chevron-right" />
-          </button>
-        {:else}
-          <div class="part">
-            <AksaraText text={part.char} size="md" />
-            <span class="part__name"><Reading text={names[index]!} /></span>
-            {#if part.sound !== ""}<span class="part__sound"
-                ><Reading text={part.sound} /></span
-              >{/if}
-          </div>
-        {/if}
+        <BreakdownRow
+          {part}
+          name={names[index]!}
+          caption={captionOf(part)}
+          accent={units.get(chartId ?? "")?.accent ?? null}
+          onopen={chartId === null ? undefined : () => onopen(chartId)}
+        />
       </li>
     {/each}
   </ol>
   <p class="reading latin">{$t("breakdownReading", { reading })}</p>
-</ResultCard>
+</section>
 
 <style>
+  .breakdown {
+    display: grid;
+    gap: var(--space-2);
+  }
+
   .parts {
     display: grid;
     gap: var(--space-2);
     list-style: none;
     margin: 0;
     padding: 0;
-  }
-
-  .part {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    box-sizing: border-box;
-    width: 100%;
-    min-height: 48px;
-    padding: var(--space-2) var(--space-3);
-    border: var(--border);
-    background: var(--color-card);
-    color: var(--color-ink);
-    font: inherit;
-    text-align: start;
-  }
-
-  .part--link {
-    cursor: pointer;
-  }
-
-  .part__name {
-    flex: 1;
-    font-weight: var(--weight-bold);
-  }
-
-  .part__sound {
-    color: var(--color-ink-muted);
   }
 
   .reading {

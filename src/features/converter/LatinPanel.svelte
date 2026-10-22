@@ -2,7 +2,6 @@
   import { getServices } from "../../app/services.ts";
   import { getI18n } from "../../l10n/context.ts";
   import AksaraText from "../../ui/AksaraText.svelte";
-  import Button from "../../ui/Button.svelte";
   import Chip from "../../ui/Chip.svelte";
   import Icon from "../../ui/Icon.svelte";
   import TextField from "../../ui/TextField.svelte";
@@ -91,7 +90,9 @@
 <div class="panel">
   <TextField
     label={$t("inputHintLatin")}
+    labelStyle="hand"
     multiline
+    rows={2}
     bind:value
     oninput={onInput}
     invalid={$result.kind === "error"}
@@ -119,13 +120,13 @@
       <div class="chips">
         {#each $result.candidates as candidate, index (index)}
           <Chip variant="choice" onclick={() => converter.choose(index)}>
-            <AksaraText text={candidate.output} size="sm" />
+            <AksaraText text={candidate.output} size="md" />
           </Chip>
         {/each}
       </div>
     </ResultCard>
   {:else if $result.kind === "idle" && detail}
-    <ResultCard label={$t("outputLabel")}>
+    <ResultCard label={$t("outputLabel")} tone="coral" tape>
       <ClusterResult
         output={$result.output}
         clusters={$result.clusters}
@@ -133,9 +134,11 @@
         selected={$result.selected}
         onselect={(i) => converter.select(i)}
       />
-      <Button variant="primary" block onclick={copy}>
-        <Icon name="copy" />{$t("copyButton")}
-      </Button>
+      {#snippet actions()}
+        <button type="button" onclick={copy}>
+          <Icon name="copy" />{$t("copyButton")}
+        </button>
+      {/snippet}
     </ResultCard>
     {#if detail.selection}
       <ClusterBreakdown
@@ -176,6 +179,7 @@
 
   .source-echo {
     padding: var(--space-3) var(--space-4);
+    border: var(--border);
     background: var(--color-card);
     font-size: var(--text-lg);
     overflow-wrap: anywhere;

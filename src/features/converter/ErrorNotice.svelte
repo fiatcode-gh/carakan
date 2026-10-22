@@ -47,9 +47,11 @@
   .notice__echo {
     grid-column: 1 / -1;
     padding: var(--space-3) var(--space-4);
+    border: var(--border);
     background: var(--color-card);
     color: var(--color-ink);
     font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
     overflow-wrap: anywhere;
   }
 
@@ -57,5 +59,7 @@
     padding-inline: 2px;
     background: var(--color-butter);
     color: var(--color-ink);
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
   }
 </style>

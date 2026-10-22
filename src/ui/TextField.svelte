@@ -4,8 +4,11 @@
   interface Props {
     label: string;
     value: string;
-    /** Visually hide the label (it stays the accessible name). */
-    hideLabel?: boolean;
+    /**
+     * `hidden` keeps the label as the accessible name only; `hand` sets it
+     * above the field in the handwritten face.
+     */
+    labelStyle?: "default" | "hidden" | "hand";
     placeholder?: string;
     /** Helper text under the field, announced with it. */
     hint?: string;
@@ -23,7 +26,7 @@
   let {
     label,
     value = $bindable(),
-    hideLabel = false,
+    labelStyle = "default",
     placeholder,
     hint,
     multiline = false,
@@ -41,7 +44,14 @@
 </script>
 
 <div class="field">
-  <label class={["field__label", hideLabel && "visually-hidden"]} for={id}>
+  <label
+    class={[
+      labelStyle !== "hand" && "field__label",
+      labelStyle === "hidden" && "visually-hidden",
+      labelStyle === "hand" && "hand",
+    ]}
+    for={id}
+  >
     {label}
   </label>
   <div class="field__control">
@@ -50,6 +60,8 @@
         {id}
         class={[
           "field__input",
+          labelStyle === "hand" && "field__input--hand",
+          trailing && "field__input--trailing",
           aksara && "field__input--aksara",
           invalid && "field__input--error",
         ]}
@@ -65,6 +77,8 @@
         {id}
         class={[
           "field__input",
+          labelStyle === "hand" && "field__input--hand",
+          trailing && "field__input--trailing",
           aksara && "field__input--aksara",
           invalid && "field__input--error",
         ]}
@@ -128,6 +142,16 @@
   .field__input:focus-visible {
     outline: var(--focus-ring);
     outline-offset: var(--focus-offset);
+  }
+
+  .field__input--hand {
+    min-height: 56px;
+    font-size: var(--text-xl);
+    font-weight: var(--weight-bold);
+  }
+
+  .field__input--trailing {
+    padding-inline-end: calc(var(--icon-button) + var(--space-4));
   }
 
   .field__input--aksara {

@@ -21,7 +21,7 @@
 <Sheet title={$t("reportButton")} {onclose}>
   <TextField
     label={$t("reportHint")}
-    hideLabel
+    labelStyle="hidden"
     placeholder={$t("reportHint")}
     multiline
     rows={6}

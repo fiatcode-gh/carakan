@@ -2,7 +2,6 @@
   import { tick } from "svelte";
   import { getServices } from "../../app/services.ts";
   import { getI18n } from "../../l10n/context.ts";
-  import Button from "../../ui/Button.svelte";
   import Icon from "../../ui/Icon.svelte";
   import IconButton from "../../ui/IconButton.svelte";
   import SegmentedControl from "../../ui/SegmentedControl.svelte";
@@ -73,6 +72,7 @@
 <div class="panel">
   <TextField
     label={$t("inputHintAksara")}
+    labelStyle="hand"
     multiline
     aksara
     bind:value
@@ -101,11 +101,13 @@
   {#if $result.kind === "error"}
     <ErrorNotice message={$result.message} />
   {:else if $result.kind === "idle"}
-    <ResultCard label={$t("outputLabel")}>
-      <p class="latin">{$result.output}</p>
-      <Button variant="primary" block onclick={copy}>
-        <Icon name="copy" />{$t("copyButton")}
-      </Button>
+    <ResultCard label={$t("outputLabel")} tone="coral" tape>
+      <p class="output latin">{$result.output}</p>
+      {#snippet actions()}
+        <button type="button" onclick={copy}>
+          <Icon name="copy" />{$t("copyButton")}
+        </button>
+      {/snippet}
     </ResultCard>
   {/if}
 </div>
@@ -124,9 +126,9 @@
     gap: var(--space-4);
   }
 
-  .latin {
+  .output {
     font-size: var(--text-xl);
-    font-weight: var(--weight-bold);
+    font-weight: var(--weight-black);
     overflow-wrap: anywhere;
   }
 </style>

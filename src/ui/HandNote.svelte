@@ -3,15 +3,17 @@
 
   interface Props {
     tag?: "p" | "span" | "h2" | "h3";
+    /** For `aria-labelledby` references. */
+    id?: string;
     /** A slight anticlockwise tilt, as if written in by hand. */
     tilt?: boolean;
     children?: Snippet;
   }
 
-  let { tag = "p", tilt = false, children }: Props = $props();
+  let { tag = "p", id, tilt = false, children }: Props = $props();
 </script>
 
-<svelte:element this={tag} class={["hand", tilt && "hand--tilt"]}>
+<svelte:element this={tag} {id} class={["hand", tilt && "hand--tilt"]}>
   {@render children?.()}
 </svelte:element>
 
