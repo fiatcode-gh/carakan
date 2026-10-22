@@ -54,6 +54,19 @@
       {/if}
       {#if current.kind === "loading"}
         <StateView kind="loading" title={$t("loadingLabel")} page />
+      {:else if current.kind === "error"}
+        <div class="quiz-end">
+          <div class="quiz-end__body">
+            <StateView
+              kind="error"
+              title={$t("storageErrorTitle")}
+              icon="hard-drive"
+              actionLabel={$t("retryButton")}
+              onaction={() => void quiz.start()}
+            />
+          </div>
+          <PrimaryBar primary={{ label: $t("backButton"), onclick: back }} />
+        </div>
       {:else if current.kind === "empty"}
         <div class="quiz-end">
           <div class="quiz-end__body">

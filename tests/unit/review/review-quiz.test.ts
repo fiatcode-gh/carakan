@@ -162,3 +162,58 @@ test("[P-R17] a rejected grade write keeps the question; retry stores it once", 
   expect(row?.repetitions).toBe(1);
   write.mockRestore();
 });
+
+test("[P-R17] two concurrent retries grade the failed answer once", async () => {
+  const { quiz, queue } = await setup(["ha"]);
+  await quiz.start();
+  const q = question(quiz);
+  const write = vi
+    .spyOn(queue, "grade")
+    .mockRejectedValueOnce(new Error("idb closed"));
+  await quiz.answer(q.exercise.answerIndex === 0 ? 1 : 0);
+  expect(get(quiz.failed)).toBe(true);
+  await Promise.all([quiz.retry(), quiz.retry()]);
+  // One failed write and exactly one stored retry.
+  expect(write).toHaveBeenCalledTimes(2);
+  const s = stateOf(quiz);
+  expect(s.kind === "feedback" && s.total).toBe(2);
+  quiz.continue();
+  await answer(quiz, true);
+  quiz.continue();
+  expect(stateOf(quiz)).toEqual({ kind: "done", correct: 1, total: 2 });
+  write.mockRestore();
+});
+
+test("[P-R17] a retry with nothing pending does nothing", async () => {
+  const { quiz, queue } = await setup(["ha"]);
+  await quiz.start();
+  const write = vi.spyOn(queue, "grade");
+  await quiz.retry();
+  expect(write).not.toHaveBeenCalled();
+  expect(stateOf(quiz).kind).toBe("question");
+  write.mockRestore();
+});
+
+test("[P-R17] a storage failure on start is the error state, not empty", async () => {
+  const { quiz, queue } = await setup(["ha"]);
+  const read = vi
+    .spyOn(queue, "allStates")
+    .mockRejectedValue(new Error("idb closed"));
+  await quiz.start();
+  expect(stateOf(quiz)).toEqual({ kind: "error" });
+  read.mockRestore();
+  await quiz.start();
+  expect(question(quiz).itemId).toBe("ha");
+});
+
+test("[P-R17] a failed due query on start is the error state, not empty", async () => {
+  const { quiz, queue } = await setup(["ha"]);
+  const read = vi
+    .spyOn(queue, "dueStates")
+    .mockRejectedValueOnce(new Error("idb closed"));
+  await quiz.start();
+  expect(stateOf(quiz)).toEqual({ kind: "error" });
+  read.mockRestore();
+  await quiz.start();
+  expect(question(quiz).itemId).toBe("ha");
+});

@@ -13,6 +13,7 @@ import { reviewSession, type ReviewSession } from "./review-session.ts";
 export type ReviewQuizState =
   | { readonly kind: "loading" }
   | { readonly kind: "empty" }
+  | { readonly kind: "error" }
   | {
       readonly kind: "question";
       readonly itemId: string;
@@ -77,13 +78,18 @@ export class ReviewQuiz {
     this.#position = -1;
     await this.#deps.review.refresh();
     const listed = get(this.#deps.review.state);
+    if (listed.kind === "error") {
+      this.#queue = [];
+      this.#state.set({ kind: "error" });
+      return;
+    }
     try {
       this.#taught = new Set(
         (await this.#deps.queue.allStates()).map((s) => s.itemId),
       );
     } catch {
       this.#queue = [];
-      this.#state.set({ kind: "empty" });
+      this.#state.set({ kind: "error" });
       return;
     }
     this.#queue =
@@ -102,10 +108,13 @@ export class ReviewQuiz {
     if (get(this.#state).kind === "feedback") this.#advance();
   }
 
-  /** Grades the answer that failed to store again. */
+  /** Grades the answer that failed to store again; ignored while one is pending. */
   async retry(): Promise<void> {
     const step = this.#retryStep;
-    if (step !== null) await step();
+    if (step === null || this.#busy || get(this.#state).kind !== "question") {
+      return;
+    }
+    await step();
   }
 
   async #grade(
