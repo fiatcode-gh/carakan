@@ -1,10 +1,15 @@
-// Captures the built app next to the approved prototype screens so the user
-// can review them side by side. Evidence only; the output is not committed.
+// Captures the built app next to the archived Buku Poster reference screens so
+// the user can review them side by side. Evidence only; the output is not
+// committed.
 //
 //   npm run build && npx vite preview --port 4173 --strictPort   # in another shell
 //   npm run design:compare
 //
-// Writes .flow/evidence/<HEAD>/design/{app-<id>.png, approved-<id>.png, index.html}.
+// DESIGN_BASE_URL points at another preview. Writes
+// .flow/evidence/<HEAD>/design/{app-<stem>.png, ref-<id>.png, index.html}: the
+// eight reference screens (docs/design/buku-poster/screenshots) each paired
+// with the app in the same state at 390×844, then app-only captures of the
+// screens the reference does not draw.
 import {
   chromium,
   type BrowserContext,
@@ -13,113 +18,78 @@ import {
 } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { SRS_ITEMS, UNIT_COMPLETIONS } from "../src/core/db/schema.ts";
+import { RULESET_STORAGE_KEY } from "../src/core/ruleset/ruleset-controller.ts";
+import { kajRulesetId, toAksara } from "../src/engine/index.ts";
 import {
-  DB_NAME,
-  MISTAKE_LOGS,
-  SRS_ITEMS,
-  UNIT_COMPLETIONS,
-} from "../src/core/db/schema.ts";
-import { defaultRulesetId, toAksara } from "../src/engine/index.ts";
+  advanceToQuestion,
+  answerCurrentQuestion,
+  id,
+  playLesson,
+  writeRows,
+} from "../tests/e2e/support/lesson.ts";
+import { readReviewQuestion } from "../tests/e2e/support/review-quiz.ts";
 import { createSolver, type Solver } from "../tests/e2e/support/solver.ts";
+import { draw, glyphRuns, strokesOf } from "../tests/e2e/support/trace.ts";
 
 const BASE = process.env["DESIGN_BASE_URL"] ?? "http://localhost:4173/";
-const SCREENS_DIR = "docs/design/screens";
+const SCREENS_DIR = "docs/design/buku-poster/screenshots";
 const head = execFileSync("git", ["rev-parse", "HEAD"], {
   encoding: "utf8",
 }).trim();
 const OUT = `.flow/evidence/${head}/design`;
-
-const id = JSON.parse(readFileSync("src/l10n/id.json", "utf8")) as Record<
-  string,
-  string
->;
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
 type Viewport = { width: number; height: number; scale: number };
-const PHONE: Viewport = { width: 360, height: 740, scale: 2 };
+const PHONE: Viewport = { width: 390, height: 844, scale: 2 };
 const TABLET: Viewport = { width: 800, height: 1280, scale: 1 };
 const DESKTOP: Viewport = { width: 1280, height: 800, scale: 1 };
 
 interface Seed {
   completedUnits?: string[];
   srs?: object[];
-  mistakes?: object[];
 }
 
 interface Capture {
   /** File stem of the app capture: `app-<stem>.png`. */
   stem: string;
   label: string;
-  /** `page` resizes the viewport to the whole page; `viewport` keeps it. */
-  fit: "page" | "viewport";
-  prepare: (page: Page, solver: Solver) => Promise<void>;
-}
-
-interface Screen {
-  /** Prototype screen id (`docs/design/screens/<id>.png`). */
-  id: string;
+  /** Reference screen id (`<SCREENS_DIR>/<ref>.png`); absent: app only. */
+  ref?: string;
+  note?: string;
   viewport: Viewport;
   seed?: Seed;
   /** Opened before `prepare`; defaults to `#/`. */
-  route: string;
-  captures: Capture[];
-  note?: string;
+  route?: string;
+  /** `page` resizes the viewport to the whole page; `viewport` keeps it. */
+  fit: "page" | "viewport";
+  prepare?: (page: Page, solver: Solver) => Promise<void>;
 }
-
-const noop = async (): Promise<void> => {};
 
 // ---- page helpers ---------------------------------------------------------
-
-async function writeRows(
-  page: Page,
-  store: string,
-  rows: readonly object[],
-): Promise<void> {
-  await page.evaluate(
-    async ({ name, storeName, values }) => {
-      const db = await new Promise<IDBDatabase>((resolve, reject) => {
-        const request = indexedDB.open(name);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-      await new Promise<void>((resolve, reject) => {
-        const tx = db.transaction(storeName, "readwrite");
-        for (const value of values) tx.objectStore(storeName).put(value);
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-      });
-      db.close();
-    },
-    { name: DB_NAME, storeName: store, values: rows },
-  );
-}
 
 const ready = (page: Page) =>
   page.locator('#app[data-boot="ready"]').waitFor({ timeout: 30_000 });
 
-async function open(page: Page, route: string, seed?: Seed): Promise<void> {
+async function open(
+  page: Page,
+  route: string,
+  seed: Seed | undefined,
+): Promise<void> {
   await page.goto(BASE);
   await ready(page);
-  if (seed !== undefined) {
-    const now = Date.now();
-    if (seed.completedUnits !== undefined) {
-      await writeRows(
-        page,
-        UNIT_COMPLETIONS,
-        seed.completedUnits.map((unitId) => ({
-          unitId,
-          completedAt: now - DAY,
-        })),
-      );
-    }
-    if (seed.srs !== undefined) await writeRows(page, SRS_ITEMS, seed.srs);
-    if (seed.mistakes !== undefined) {
-      await writeRows(page, MISTAKE_LOGS, seed.mistakes);
-    }
+  if (seed?.completedUnits !== undefined) {
+    const at = Date.now() - DAY;
+    await writeRows(
+      page,
+      UNIT_COMPLETIONS,
+      seed.completedUnits.map((unitId) => ({ unitId, completedAt: at })),
+    );
   }
+  if (seed?.srs !== undefined) await writeRows(page, SRS_ITEMS, seed.srs);
   await page.goto(`${BASE}${route}`);
   await page.reload();
   await ready(page);
@@ -133,11 +103,8 @@ async function settle(page: Page): Promise<void> {
   await page.waitForTimeout(250);
 }
 
-async function shoot(
-  page: Page,
-  capture: Capture,
-  viewport: Viewport,
-): Promise<void> {
+async function shoot(page: Page, capture: Capture): Promise<void> {
+  const { viewport } = capture;
   if (capture.fit === "page") {
     const height = await page.evaluate(
       () => document.documentElement.scrollHeight,
@@ -150,56 +117,10 @@ async function shoot(
   }
   await settle(page);
   await page.screenshot({ path: `${OUT}/app-${capture.stem}.png` });
-  if (capture.fit === "page") {
-    await page.setViewportSize({
-      width: viewport.width,
-      height: viewport.height,
-    });
-  }
 }
 
-const button = (page: Page, name: string) =>
-  page.getByRole("button", { name, exact: true });
-
-async function meetAll(page: Page, glyphs: number): Promise<void> {
-  for (let i = 0; i < glyphs; i++) {
-    await button(page, id["continueButton"]!).click();
-  }
-}
-
-/** Reads the current question the way a learner sees it. */
-async function readQuestion(page: Page) {
-  const options = page.locator(".answers button:not([disabled])");
-  await options.first().waitFor();
-  const sound = page.locator(".quiz__sound");
-  const prompt =
-    (await sound.count()) > 0
-      ? { sound: ((await sound.textContent()) ?? "").trim() }
-      : {
-          glyph: (
-            (await page.locator(".quiz__prompt .aksara").textContent()) ?? ""
-          ).trim(),
-        };
-  const texts = (await options.allTextContents()).map((s) => s.trim());
-  return { prompt, texts };
-}
-
-async function answer(
-  page: Page,
-  solver: Solver,
-  correct: boolean,
-): Promise<void> {
-  const { prompt, texts } = await readQuestion(page);
-  const right = solver.correctIndex(prompt, texts);
-  const index = correct ? right : (right + 1) % texts.length;
-  await page.locator(".answers button").nth(index).click();
-  await page.locator(".feedback-row").waitFor();
-}
-
-async function startLesson(page: Page, solver: Solver): Promise<void> {
-  const unit = solver.content.units.find((u) => u.id === "g1")!;
-  await meetAll(page, unit.glyphs.length);
-}
+const button = (page: Page, key: string) =>
+  page.getByRole("button", { name: id[key]!, exact: true });
 
 const tile = (page: Page, entryId: string) =>
   page.locator(`#tab-chart [data-entry="${entryId}"]`);
@@ -209,379 +130,368 @@ async function openChartSheet(page: Page, entryId: string): Promise<void> {
   await page.getByRole("dialog").waitFor();
 }
 
-async function typeLatin(page: Page): Promise<void> {
-  await page.getByLabel(id["inputHintLatin"]!).fill("hanacaraka");
-  await page.locator(".result").first().waitFor();
+async function typeLatin(page: Page, text: string): Promise<void> {
+  await page.getByLabel(id["inputHintLatin"]!).fill(text);
+  await page.getByRole("region", { name: id["outputLabel"]! }).waitFor();
+}
+
+/** The lesson's meet card, then the trace pad for its first glyph. */
+async function openTrace(page: Page): Promise<void> {
+  await button(page, "tryWritingButton").click();
+  await page.locator(".trace-pad[data-font-size]").waitFor();
+}
+
+/** Traces `pa` once, checks it, then draws its first third unchecked. */
+async function traceOnceThenStart(page: Page, solver: Solver): Promise<void> {
+  await openTrace(page);
+  const runs = await glyphRuns(page, solver.table.byId.get("pa")!.char);
+  await draw(page, "mouse", strokesOf(runs));
+  await button(page, "traceCheck").click();
+  await page.locator('.trace .slot[data-done="true"]').waitFor();
+  await draw(
+    page,
+    "mouse",
+    strokesOf(runs.slice(0, Math.ceil(runs.length / 3))),
+  );
+}
+
+/** Answers the first question right, redrawing the lesson until it is glyph → sound. */
+async function glyphQuestionFeedback(
+  page: Page,
+  solver: Solver,
+): Promise<void> {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    await advanceToQuestion(page, solver);
+    if ((await page.locator(".lesson .quiz__sound").count()) === 0) {
+      await answerCurrentQuestion(page, solver);
+      return;
+    }
+    await page.reload();
+    await ready(page);
+  }
+  throw new Error("no glyph → sound first question in 10 lessons");
+}
+
+/** Starts the review quiz and answers its first question right. */
+async function reviewFeedback(page: Page, solver: Solver): Promise<void> {
+  await button(page, "reviewStartButton").click();
+  const question = await readReviewQuestion(page);
+  const index = solver.correctIndex(question.prompt, question.options);
+  await page.locator(".quiz .answers button").nth(index).click();
+  await page.locator(".quiz .feedback-row").waitFor();
 }
 
 // ---- seeds ----------------------------------------------------------------
 
 const now = Date.now();
-const fresh = (itemId: string, dueAt: number): object => ({
-  itemId,
-  intervalDays: 0,
-  ease: 2.5,
-  repetitions: 0,
-  dueAt,
-  lastReviewedAt: null,
-});
-const reviewed = (itemId: string, dueAt: number): object => ({
-  itemId,
-  intervalDays: 1,
-  ease: 2.5,
-  repetitions: 1,
-  dueAt,
-  lastReviewedAt: dueAt - DAY,
-});
-/** Stored dueAt − lastReviewedAt ≤ 30 min counts as a retry. */
-const retry = (itemId: string, dueAt: number): object => ({
-  itemId,
-  intervalDays: 0,
-  ease: 2.3,
-  repetitions: 0,
-  dueAt,
-  lastReviewedAt: dueAt - 10 * MINUTE,
-});
-
 const reviewSeed: Seed = {
   srs: [
-    reviewed("na", now - 3 * HOUR),
-    reviewed("ka", now - 2 * HOUR),
-    retry("ca", now - HOUR),
-    fresh("ha", now - 30 * MINUTE),
-    fresh("ra", now - 20 * MINUTE),
+    {
+      itemId: "pa",
+      intervalDays: 3,
+      ease: 2.5,
+      repetitions: 2,
+      dueAt: now - HOUR,
+      lastReviewedAt: now - HOUR - 3 * DAY,
+    },
+    {
+      itemId: "ha",
+      intervalDays: 1,
+      ease: 2.5,
+      repetitions: 1,
+      dueAt: now - 30 * MINUTE,
+      lastReviewedAt: now - 30 * MINUTE - DAY,
+    },
+    {
+      itemId: "ya",
+      intervalDays: 0,
+      ease: 2.5,
+      repetitions: 0,
+      dueAt: now - 20 * MINUTE,
+      lastReviewedAt: null,
+    },
   ],
-  mistakes: [{ confusionPair: "da-dha", count: 3, lastAt: now - HOUR }],
+};
+/** Review quiz needs two stored cards; one is not due. */
+const quizSeed: Seed = {
+  srs: [
+    ...reviewSeed.srs!,
+    {
+      itemId: "na",
+      intervalDays: 8,
+      ease: 2.5,
+      repetitions: 3,
+      dueAt: now + 5 * DAY,
+      lastReviewedAt: now - 3 * DAY,
+    },
+  ],
 };
 
-// ---- screens: prototype id → app route and state ---------------------------
+// ---- captures: the eight reference screens, then app-only -----------------
 
-const screens: Screen[] = [
+const captures: Capture[] = [
   {
-    id: "ladder",
+    stem: "01-learn-path",
+    ref: "01-learn-path",
+    label: "app, fresh profile",
     viewport: PHONE,
-    route: "#/",
-    seed: { completedUnits: ["g1"] },
-    note: "Unit 1 completed, unit 2 ready, the rest locked.",
-    captures: [{ stem: "ladder", label: "app", fit: "page", prepare: noop }],
+    fit: "viewport",
   },
   {
-    id: "teacher",
+    stem: "02-meet-aksara",
+    ref: "02-meet-aksara",
+    label: "app, lesson g1, first meet (pa)",
+    viewport: PHONE,
+    route: "#/lesson/g1",
+    fit: "viewport",
+  },
+  {
+    stem: "03-trace",
+    ref: "03-trace",
+    label: "app, pa traced once (1/3), first third drawn unchecked",
+    viewport: PHONE,
+    route: "#/lesson/g1",
+    fit: "viewport",
+    prepare: traceOnceThenStart,
+  },
+  {
+    stem: "04-quiz",
+    ref: "04-quiz",
+    label: "app, first question (glyph → sound) answered right",
+    viewport: PHONE,
+    route: "#/lesson/g1",
+    fit: "viewport",
+    prepare: glyphQuestionFeedback,
+  },
+  {
+    stem: "05-chart",
+    ref: "05-chart",
+    label: "app, Carakan tab",
+    viewport: PHONE,
+    route: "#/chart",
+    fit: "viewport",
+  },
+  {
+    stem: "06-chart-detail",
+    ref: "06-chart-detail",
+    label: "app, ha sheet open",
+    viewport: PHONE,
+    route: "#/chart",
+    fit: "viewport",
+    prepare: (page) => openChartSheet(page, "ha"),
+  },
+  {
+    stem: "07-converter",
+    ref: "07-converter",
+    label: "app, aku with the ku cluster selected",
+    viewport: PHONE,
+    route: "#/converter",
+    fit: "viewport",
+    prepare: async (page) => {
+      await typeLatin(page, "aku");
+      // The hit buttons never take pointer events (text selection), so
+      // dispatch the click the way a screen reader would activate them.
+      await page
+        .locator('.cluster-result__hit[data-index="1"]')
+        .dispatchEvent("click");
+      await page.getByRole("region", { name: id["breakdownTitle"]! }).waitFor();
+    },
+  },
+  {
+    stem: "08-review",
+    ref: "08-review",
+    label: "app, three cards due (pa, ha, ya)",
+    viewport: PHONE,
+    seed: reviewSeed,
+    route: "#/review",
+    fit: "viewport",
+  },
+  {
+    stem: "sandhangan",
+    label: "Chart, Sandhangan tab",
+    viewport: PHONE,
+    route: "#/chart",
+    fit: "page",
+    prepare: async (page) => {
+      await page
+        .locator("#tab-chart")
+        .getByRole("tab", { name: id["chartTabSandhangan"]!, exact: true })
+        .click();
+    },
+  },
+  {
+    stem: "pasangan",
+    label: "Chart, Pasangan tab",
+    viewport: PHONE,
+    route: "#/chart",
+    fit: "page",
+    prepare: async (page) => {
+      await page
+        .locator("#tab-chart")
+        .getByRole("tab", { name: id["pasanganLabel"]!, exact: true })
+        .click();
+    },
+  },
+  {
+    stem: "chart-detail-wulu",
+    label: "Chart detail, wulu",
+    viewport: PHONE,
+    route: "#/chart",
+    fit: "viewport",
+    prepare: async (page) => {
+      await page
+        .locator("#tab-chart")
+        .getByRole("tab", { name: id["chartTabSandhangan"]!, exact: true })
+        .click();
+      await openChartSheet(page, "wulu");
+    },
+  },
+  {
+    stem: "converter-a2l",
+    label: "Converter, Aksara → Latin with output",
+    viewport: PHONE,
+    route: "#/converter",
+    fit: "page",
+    prepare: async (page) => {
+      await page.getByRole("radio", { name: id["dirAksaraToLatin"]! }).check();
+      const result = toAksara("hanacaraka", { ruleset: kajRulesetId });
+      if (result.kind !== "success") throw new Error("not convertible");
+      await page.getByLabel(id["inputHintAksara"]!).fill(result.output);
+      await page.getByRole("region", { name: id["outputLabel"]! }).waitFor();
+    },
+  },
+  {
+    stem: "converter-picker",
+    label: "Converter, glyph picker open",
+    viewport: PHONE,
+    route: "#/converter",
+    fit: "viewport",
+    prepare: async (page) => {
+      await page.getByRole("radio", { name: id["dirAksaraToLatin"]! }).check();
+      await button(page, "glyphPickerTitle").click();
+      await page
+        .getByRole("dialog", { name: id["glyphPickerTitle"]! })
+        .waitFor();
+    },
+  },
+  {
+    stem: "meet-sound-toast",
+    label: "Meet, coming-soon toast after the sound button",
+    viewport: PHONE,
+    route: "#/lesson/g1",
+    fit: "viewport",
+    prepare: async (page) => {
+      await page
+        .getByRole("button", {
+          name: id["playSound"]!.replace("{reading}", "pa"),
+        })
+        .click();
+      await page
+        .getByRole("status")
+        .filter({ hasText: id["audioComingSoon"]! })
+        .waitFor();
+    },
+  },
+  {
+    stem: "lesson-done",
+    label: "Lesson g1 done",
+    viewport: PHONE,
+    route: "#/lesson/g1",
+    fit: "viewport",
+    prepare: (page, solver) =>
+      playLesson(page, solver, "g1", { navigate: false }),
+  },
+  {
+    stem: "review-quiz-feedback",
+    label: "Review quiz, first question answered right",
+    viewport: PHONE,
+    seed: quizSeed,
+    route: "#/review",
+    fit: "viewport",
+    prepare: reviewFeedback,
+  },
+  {
+    stem: "review-empty",
+    label: "Review, nothing due",
+    viewport: PHONE,
+    route: "#/review",
+    fit: "viewport",
+  },
+  {
+    stem: "settings",
+    label: "Settings",
+    viewport: PHONE,
+    route: "#/settings",
+    fit: "page",
+  },
+  {
+    stem: "settings-reset",
+    label: "Settings, reset confirmation",
+    viewport: PHONE,
+    route: "#/settings",
+    fit: "viewport",
+    prepare: async (page) => {
+      await button(page, "resetButton").click();
+      await page
+        .getByRole("dialog", { name: id["resetConfirmTitle"]! })
+        .waitFor();
+    },
+  },
+  {
+    stem: "teacher",
+    label: "Teacher",
     viewport: PHONE,
     route: "#/teacher",
-    captures: [{ stem: "teacher", label: "app", fit: "page", prepare: noop }],
+    fit: "page",
   },
   {
-    id: "lesson-meet",
-    viewport: PHONE,
-    route: "#/lesson/g1",
-    captures: [
-      { stem: "lesson-meet", label: "app", fit: "viewport", prepare: noop },
-    ],
-  },
-  {
-    id: "lesson-q-glyph",
-    viewport: PHONE,
-    route: "#/lesson/g1",
-    note: "Lesson g1 advanced to its first glyph→sound question.",
-    captures: [
-      {
-        stem: "lesson-q-glyph",
-        label: "app",
-        fit: "viewport",
-        prepare: startLesson,
-      },
-    ],
-  },
-  {
-    id: "lesson-q-sound",
-    viewport: PHONE,
-    route: "#/lesson/g1",
-    note: "Second question of lesson g1 (sound→glyph) after one right answer.",
-    captures: [
-      {
-        stem: "lesson-q-sound",
-        label: "app",
-        fit: "viewport",
-        prepare: async (page, solver) => {
-          await startLesson(page, solver);
-          await answer(page, solver, true);
-          await button(page, id["continueButton"]!).click();
-        },
-      },
-    ],
-  },
-  {
-    id: "lesson-feedback",
-    viewport: PHONE,
-    route: "#/lesson/g1",
-    note: "The prototype stacks both states on one page; the app shows one at a time.",
-    captures: [
-      {
-        stem: "lesson-feedback-correct",
-        label: "app, right answer",
-        fit: "viewport",
-        prepare: async (page, solver) => {
-          await startLesson(page, solver);
-          await answer(page, solver, true);
-        },
-      },
-      {
-        stem: "lesson-feedback-wrong",
-        label: "app, wrong answer",
-        fit: "viewport",
-        prepare: async (page, solver) => {
-          await startLesson(page, solver);
-          await answer(page, solver, false);
-        },
-      },
-    ],
-  },
-  {
-    id: "lesson-done",
-    viewport: PHONE,
-    route: "#/lesson/g1",
-    captures: [
-      {
-        stem: "lesson-done",
-        label: "app",
-        fit: "viewport",
-        prepare: async (page, solver) => {
-          await startLesson(page, solver);
-          for (;;) {
-            await answer(page, solver, true);
-            await button(page, id["continueButton"]!).click();
-            await page
-              .locator(".lesson-done, .answers button:not([disabled])")
-              .first()
-              .waitFor();
-            if ((await page.locator(".lesson-done").count()) > 0) break;
-          }
-        },
-      },
-    ],
-  },
-  {
-    id: "chart",
-    viewport: PHONE,
-    route: "#/chart",
-    captures: [{ stem: "chart", label: "app", fit: "page", prepare: noop }],
-  },
-  {
-    id: "chart-detail",
-    viewport: PHONE,
-    route: "#/chart",
-    note: "Detail of na.",
-    captures: [
-      {
-        stem: "chart-detail",
-        label: "app",
-        fit: "viewport",
-        prepare: (page) => openChartSheet(page, "na"),
-      },
-    ],
-  },
-  {
-    id: "chart-detail-sandhangan",
-    viewport: PHONE,
-    route: "#/chart",
-    note: "Detail of wulu.",
-    captures: [
-      {
-        stem: "chart-detail-sandhangan",
-        label: "app",
-        fit: "viewport",
-        prepare: (page) => openChartSheet(page, "wulu"),
-      },
-    ],
-  },
-  {
-    id: "review",
-    viewport: PHONE,
-    route: "#/review",
-    seed: reviewSeed,
-    note: "The prototype predates W14, which hides the answer until the learner reveals the card. The first capture reveals every card, as the prototype showed them; the second is the approved W14 hidden state.",
-    captures: [
-      {
-        stem: "review",
-        label: "app, every card revealed",
-        fit: "page",
-        prepare: async (page) => {
-          const drill = page.locator("#tab-review .drill").first();
-          await drill.locator(".answers button, button").first().click();
-          const reveal = page.getByRole("button", {
-            name: id["revealAnswerButton"]!,
-          });
-          while ((await reveal.count()) > 0) {
-            await reveal.first().dispatchEvent("click");
-            await page.waitForTimeout(100);
-          }
-        },
-      },
-      {
-        stem: "review-hidden",
-        label: "app, hidden (approved W14 change)",
-        fit: "page",
-        prepare: noop,
-      },
-    ],
-  },
-  {
-    id: "review-empty",
-    viewport: PHONE,
-    route: "#/review",
-    captures: [
-      { stem: "review-empty", label: "app", fit: "viewport", prepare: noop },
-    ],
-  },
-  {
-    id: "review-help",
+    stem: "review-help",
+    label: "Review help",
     viewport: PHONE,
     route: "#/review-help",
-    captures: [
-      { stem: "review-help", label: "app", fit: "page", prepare: noop },
-    ],
+    fit: "page",
   },
   {
-    id: "converter-l2a",
-    viewport: PHONE,
-    route: "#/converter",
-    note: "Input hanacaraka.",
-    captures: [
-      {
-        stem: "converter-l2a",
-        label: "app",
-        fit: "page",
-        prepare: typeLatin,
-      },
-    ],
-  },
-  {
-    id: "converter-l2a-copied",
-    viewport: PHONE,
-    route: "#/converter",
-    captures: [
-      {
-        stem: "converter-l2a-copied",
-        label: "app",
-        fit: "viewport",
-        prepare: async (page) => {
-          await typeLatin(page);
-          await button(page, id["copyButton"]!).click();
-          await page.locator(".toast").waitFor();
-        },
-      },
-    ],
-  },
-  {
-    id: "converter-a2l",
-    viewport: PHONE,
-    route: "#/converter",
-    note: "Aksara to Latin with the glyph picker open.",
-    captures: [
-      {
-        stem: "converter-a2l",
-        label: "app",
-        fit: "viewport",
-        prepare: async (page) => {
-          await page
-            .getByRole("radio", { name: id["dirAksaraToLatin"]! })
-            .check();
-          const result = toAksara("hanacaraka");
-          if (result.kind !== "success") throw new Error("not convertible");
-          await page.getByLabel(id["inputHintAksara"]!).fill(result.output);
-          await button(page, id["glyphPickerTitle"]!).click();
-          await page
-            .getByRole("dialog", { name: id["glyphPickerTitle"]! })
-            .waitFor();
-        },
-      },
-    ],
-  },
-  {
-    id: "settings",
-    viewport: PHONE,
-    route: "#/settings",
-    captures: [{ stem: "settings", label: "app", fit: "page", prepare: noop }],
-  },
-  {
-    id: "settings-report",
-    viewport: PHONE,
-    route: "#/settings",
-    captures: [
-      {
-        stem: "settings-report",
-        label: "app",
-        fit: "viewport",
-        prepare: async (page) => {
-          await button(page, id["reportButton"]!).click();
-          await page
-            .getByRole("dialog", { name: id["reportButton"]! })
-            .waitFor();
-        },
-      },
-    ],
-  },
-  {
-    id: "tablet-converter-l2a",
-    viewport: TABLET,
-    route: "#/converter",
-    captures: [
-      {
-        stem: "tablet-converter-l2a",
-        label: "app, 800×1280",
-        fit: "viewport",
-        prepare: typeLatin,
-      },
-    ],
-  },
-  {
-    id: "desktop-ladder",
+    stem: "desktop-ladder",
+    label: "Learn path, 1280×800",
     viewport: DESKTOP,
-    route: "#/",
     seed: { completedUnits: ["g1"] },
-    captures: [
-      {
-        stem: "desktop-ladder",
-        label: "app, 1280×800",
-        fit: "viewport",
-        prepare: noop,
-      },
-    ],
+    fit: "viewport",
   },
   {
-    id: "desktop-chart-detail",
+    stem: "desktop-chart-detail",
+    label: "Chart detail (ha), 1280×800",
     viewport: DESKTOP,
     route: "#/chart",
-    captures: [
-      {
-        stem: "desktop-chart-detail",
-        label: "app, 1280×800",
-        fit: "viewport",
-        prepare: (page) => openChartSheet(page, "na"),
-      },
-    ],
+    fit: "viewport",
+    prepare: (page) => openChartSheet(page, "ha"),
+  },
+  {
+    stem: "tablet-converter",
+    label: "Converter, 800×1280",
+    viewport: TABLET,
+    route: "#/converter",
+    fit: "viewport",
+    prepare: (page) => typeLatin(page, "hanacaraka"),
   },
 ];
 
-/** Prototype screens this script does not recapture, and why. */
+/** Views this script does not capture, and why. */
 const notCaptured: ReadonlyArray<readonly [string, string]> = [
   [
-    "states",
-    "loading, load-error, update and storage-error views are transient; their proofs are tests/e2e/shell.spec.ts and tests/e2e/update.spec.ts",
+    "update banner",
+    "needs a waiting service worker; its proof is tests/e2e/update.spec.ts",
   ],
   [
-    "focus-ladder",
-    "the keyboard focus ring is asserted by tests/e2e/a11y.spec.ts",
+    "loading, load-error and storage-error views",
+    "transient; their proof is tests/e2e/shell.spec.ts",
   ],
-  ["icon-maskable", "shown with the app icon below"],
-  ["icon-maskable-guide", "shown with the app icon below"],
 ];
 
 // ---- run ------------------------------------------------------------------
 
 mkdirSync(OUT, { recursive: true });
-const solver = await createSolver(defaultRulesetId);
+const solver = await createSolver(kajRulesetId);
 const browser = await chromium.launch();
 
 async function withContext<T>(
@@ -589,6 +499,7 @@ async function withContext<T>(
   run: (context: BrowserContext) => Promise<T>,
 ): Promise<T> {
   const options: BrowserContextOptions = {
+    baseURL: BASE,
     viewport: { width: viewport.width, height: viewport.height },
     deviceScaleFactor: viewport.scale,
     isMobile: viewport === PHONE,
@@ -598,6 +509,18 @@ async function withContext<T>(
     permissions: ["clipboard-read", "clipboard-write"],
   };
   const context = await browser.newContext(options);
+  // The e2e default fixture: KAJ I, so the reference states hold.
+  await context.addInitScript(
+    ([key, value]) => {
+      try {
+        if (localStorage.getItem(key) === null)
+          localStorage.setItem(key, value);
+      } catch {
+        // storage blocked: the app falls back to its default
+      }
+    },
+    [RULESET_STORAGE_KEY, kajRulesetId] as const,
+  );
   try {
     return await run(context);
   } finally {
@@ -605,30 +528,31 @@ async function withContext<T>(
   }
 }
 
-for (const screen of screens) {
-  for (const capture of screen.captures) {
-    // A fresh context per capture: every capture starts from its own seed.
-    await withContext(screen.viewport, async (context) => {
-      const page = await context.newPage();
-      await open(page, screen.route, screen.seed);
-      await capture.prepare(page, solver);
-      await shoot(page, capture, screen.viewport);
-    });
-    console.log(`app-${capture.stem}.png`);
-  }
+for (const capture of captures) {
+  // A fresh context per capture: every capture starts from its own seed.
+  await withContext(capture.viewport, async (context) => {
+    const page = await context.newPage();
+    await open(page, capture.route ?? "#/", capture.seed);
+    await capture.prepare?.(page, solver);
+    await shoot(page, capture);
+  });
+  console.log(`app-${capture.stem}.png`);
 }
 await browser.close();
 
 // ---- evidence page ----------------------------------------------------------
 
-copyFileSync("public/icons/icon-512.png", `${OUT}/app-icon.png`);
-for (const screen of screens) {
-  copyFileSync(
-    `${SCREENS_DIR}/${screen.id}.png`,
-    `${OUT}/approved-${screen.id}.png`,
-  );
+const titles = new Map(
+  (
+    JSON.parse(
+      readFileSync("docs/design/buku-poster/screens.json", "utf8"),
+    ) as { png: string; title: string }[]
+  ).map((s) => [s.png.replace(/^screenshots\/|\.png$/g, ""), s.title]),
+);
+
+for (const refId of titles.keys()) {
+  copyFileSync(`${SCREENS_DIR}/${refId}.png`, `${OUT}/ref-${refId}.png`);
 }
-copyFileSync(`${SCREENS_DIR}/icon.png`, `${OUT}/approved-icon.png`);
 
 const escape = (text: string): string =>
   text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -636,18 +560,20 @@ const escape = (text: string): string =>
 const figure = (file: string, caption: string, width: number): string =>
   `<figure><figcaption>${escape(caption)}</figcaption><img src="${file}" width="${width}" alt="${escape(caption)}"></figure>`;
 
-const rows = [
-  ...screens.map((screen) => {
-    const width = screen.viewport === PHONE ? 360 : 480;
-    const apps = screen.captures
-      .map((c) => figure(`app-${c.stem}.png`, c.label, width))
-      .join("");
-    const note =
-      screen.note === undefined ? "" : `<p>${escape(screen.note)}</p>`;
-    return `<section><h2>${escape(screen.id)}</h2>${note}<div class="row">${figure(`approved-${screen.id}.png`, "approved prototype", width)}${apps}</div></section>`;
-  }),
-  `<section><h2>icon</h2><div class="row">${figure("approved-icon.png", "approved prototype", 256)}${figure("app-icon.png", "app, public/icons/icon-512.png", 256)}</div></section>`,
-];
+const widthOf = (viewport: Viewport): number =>
+  viewport === PHONE ? 390 : viewport === TABLET ? 400 : 640;
+
+const pairs = captures
+  .filter((c) => c.ref !== undefined)
+  .map((c) => {
+    const refId = c.ref!;
+    const note = c.note === undefined ? "" : `<p>${escape(c.note)}</p>`;
+    return `<section><h2>${escape(refId)}: ${escape(titles.get(refId)!)}</h2>${note}<div class="row">${figure(`ref-${refId}.png`, "reference", 390)}${figure(`app-${c.stem}.png`, c.label, widthOf(c.viewport))}</div></section>`;
+  });
+
+const appOnly = captures
+  .filter((c) => c.ref === undefined)
+  .map((c) => figure(`app-${c.stem}.png`, c.label, widthOf(c.viewport)));
 
 const skipped = notCaptured
   .map(([name, why]) => `<li><code>${escape(name)}</code>: ${escape(why)}</li>`)
@@ -656,7 +582,7 @@ const skipped = notCaptured
 writeFileSync(
   `${OUT}/index.html`,
   `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Carakan: approved prototype vs app (${head.slice(0, 7)})</title>
+<html lang="en"><head><meta charset="utf-8"><title>Carakan: Buku Poster reference vs app (${head.slice(0, 7)})</title>
 <style>
 body{font:16px/1.4 system-ui,sans-serif;margin:24px;background:#fafafa;color:#222}
 .row{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
@@ -664,10 +590,11 @@ figure{margin:0}figcaption{font-weight:600;margin-bottom:6px}
 img{border:1px solid #ccc;background:#fff;height:auto}
 section{margin-bottom:48px}
 </style></head><body>
-<h1>Approved prototype vs app</h1>
-<p>Head <code>${head}</code>, app at ${escape(BASE)}, 360×740 at device scale 2 unless the caption says otherwise.</p>
-${rows.join("\n")}
-<h2>Not recaptured</h2><ul>${skipped}</ul>
+<h1>Buku Poster reference vs app</h1>
+<p>Head <code>${head}</code>, app at ${escape(BASE)}, 390×844 at device scale 2 unless the caption says otherwise. Same state, not a pixel match.</p>
+${pairs.join("\n")}
+<section><h2>Not in the reference</h2><div class="row">${appOnly.join("")}</div></section>
+<h2>Not captured</h2><ul>${skipped}</ul>
 </body></html>
 `,
 );
