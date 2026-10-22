@@ -102,7 +102,7 @@ export class Word {
   }
 
   /**
-   * v3 (KAJ I p.12, p.124): a vowel-initial canonical is written with the
+   * v3 (KAJ I p.12; Tradisional p.124 8.b): a vowel-initial canonical is written with the
    * ha carrier; its h is silent in school spelling and explicit in the
    * engine's JGST back-form (hasěm/ ↔ asem).
    */

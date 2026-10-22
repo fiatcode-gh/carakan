@@ -25,20 +25,50 @@ Every word entry in public/content/v1/words.json:
   `derive` (src/content/glyph-derivation.ts).
 - `gloss`: Indonesian, short, kid-appropriate.
 - `source`: `wiktionary:<word>` (section verified) or `author`.
-- Still excluded by engine v2 limitations (do not add): the separate-
-  syllable ai/au reading (`syair`, `bait` — the engine always takes the
-  diphthong), pepet + vowel hiatus (eu class: `néutron`), post-base
-  O+TARUNG `au` spellings, `z`/`q`/`x` rekan, `lega`-class nga-lelet
-  collapses (pa cerek/nga lelet are display-only), `rawon`-style words
-  are FIXED (add freely).
-- Every addition must pass `npm test -- tests/content/corpus-round-trip.test.ts`.
+- `byRuleset`: optional map from a ruleset id (`pedoman-2002-v1`,
+  `kaj1-2021-simplified-v3`) to overrides. Allowed keys: `canonical`,
+  `displayPujl`, `requiredGlyphs`, `requiredCaps`; anything else is a
+  `ContentFormatError`. The top-level fields apply to every ruleset without an
+  override. Add one only when the word needs it under a ruleset: the canonical
+  errors or is ambiguous there, the display differs, or the glyphs differ.
+  Today: `nabi` (`ṇabi` under Pedoman: murda on the first aksara only),
+  `ramai` (see below), `vila` and `vakum` (display `vila`/`vakum` and glyph
+  `fa` under Pedoman, which has one fa/va letter).
+- Every addition must pass the content gates under both rulesets
+  (`npm test -- tests/content`), including
+  `tests/content/corpus-round-trip.test.ts`. The round trip has one documented
+  exception: a word with `v` reads back `f` under Pedoman (`vila`, `vakum`).
+- `ai`/`au` per ruleset. Under KAJ I v3 `ai`/`au` is the diphthong (dirga
+  mure, dirga mure + tarung). Under Pedoman 2002 it is ambiguous (ha reading or
+  swara reading), and a corpus canonical must not be ambiguous. So a word with
+  `ai`/`au` stores the explicit HA form under Pedoman: `byRuleset` with
+  `canonical` (`ramahi`) and `displayPujl` (`ramai`). List every such word on
+  the teacher sheet (`docs/content/teacher-review-pedoman-2002.md`), because the
+  HA form is a provisional choice pending the teacher.
+- Still excluded by engine limitations (do not add): the KAJ separate-syllable
+  ai/au reading (`syair`, `bait`; under KAJ the engine always takes the
+  diphthong), pepet + vowel hiatus (eu class: `néutron`), post-base O+TARUNG
+  `au` spellings, `z`/`q`/`x` rekan, `lega`-class nga-lelet collapses (pa
+  cerek/nga lelet are display-only), long vowels `ii`/`uu` (an error under
+  Pedoman). `rawon`-style words are FIXED (add freely).
+
+## Units per ruleset
+
+A unit in `units.json` may carry `rulesets`, a list of ruleset ids; absent
+means every ruleset. A unit id names one fixed glyph set, so a unit whose
+glyphs differ between the rulesets is two units: `u8` (KAJ I, 18 glyphs) and
+`u8p` (Pedoman 2002, 14 glyphs). The units gate checks each ruleset's ladder
+teaches every glyph of that ruleset exactly once.
 
 ## Shaping check
 
 Mandatory after any engine or font change. It shapes every corpus canonical
 plus sentence and taling-intent cases with HarfBuzz and exits non-zero on a
 dotted circle, a taling not drawn before its owner base, or a violated intent
-expectation (HarfBuzz is not reachable from `npm test`):
+expectation (HarfBuzz is not reachable from `npm test`). It covers both
+rulesets: the KAJ outputs against the Dart dump, and the Pedoman outputs
+(corpus under the Pedoman canonicals, plus the Pedoman sentence cases) with
+the same HarfBuzz and cluster checks:
 
 ```sh
 npm run shaping
@@ -63,3 +93,7 @@ gloss (glosses stay in `words.json` for the review drill).
   word's aksara (`visibleGlyphs`), and the word has no pasangan
   (`hasPasangan`).
 - Changes go through a teacher review sheet, never a direct edit.
+- Examples are filtered per ruleset: a key whose glyph the active ruleset lacks
+  (for example `va` or the nya murda under Pedoman) is not shown. The gates
+  check the examples under both rulesets, so an example word must show its glyph
+  and have no pasangan under each ruleset that has the key.

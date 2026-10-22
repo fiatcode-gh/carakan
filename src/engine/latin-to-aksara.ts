@@ -76,7 +76,7 @@ const isAsciiDigit = (ch: string): boolean => /^[0-9]$/.test(ch);
  * Latin -> aksara converter. Ruleset kaj1-2021-simplified-v3. Vowel signs,
  * taling included, are stored after their base in Unicode order; the shaper
  * draws taling before it. Word-initial vowels take the ha carrier (KAJ I
- * p.5 3.b, p.124 8.b); only a capitalized vowel-initial word inside a
+ * p.5 3.b; Tradisional p.124 8.b); only a capitalized vowel-initial word inside a
  * sentence keeps its swara letter. The Pedoman 2002 differences apply when
  * `ruleset` is the Pedoman.
  */
@@ -137,7 +137,7 @@ export function latinToAksara(
 }
 
 /**
- * Renders words and punctuation as joined writing (KAJ I p.24, p.126):
+ * Renders words and punctuation as joined writing (KAJ I p.24; Tradisional p.126 8.e):
  * spaces write nothing, so a word-final pangkon links to the next word as
  * pasangan. A comma after a pangkon is that pangkon itself; the ZWNJ stops
  * the font from linking it to the next word. A full stop after a pangkon

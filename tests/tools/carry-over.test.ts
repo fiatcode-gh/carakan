@@ -8,8 +8,8 @@ import { describe, expect, it } from "vitest";
 const carried: ReadonlyArray<readonly [string, string]> = [
   [
     "docs/references/CITATIONS.md",
-    // updated for carakan paths (Task 18)
-    "f437997c8b00599355e847421720feeaaa41bd745011cdfde08d73c216a45679",
+    // Pedoman 2002 ruleset (pedoman-2002-ruleset)
+    "ec534ffab61f4c31237f0bb2d7b9635b65a3f6ffe3541457687568dde20d9221",
   ],
   [
     "docs/references/unicode-javanese-block.txt",
@@ -25,8 +25,8 @@ const carried: ReadonlyArray<readonly [string, string]> = [
   ],
   [
     "docs/content/corpus-guide.md",
-    // updated for carakan paths (Task 18)
-    "bdb1d861a289eb3c75cf50d14e818b0a728722fa046a63cdc72dc52efec27e3c",
+    // Pedoman 2002 ruleset (pedoman-2002-ruleset)
+    "5df701e49b2304622adb682d1d0b8b54ef11bf296842fc03a9d7ae15cc24cf29",
   ],
   [
     "public/content/v1/aksara.json",
