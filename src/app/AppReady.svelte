@@ -3,6 +3,7 @@
   import { getI18n } from "../l10n/context.ts";
   import LessonPage from "../features/lessons/LessonPage.svelte";
   import TeacherPage from "../features/lessons/TeacherPage.svelte";
+  import ReviewQuizPage from "../features/review/ReviewQuizPage.svelte";
   import ReviewHelpPage from "../features/review/ReviewHelpPage.svelte";
   import SettingsPage from "../features/settings/SettingsPage.svelte";
   import TracePage from "../features/tracing/TracePage.svelte";
@@ -56,6 +57,8 @@
       {#key $route.unitId}
         <LessonPage unitId={$route.unitId} />
       {/key}
+    {:else if $route.kind === "reviewQuiz"}
+      <ReviewQuizPage />
     {:else if $route.kind === "trace"}
       {#key $route.glyphId}
         <TracePage glyphId={$route.glyphId} />

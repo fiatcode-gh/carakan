@@ -1,4 +1,5 @@
 import type { SrsItemRow } from "../../core/db/schema.ts";
+import type { MessageKey } from "../../l10n/i18n.ts";
 
 export type StrengthLevel = 1 | 2 | 3 | 4;
 
@@ -21,9 +22,7 @@ export function strengthLevel(
 }
 
 /** Message key of the label shown beside the bar (baru, lumayan, kuat). */
-export function strengthLabelKey(
-  level: StrengthLevel,
-): "strengthNew" | "strengthFair" | "strengthStrong" {
+export function strengthLabelKey(level: StrengthLevel): MessageKey {
   if (level === 1) return "strengthNew";
   return level === 2 ? "strengthFair" : "strengthStrong";
 }

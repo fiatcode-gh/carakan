@@ -18,6 +18,7 @@ import {
 import { gotoRoute, seedLocale, tokenColor } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
 import { readStore, unitButton, writeRows } from "./support/lesson.ts";
+import { answerReviewQuestion } from "./support/review-quiz.ts";
 import { createSolver, type Solver } from "./support/solver.ts";
 
 const messages = (locale: "id" | "en") =>
@@ -362,16 +363,17 @@ async function storeCounts(page: Page) {
 const seededCounts = { completions: 3, cards: 2, mistakes: 1 };
 const emptyCounts = { completions: 0, cards: 0, mistakes: 0 };
 
-/** Puts a retry card, reveal state and an active drill in memory, then lands on Settings. */
+/** Puts a quiz retry card and an active drill in memory, then lands on Settings. */
 async function buildSessionMemory(page: Page, catalog = id): Promise<void> {
   await page.getByRole("link", { name: catalog["navReview"]! }).first().click();
   await page
-    .getByRole("button", { name: catalog["revealAnswerButton"]! })
-    .first()
+    .locator("#tab-review .review-today")
+    .getByRole("button", { name: catalog["reviewStartButton"]! })
     .click();
+  await answerReviewQuestion(page, solver, "wrong");
   await page
-    .getByRole("button", { name: catalog["gradeAgain"]!, exact: true })
-    .first()
+    .locator(".quiz")
+    .getByRole("button", { name: catalog["closeButton"]!, exact: true })
     .click();
   await expect(
     page.getByRole("heading", { level: 2, name: catalog["drillHeading"]! }),
@@ -471,7 +473,10 @@ for (const locale of ["id", "en"] as const) {
       await expect(
         page.getByRole("heading", { level: 2, name: catalog["drillHeading"]! }),
       ).toHaveCount(0);
-      await expect(page.locator("#tab-review .card")).toHaveCount(0);
+      await expect(
+        page.locator("#tab-review .review-today button"),
+      ).toHaveCount(0);
+      await expect(page.locator("#tab-review .strength-row")).toHaveCount(0);
     };
 
     await page.getByRole("button", { name: catalog["backButton"]! }).click();

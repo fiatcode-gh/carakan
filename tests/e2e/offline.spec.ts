@@ -19,6 +19,7 @@ import {
   unitButton,
   writeRows,
 } from "./support/lesson.ts";
+import { answerReviewQuestion } from "./support/review-quiz.ts";
 import { createSolver, type Solver } from "./support/solver.ts";
 
 let solver: Solver;
@@ -134,11 +135,11 @@ test("[P-S09] progress and a graded review card survive closing the browser, off
     await installAndControl(firstPage);
     await completeLesson(firstPage, solver, solver.content.units[0]!.id);
     await gotoRoute(firstPage, "#/review");
-    const card = firstPage.locator("#tab-review .card").first();
-    await card.getByRole("button", { name: id["revealAnswerButton"]! }).click();
-    await card
-      .getByRole("button", { name: id["gradeGood"]!, exact: true })
+    await firstPage
+      .locator("#tab-review .review-today")
+      .getByRole("button", { name: id["reviewStartButton"]! })
       .click();
+    await answerReviewQuestion(firstPage, solver, "right");
     await expect
       .poll(
         async () =>

@@ -11,7 +11,8 @@ export type Route =
   | { readonly kind: "teacher" }
   | { readonly kind: "reviewHelp" }
   | { readonly kind: "lesson"; readonly unitId: string }
-  | { readonly kind: "trace"; readonly glyphId: string };
+  | { readonly kind: "trace"; readonly glyphId: string }
+  | { readonly kind: "reviewQuiz" };
 
 export const tabIds: readonly TabId[] = [
   "ladder",
@@ -30,6 +31,7 @@ export const auditRoutes: readonly Route[] = [
   { kind: "reviewHelp" },
   { kind: "lesson", unitId: "g1" },
   { kind: "trace", glyphId: "pa" },
+  { kind: "reviewQuiz" },
 ];
 
 const ladder = { kind: "ladder" } as Route;
@@ -48,6 +50,8 @@ export function parseHash(hash: string): Route {
       return { kind: path };
     case "review-help":
       return { kind: "reviewHelp" };
+    case "review/quiz":
+      return { kind: "reviewQuiz" };
     case null:
       return ladder;
   }
@@ -76,6 +80,8 @@ export function href(route: Route): string {
       return "#/";
     case "reviewHelp":
       return "#/review-help";
+    case "reviewQuiz":
+      return "#/review/quiz";
     case "lesson":
       return `#/lesson/${encodeURIComponent(route.unitId)}`;
     case "trace":
@@ -95,9 +101,13 @@ export function isTabRoot(route: Route): boolean {
   return tabOf(route) !== null;
 }
 
-/** Pages that run an activity (a lesson, a tracing practice): no update banner. */
+/** Pages that run an activity (a lesson, a tracing practice, a review quiz): no update banner. */
 export function isActivityRoute(route: Route): boolean {
-  return route.kind === "lesson" || route.kind === "trace";
+  return (
+    route.kind === "lesson" ||
+    route.kind === "trace" ||
+    route.kind === "reviewQuiz"
+  );
 }
 
 interface CarakanHistoryState {

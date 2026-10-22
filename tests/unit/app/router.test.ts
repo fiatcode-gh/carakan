@@ -19,6 +19,7 @@ const roundTrips: [string, Route][] = [
   ["#/review-help", { kind: "reviewHelp" }],
   ["#/lesson/g1", { kind: "lesson", unitId: "g1" }],
   ["#/trace/pa", { kind: "trace", glyphId: "pa" }],
+  ["#/review/quiz", { kind: "reviewQuiz" }],
 ];
 
 describe("[P-S05] hash routes", () => {
@@ -56,10 +57,11 @@ describe("[P-S05] hash routes", () => {
     expect(auditRoutes.map(href)).toEqual(roundTrips.map(([hash]) => hash));
   });
 
-  test("isActivityRoute is true for lesson and trace only", () => {
+  test("isActivityRoute is true for lesson, trace and the review quiz only", () => {
     expect(auditRoutes.filter(isActivityRoute).map((r) => r.kind)).toEqual([
       "lesson",
       "trace",
+      "reviewQuiz",
     ]);
   });
 });

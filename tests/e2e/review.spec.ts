@@ -1,4 +1,4 @@
-import type { Locator, Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import {
   DB_NAME,
@@ -17,6 +17,7 @@ import {
 import { gotoRoute, tokenColor } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
 import { playLesson, writeRows } from "./support/lesson.ts";
+import { answerReviewQuestion } from "./support/review-quiz.ts";
 import {
   createSolver,
   type QuestionPrompt,
@@ -53,13 +54,18 @@ const fresh = (itemId: string, dueAt: number): SrsItemRow => ({
   lastReviewedAt: null,
 });
 
-const reviewed = (itemId: string, dueAt: number): SrsItemRow => ({
+const scheduled = (
+  itemId: string,
+  dueAt: number,
+  repetitions: number,
+  intervalDays: number,
+): SrsItemRow => ({
   itemId,
-  intervalDays: 1,
+  intervalDays,
   ease: 2.5,
-  repetitions: 1,
+  repetitions,
   dueAt,
-  lastReviewedAt: dueAt - DAY,
+  lastReviewedAt: repetitions === 0 ? null : dueAt - DAY,
 });
 
 async function readStore<T>(page: Page, store: string): Promise<T[]> {
@@ -102,25 +108,23 @@ async function openReview(
   }
 }
 
-const cards = (page: Page) => page.locator("#tab-review .card");
-const reveal = (scope: Page | Locator, text = id["revealAnswerButton"]!) =>
-  scope.getByRole("button", { name: text });
-const gradeButton = (scope: Page | Locator, name: string) =>
-  scope.getByRole("button", { name, exact: true });
-const group = (page: Page, title: string) =>
-  page.getByRole("heading", { level: 2, name: title });
+const today = (page: Page) => page.locator("#tab-review .review-today");
+const startButton = (page: Page, catalog = id) =>
+  today(page).getByRole("button", { name: catalog["reviewStartButton"]! });
+const dueCount = (count: number, catalog = id) =>
+  catalog["reviewDueCount"]!.replace("{count}", String(count));
+const strengthRows = (page: Page) => page.locator("#tab-review .strength-row");
+const quizButton = (page: Page, name: string) =>
+  page.locator(".quiz").getByRole("button", { name, exact: true });
 const info = (glyphId: string) => solver.table.byId.get(glyphId)!;
+const reading = (glyphId: string) => info(glyphId).pujl || info(glyphId).name;
 
-/** Reveals the first card then grades it. */
-async function revealAndGrade(
-  page: Page,
-  grade: "gradeAgain" | "gradeHard" | "gradeGood" | "gradeEasy",
-): Promise<void> {
-  await reveal(cards(page).first()).click();
-  await gradeButton(cards(page).first(), id[grade]!).click();
-}
+const storedCard = async (page: Page, itemId: string) =>
+  (await readStore<SrsItemRow>(page, SRS_ITEMS)).find(
+    (row) => row.itemId === itemId,
+  );
 
-test("[P-R01][P-R12] the help button opens the help page with both slips and four grade lines", async ({
+test("[P-R01][P-R12] the help button opens the help page with the why card and the three how-it-works lines", async ({
   page,
 }) => {
   await openReview(page);
@@ -129,65 +133,36 @@ test("[P-R01][P-R12] the help button opens the help page with both slips and fou
   await expect(
     page.getByRole("heading", { level: 1, name: id["reviewHelpTitle"]! }),
   ).toBeVisible();
-  const slips = page.locator("main .surface:visible");
-  await expect(slips).toHaveCount(2);
-  await expect(slips.nth(0).getByRole("heading")).toHaveText(
+  const cards = page.locator("main .surface:visible");
+  await expect(cards).toHaveCount(2);
+  await expect(cards.nth(0).getByRole("heading")).toHaveText(
     id["reviewHelpWhyHeading"]!,
   );
-  await expect(slips.nth(0)).toContainText(id["reviewHelpWhyBody"]!);
-  await expect(slips.nth(1).getByRole("heading")).toHaveText(
-    id["reviewHelpGradeHeading"]!,
+  await expect(cards.nth(0)).toContainText(id["reviewHelpWhyBody"]!);
+  await expect(cards.nth(1).getByRole("heading")).toHaveText(
+    id["reviewHelpHowHeading"]!,
   );
-  const lines = slips.nth(1).locator("li");
-  await expect(lines).toHaveCount(4);
-  const expected = [
-    id["reviewHelpGradeAgain"]!,
-    id["reviewHelpGradeHard"]!,
-    id["reviewHelpGradeGood"]!,
-    id["reviewHelpGradeEasy"]!,
-  ];
-  for (const [i, text] of expected.entries()) {
-    await expect(lines.nth(i)).toHaveText(text);
-    await expect(lines.nth(i).locator(".grade__marker")).toBeVisible();
-  }
-  const markers = await lines.locator(".grade__marker").evaluateAll((els) =>
-    els.map((el) => {
-      const s = getComputedStyle(el);
-      return {
-        width: s.width,
-        height: s.height,
-        borderWidth: s.borderTopWidth,
-        borderColor: s.borderTopColor,
-        background: s.backgroundColor,
-      };
-    }),
-  );
-  const ink = await tokenColor(page, "--color-ink");
-  const fills = [
-    await tokenColor(page, "--color-coral"),
-    await tokenColor(page, "--color-neutral"),
-    await tokenColor(page, "--color-butter"),
-    await tokenColor(page, "--color-periwinkle"),
-  ];
-  expect(markers).toEqual(
-    fills.map((background) => ({
-      width: "14px",
-      height: "14px",
-      borderWidth: "2px",
-      borderColor: ink,
-      background,
-    })),
-  );
+  await expect(cards.nth(1).locator("p")).toHaveText([
+    id["reviewHelpRight"]!,
+    id["reviewHelpWrong"]!,
+    id["reviewHelpStrength"]!,
+  ]);
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
   await shoot(page, "help");
 });
 
-test("[P-R06] a fresh profile shows the empty state", async ({ page }) => {
+test("[P-R06] a fresh profile shows the empty state on the Today card, with no start button", async ({
+  page,
+}) => {
   await openReview(page);
-  await expect(page.getByText(id["reviewEmpty"]!)).toBeVisible();
-  await expect(cards(page)).toHaveCount(0);
+  await expect(today(page)).toContainText(id["reviewTodayLabel"]!);
+  await expect(
+    today(page).getByRole("heading", { level: 2, name: id["reviewEmpty"]! }),
+  ).toBeVisible();
+  await expect(startButton(page)).toHaveCount(0);
+  await expect(strengthRows(page)).toHaveCount(0);
   await expect(page.locator("#tab-review .drill")).toHaveCount(0);
   await expectAccessible(page);
   await expectTouchTargets(page);
@@ -195,112 +170,176 @@ test("[P-R06] a fresh profile shows the empty state", async ({ page }) => {
   await shoot(page, "empty");
 });
 
-test("[P-R04][P-R03] fresh and due cards sit under their headers; revealing shows the name and four grades", async ({
+test("[P-R04] three due cards show the count, a fanned stack of their glyphs and the start button", async ({
   page,
 }) => {
   await openReview(page, {
-    srs: [reviewed("na", NOW - 3 * HOUR), fresh("ha", NOW - HOUR)],
+    srs: [
+      fresh("ha", NOW - 3 * HOUR),
+      fresh("na", NOW - 2 * HOUR),
+      fresh("ca", NOW - HOUR),
+    ],
   });
-  const headings = page.locator("#tab-review h2");
-  await expect(headings).toHaveText([
-    id["reviewGroupDue"]!,
-    id["reviewGroupFresh"]!,
-  ]);
-  await expect(cards(page)).toHaveCount(2);
-  await expect(cards(page).nth(0).locator(".aksara")).toHaveText(
-    info("na").char,
+  await expect(
+    today(page).getByRole("heading", { level: 2, name: dueCount(3) }),
+  ).toBeVisible();
+  await expect(startButton(page)).toBeVisible();
+  const stack = today(page).locator('[aria-hidden="true"]:has(.aksara)');
+  await expect(stack).toHaveCount(1);
+  const glyphs = await stack.locator(".aksara").allTextContents();
+  expect(glyphs.map((g) => g.trim()).sort()).toEqual(
+    ["ha", "na", "ca"].map((glyphId) => info(glyphId).char).sort(),
   );
-  await expect(cards(page).nth(1).locator(".aksara")).toHaveText(
+  await expectAccessible(page);
+  await expectTouchTargets(page);
+  await expectNoHorizontalOverflow(page);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await shoot(page, "today");
+});
+
+test("[P-R17] the quiz grades a right answer good and a wrong one again, asks the missed card again, then shows the result", async ({
+  page,
+}) => {
+  await openReview(page, {
+    srs: [
+      fresh("ha", NOW - 3 * HOUR),
+      fresh("na", NOW - 2 * HOUR),
+      fresh("ca", NOW - HOUR),
+    ],
+  });
+  await startButton(page).click();
+  await expect.poll(() => new URL(page.url()).hash).toBe("#/review/quiz");
+  await expect(page.locator(".quiz__prompt .aksara")).toHaveText(
     info("ha").char,
   );
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
-  await shoot(page, "hidden");
+  await shoot(page, "quiz");
 
-  for (const [i, glyphId] of ["na", "ha"].entries()) {
-    const card = cards(page).nth(i);
-    await reveal(card).click();
-    await expect(card).toContainText(info(glyphId).name);
-    for (const key of ["gradeAgain", "gradeHard", "gradeGood", "gradeEasy"]) {
-      await expect(gradeButton(card, id[key]!)).toBeVisible();
-    }
+  await answerReviewQuestion(page, solver, "right");
+  await expect
+    .poll(async () => (await storedCard(page, "ha"))?.repetitions)
+    .toBe(1);
+  const ha = (await storedCard(page, "ha"))!;
+  expect(ha.dueAt).toBeGreaterThanOrEqual(NOW + DAY);
+  expect(ha.dueAt).toBeLessThan(NOW + DAY + HOUR);
+  await quizButton(page, id["continueButton"]!).click();
+
+  const second = await answerReviewQuestion(page, solver, "wrong");
+  expect(solver.targetIds(second.prompt)).toEqual(["na"]);
+  await expect
+    .poll(async () => (await storedCard(page, "na"))?.lastReviewedAt)
+    .not.toBeNull();
+  const na = (await storedCard(page, "na"))!;
+  expect(na.repetitions).toBe(0);
+  expect(na.dueAt).toBeGreaterThanOrEqual(NOW + 10 * MINUTE);
+  expect(na.dueAt).toBeLessThan(NOW + 10 * MINUTE + HOUR);
+  await quizButton(page, id["continueButton"]!).click();
+
+  await answerReviewQuestion(page, solver, "right");
+  await quizButton(page, id["continueButton"]!).click();
+
+  const again = await answerReviewQuestion(page, solver, "right");
+  expect(again.prompt).toEqual(second.prompt);
+  await quizButton(page, id["continueButton"]!).click();
+
+  await expect(
+    page.locator(".quiz-done").getByRole("heading", {
+      name: id["lessonDone"]!.replace("{correct}", "3").replace("{total}", "4"),
+    }),
+  ).toBeVisible();
+  await expectAccessible(page);
+  await expectTouchTargets(page);
+  await shoot(page, "quiz-done");
+
+  await page.locator(".quiz-done .bar").getByRole("button").click();
+  await expect.poll(() => new URL(page.url()).hash).toBe("#/review");
+  await expect(
+    today(page).getByRole("heading", { level: 2, name: id["reviewEmpty"]! }),
+  ).toBeVisible();
+});
+
+test("[P-R05] a card missed in the quiz stays in the due count as a retry after the quiz is closed", async ({
+  page,
+}) => {
+  await openReview(page, {
+    srs: [
+      fresh("ha", NOW - 3 * HOUR),
+      fresh("na", NOW - 2 * HOUR),
+      fresh("ca", NOW - HOUR),
+    ],
+  });
+  await startButton(page).click();
+  await answerReviewQuestion(page, solver, "right");
+  await quizButton(page, id["continueButton"]!).click();
+  await answerReviewQuestion(page, solver, "wrong");
+  await expect
+    .poll(async () => (await storedCard(page, "na"))?.lastReviewedAt)
+    .not.toBeNull();
+  await quizButton(page, id["closeButton"]!).click();
+  await expect.poll(() => new URL(page.url()).hash).toBe("#/review");
+  // na is stored as due in ten minutes: only the retry set lists it now.
+  expect((await storedCard(page, "na"))!.dueAt).toBeGreaterThan(NOW);
+  await expect(
+    today(page).getByRole("heading", { level: 2, name: dueCount(2) }),
+  ).toBeVisible();
+  const stack = today(page).locator('[aria-hidden="true"]:has(.aksara)');
+  const glyphs = await stack.locator(".aksara").allTextContents();
+  expect(glyphs.map((g) => g.trim()).sort()).toEqual(
+    ["na", "ca"].map((glyphId) => info(glyphId).char).sort(),
+  );
+});
+
+test("[P-R18] strength rows follow the ladder order with 3, 2 and 1 filled segments, and list a card that is not due", async ({
+  page,
+}) => {
+  await openReview(page, {
+    srs: [
+      scheduled("ya", NOW - HOUR, 0, 0),
+      scheduled("pa", NOW - HOUR, 2, 3),
+      scheduled("ha", NOW - HOUR, 1, 1),
+      scheduled("na", NOW + 3 * DAY, 4, 30),
+    ],
+  });
+  await expect(
+    page.getByRole("heading", { level: 2, name: id["strengthHeading"]! }),
+  ).toBeVisible();
+  const rows = strengthRows(page);
+  await expect(rows).toHaveCount(4);
+  const expected = [
+    ["pa", 3, id["strengthStrong"]!],
+    ["ha", 2, id["strengthFair"]!],
+    ["ya", 1, id["strengthNew"]!],
+    ["na", 4, id["strengthStrong"]!],
+  ] as const;
+  const sage = await tokenColor(page, "--color-sage");
+  for (const [i, [glyphId, filled, label]] of expected.entries()) {
+    const row = rows.nth(i);
+    await expect(
+      row.getByRole("img", {
+        name: id["aksaraName"]!.replace("{reading}", reading(glyphId)),
+      }),
+    ).toBeVisible();
+    await expect(row).toContainText(reading(glyphId));
+    await expect(row).toContainText(label);
+    await expect(row).toContainText(
+      id["strengthSegments"]!.replace("{filled}", String(filled)),
+    );
+    const segments = await row
+      .locator(".strength-bar > *")
+      .evaluateAll((els) =>
+        els.map((el) => getComputedStyle(el).backgroundColor),
+      );
+    expect(segments).toHaveLength(4);
+    expect(segments.filter((c) => c === sage)).toHaveLength(filled);
+    expect(segments.slice(0, filled).every((c) => c === sage)).toBe(true);
   }
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
   await page.evaluate(() => window.scrollTo(0, 0));
-  await shoot(page, "revealed");
-});
-
-test("[P-R12] revealed grade buttons carry equal weight and each a marker", async ({
-  page,
-}) => {
-  await openReview(page, { srs: [fresh("ha", NOW - HOUR)] });
-  const card = cards(page).first();
-  await reveal(card).click();
-  const keys = ["gradeAgain", "gradeHard", "gradeGood", "gradeEasy"];
-  const backgrounds: string[] = [];
-  for (const key of keys) {
-    const button = gradeButton(card, id[key]!);
-    await expect(button.locator(".grade-dot")).toHaveCount(1);
-    await expect(button.locator(".grade-dot")).toHaveAttribute(
-      "aria-hidden",
-      "true",
-    );
-    backgrounds.push(
-      await button.evaluate((el) => getComputedStyle(el).backgroundColor),
-    );
-  }
-  expect(new Set(backgrounds).size, "same background on all four").toBe(1);
-});
-
-test("[P-R14] a hidden card keeps its name and grade buttons out of the DOM; revealing focuses Again", async ({
-  page,
-}) => {
-  await openReview(page, { srs: [fresh("ha", NOW - HOUR)] });
-  const card = cards(page).first();
-  await expect(card.locator(".aksara")).toHaveText(info("ha").char);
-  await expect(reveal(card)).toBeVisible();
-  await expect(card.getByText(info("ha").name, { exact: true })).toHaveCount(0);
-  for (const key of ["gradeAgain", "gradeHard", "gradeGood", "gradeEasy"]) {
-    await expect(gradeButton(page, id[key]!)).toHaveCount(0);
-  }
-  await reveal(card).click();
-  await expect(reveal(page)).toHaveCount(0);
-  await expect(card.getByText(info("ha").name, { exact: true })).toBeVisible();
-  for (const key of ["gradeAgain", "gradeHard", "gradeGood", "gradeEasy"]) {
-    await expect(gradeButton(card, id[key]!)).toBeVisible();
-  }
-  await expect(gradeButton(card, id["gradeAgain"]!)).toBeFocused();
-});
-
-test("[P-R05][P-R15] again keeps the card as a hidden retry at the end; good removes it", async ({
-  page,
-}) => {
-  await openReview(page, {
-    srs: [fresh("ha", NOW - 2 * HOUR), fresh("na", NOW - HOUR)],
-  });
-  await revealAndGrade(page, "gradeAgain");
-  await expect(group(page, id["reviewGroupRetry"]!)).toBeVisible();
-  await expect(cards(page)).toHaveCount(2);
-  await expect(cards(page).first().locator(".aksara")).toHaveText(
-    info("na").char,
-  );
-  const last = cards(page).last();
-  await expect(last.locator(".aksara")).toHaveText(info("ha").char);
-  await expect(reveal(last)).toBeVisible();
-  await expect(
-    last.getByRole("button", { name: id["gradeAgain"]! }),
-  ).toHaveCount(0);
-  await expect(last.getByText(info("ha").name, { exact: true })).toHaveCount(0);
-
-  await reveal(last).click();
-  await gradeButton(last, id["gradeGood"]!).click();
-  await expect(cards(page)).toHaveCount(1);
-  await expect(cards(page).first().locator(".aksara")).toHaveText(
-    info("na").char,
-  );
+  await shoot(page, "strength");
 });
 
 test("[P-R07] opening Ulangi re-queries: a persisted retry and a newly due card appear", async ({
@@ -309,18 +348,19 @@ test("[P-R07] opening Ulangi re-queries: a persisted retry and a newly due card 
   await openReview(page, {
     srs: [fresh("ha", NOW - HOUR), fresh("ca", NOW + 5 * MINUTE)],
   });
-  await expect(cards(page)).toHaveCount(1);
-  await revealAndGrade(page, "gradeAgain");
+  await expect(
+    today(page).getByRole("heading", { level: 2, name: dueCount(1) }),
+  ).toBeVisible();
+  await startButton(page).click();
+  await answerReviewQuestion(page, solver, "wrong");
+  await quizButton(page, id["closeButton"]!).click();
   await page.getByRole("link", { name: id["navLadder"]! }).click();
   await expect(page.locator(".ladder")).toBeVisible();
   await page.clock.fastForward("10:00");
   await page.getByRole("link", { name: id["navReview"]! }).click();
-  await expect(cards(page)).toHaveCount(2);
-  const texts = await cards(page).locator(".aksara").allTextContents();
-  expect(texts).toContain(info("ca").char);
-  expect(texts).toContain(info("ha").char);
-  await expect(group(page, id["reviewGroupRetry"]!)).toBeVisible();
-  await expect(group(page, id["reviewGroupFresh"]!)).toBeVisible();
+  await expect(
+    today(page).getByRole("heading", { level: 2, name: dueCount(2) }),
+  ).toBeVisible();
 });
 
 test("[P-R07] resuming the page re-queries without a tab switch", async ({
@@ -329,27 +369,39 @@ test("[P-R07] resuming the page re-queries without a tab switch", async ({
   await openReview(page, {
     srs: [fresh("ha", NOW - HOUR), fresh("ca", NOW + 30 * MINUTE)],
   });
-  await expect(cards(page)).toHaveCount(1);
+  await expect(
+    today(page).getByRole("heading", { level: 2, name: dueCount(1) }),
+  ).toBeVisible();
   await page.clock.fastForward("30:00");
   await page.evaluate(() =>
     document.dispatchEvent(new Event("visibilitychange")),
   );
-  await expect(cards(page)).toHaveCount(2);
+  await expect(
+    today(page).getByRole("heading", { level: 2, name: dueCount(2) }),
+  ).toBeVisible();
 });
 
-test("[P-R07] a card graded good comes back as due the next day", async ({
+test("[P-R07] a card graded good in the quiz comes back as due the next day", async ({
   page,
 }) => {
-  await openReview(page, { srs: [fresh("ha", NOW - HOUR)] });
-  await revealAndGrade(page, "gradeGood");
-  await expect(page.getByText(id["reviewEmpty"]!)).toBeVisible();
+  // A card needs a second stored card to be asked against.
+  await openReview(page, {
+    srs: [fresh("ha", NOW - HOUR), fresh("ca", NOW + 7 * DAY)],
+  });
+  await startButton(page).click();
+  await answerReviewQuestion(page, solver, "right");
+  await quizButton(page, id["continueButton"]!).click();
+  await page.locator(".quiz-done .bar").getByRole("button").click();
+  await expect(
+    today(page).getByRole("heading", { level: 2, name: id["reviewEmpty"]! }),
+  ).toBeVisible();
   await page.clock.fastForward("24:00:00");
   await page.reload();
   await page.locator('#app[data-boot="ready"]').waitFor();
-  await expect(group(page, id["reviewGroupDue"]!)).toBeVisible();
-  await expect(cards(page)).toHaveCount(1);
+  await expect(
+    today(page).getByRole("heading", { level: 2, name: dueCount(1) }),
+  ).toBeVisible();
 });
-
 interface Drill {
   prompt: QuestionPrompt;
   options: string[];
@@ -528,18 +580,39 @@ test("[P-R11] a mistake made in a lesson surfaces the drill without a reload", a
 test.describe("English interface", () => {
   test.use({ locale: "en-US" });
 
-  test("[P-L04] the reveal button and the grade buttons are English", async ({
+  test("[P-L04] the Today card, the strength rows and the help are English", async ({
     page,
   }) => {
-    await openReview(page, { srs: [fresh("ha", NOW - HOUR)] });
+    // A card needs a second stored card to be asked against.
+    await openReview(page, {
+      srs: [fresh("ha", NOW - HOUR), fresh("ca", NOW + 7 * DAY)],
+    });
     await expect(
       page.getByRole("heading", { level: 1, name: en["reviewTitle"]! }),
     ).toBeVisible();
-    await expect(group(page, en["reviewGroupFresh"]!)).toBeVisible();
-    await reveal(page, en["revealAnswerButton"]!).click();
-    for (const key of ["gradeAgain", "gradeHard", "gradeGood", "gradeEasy"]) {
-      await expect(gradeButton(page, en[key]!)).toBeVisible();
-    }
+    await expect(today(page)).toContainText(en["reviewTodayLabel"]!);
+    await expect(
+      today(page).getByRole("heading", { level: 2, name: dueCount(1, en) }),
+    ).toBeVisible();
+    await expect(startButton(page, en)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2, name: en["strengthHeading"]! }),
+    ).toBeVisible();
+    await expect(strengthRows(page).first()).toContainText(en["strengthNew"]!);
+    await expect(strengthRows(page).first()).toContainText(
+      en["strengthSegments"]!.replace("{filled}", "1"),
+    );
     await expectAccessible(page);
+
+    await startButton(page, en).click();
+    await expect(
+      page.locator(".quiz").getByRole("button", { name: en["closeButton"]! }),
+    ).toBeVisible();
+    await expectAccessible(page);
+
+    await gotoRoute(page, "#/review-help");
+    await expect(page.locator("main .surface:visible").nth(1)).toContainText(
+      en["reviewHelpRight"]!,
+    );
   });
 });

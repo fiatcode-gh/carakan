@@ -177,13 +177,23 @@ test.describe("progress carries across rulesets", () => {
     await page.reload();
     await page.locator('#app[data-boot="ready"]').waitFor();
 
-    const cards = page.locator("#tab-review .card .aksara");
+    const rows = page.locator("#tab-review .strength-row");
+    // Cards the active ruleset lacks stay out of the due count and the rows.
+    const expectReview = async (count: number) => {
+      await expect(
+        page.locator("#tab-review .review-today").getByRole("heading", {
+          level: 2,
+          name: id["reviewDueCount"]!.replace("{count}", String(count)),
+        }),
+      ).toBeVisible();
+      await expect(rows).toHaveCount(count);
+    };
     const caMurda = kajGlyphs.byId.get("caMurda")!.char;
     const ka = kajGlyphs.byId.get("ka")!.char;
 
     await tab(page, "navReview").click();
-    await expect(cards).toHaveCount(2);
-    await expect(cards.filter({ hasText: caMurda })).toHaveCount(1);
+    await expectReview(2);
+    await expect(rows.filter({ hasText: caMurda })).toHaveCount(1);
 
     await openSettings(page);
     await radio(page, id["rulesetNamePedoman"]!).check();
@@ -202,16 +212,16 @@ test.describe("progress carries across rulesets", () => {
       .toContain("u8p");
 
     await tab(page, "navReview").click();
-    await expect(cards).toHaveCount(1);
-    await expect(cards.filter({ hasText: ka })).toHaveCount(1);
+    await expectReview(1);
+    await expect(rows.filter({ hasText: ka })).toHaveCount(1);
     expect(await readStore(page, SRS_ITEMS)).toHaveLength(2);
 
     await openSettings(page);
     await radio(page, id["rulesetNameKaj"]!).check();
     await goBack(page);
     await tab(page, "navReview").click();
-    await expect(cards).toHaveCount(2);
-    await expect(cards.filter({ hasText: caMurda })).toHaveCount(1);
+    await expectReview(2);
+    await expect(rows.filter({ hasText: caMurda })).toHaveCount(1);
   });
 });
 

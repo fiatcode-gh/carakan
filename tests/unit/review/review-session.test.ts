@@ -42,13 +42,6 @@ const ids = (session: ReviewSession) => {
   return state.kind === "ready" ? state.items.map((i) => i.itemId) : [];
 };
 
-const kinds = (session: ReviewSession) => {
-  const state = get(session.state);
-  return state.kind === "ready"
-    ? state.items.map((i) => [i.itemId, i.kind, i.revealed])
-    : [];
-};
-
 test("[P-R02] an empty queue reports the empty state", async () => {
   const { session } = await setup();
   await session.refresh();
@@ -75,8 +68,8 @@ test("[P-R05] grading advances the queue", async () => {
 test("[P-R10] an enqueue after the session exists refreshes the list", async () => {
   const { queue, session } = await setup();
   await queue.enqueue("ha", T0);
-  // The queue's change listener queued a refresh; a no-op reveal flushes the chain.
-  await session.reveal("none");
+  // The queue's change listener queued a refresh; this one runs after it.
+  await session.refresh();
   expect(ids(session)).toEqual(["ha"]);
 });
 
@@ -89,31 +82,22 @@ test("[P-R05] grading again keeps the card for an immediate retest", async () =>
   expect(ids(session)).toEqual(["na", "ha"]);
 });
 
-test("[P-R03] cards are grouped by situation: fresh, due, retry", async () => {
-  let clock = T0;
-  const { queue, session } = await setup(() => clock);
+test("[P-R02] a ready list carries the item ids only", async () => {
+  const { queue, session } = await setup();
   await queue.enqueue("ha", T0);
-  await queue.enqueue("na", T0);
-  await queue.grade("na", "good", T0);
-  clock = T0 + 2 * DAY;
   await session.refresh();
-  expect(kinds(session)).toEqual([
-    ["ha", "fresh", false],
-    ["na", "due", false],
-  ]);
-  await session.grade("ha", "again");
-  expect(kinds(session)).toEqual([
-    ["na", "due", false],
-    ["ha", "retry", false],
-  ]);
+  expect(get(session.state)).toEqual({
+    kind: "ready",
+    items: [{ itemId: "ha" }],
+  });
 });
 
-test("[P-R05] a missed card stays grouped as retry across a restart", async () => {
+test("[P-R05] a missed card stays listed across a restart", async () => {
   const { queue, session } = await setup(() => T0 + 15 * MINUTE);
   await queue.enqueue("ha", T0);
   await queue.grade("ha", "again", T0);
   await session.refresh();
-  expect(kinds(session)).toEqual([["ha", "retry", false]]);
+  expect(ids(session)).toEqual(["ha"]);
 });
 
 test("operations run in call order", async () => {
@@ -121,15 +105,11 @@ test("operations run in call order", async () => {
   await queue.enqueue("ha", T0);
   await queue.enqueue("na", T0);
   void session.refresh();
-  void session.reveal("ha");
   const done = session.grade("ha", "again");
-  void session.reveal("na");
+  void session.refresh();
   await done;
   await session.refresh();
-  expect(kinds(session)).toEqual([
-    ["na", "fresh", true],
-    ["ha", "retry", false],
-  ]);
+  expect(ids(session)).toEqual(["na", "ha"]);
 });
 
 test("[P-S10] a rejected read or grade leaves an error state that a refresh clears", async () => {
@@ -160,7 +140,7 @@ test("[P-T07] erased progress empties the list, including the retry set", async 
   await queue.enqueue("ha", T0);
   await session.refresh();
   await session.grade("ha", "again");
-  expect(kinds(session)).toEqual([["ha", "retry", false]]);
+  expect(ids(session)).toEqual(["ha"]);
   await progress.erase();
   await session.refresh();
   expect(get(session.state)).toEqual({ kind: "empty" });
