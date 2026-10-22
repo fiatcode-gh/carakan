@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Carakan · Converter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="fonts/fonts.css">
+</head>
+<body>
+
+
+<style>
+body{margin:0}
+a{color:#2F3456}a:hover{color:#4A5590}
+.jv{font-family:'Noto Sans Javanese',sans-serif}
+.hand{font-family:'Patrick Hand',cursive}
+.ruled{background-color:#F7F3EA;background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 35px, #DAE3EC 35px, #DAE3EC 36px)}
+</style>
+
+<div class="ruled" style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; font-family: 'Bricolage Grotesque', system-ui, sans-serif; color: #2F3456; display: flex; flex-direction: column">
+
+<div style="padding: 26px 18px 12px; display: flex; justify-content: space-between; align-items: flex-end">
+<div style="font-size: 44px; font-weight: 800; line-height: 0.92; letter-spacing: -0.04em">Ganti<br>aksara.</div>
+<button aria-label="How the converter works" style="width: 44px; height: 44px; border: 2px solid #2F3456; background: #FFFDF8; display: flex; align-items: center; justify-content: center; padding: 0; font-family: 'Patrick Hand', cursive; font-size: 24px; color: #2F3456">?</button>
+</div>
+
+<div role="tablist" aria-label="Direction" style="margin: 4px 18px 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 2px solid #2F3456; background: #FFFDF8">
+<button role="tab" aria-selected="true" style="height: 44px; border: 0; background: #2F3456; color: #F7F3EA; font-family: inherit; font-weight: 800; font-size: 14px">Latin → Aksara</button>
+<button role="tab" aria-selected="false" style="height: 44px; border: 0; border-left: 2px solid #2F3456; background: transparent; color: #2F3456; font-family: inherit; font-weight: 700; font-size: 14px">Aksara → Latin</button>
+</div>
+
+<label for="conv-in" class="hand" style="margin: 14px 18px 4px; font-size: 20px; color: #8C5A3C">Ketik kata dalam huruf Latin…</label>
+<input id="conv-in" value="aku" style="margin: 0 18px; height: 56px; box-sizing: border-box; border: 2px solid #2F3456; background: #FFFDF8; padding: 0 14px; font-family: inherit; font-size: 24px; font-weight: 700; color: #2F3456">
+
+<div style="margin: 16px 18px 0; background: #F08A6C; border: 2px solid #2F3456; box-shadow: 5px 5px 0 #2F3456; position: relative">
+<div style="position: absolute; top: -9px; right: 36px; width: 70px; height: 20px; background: rgba(246,207,99,0.85); transform: rotate(4deg)"></div>
+<div style="padding: 12px 14px 0; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase">Hasil</div>
+<div class="jv" style="padding: 0 14px 52px; font-size: 64px; line-height: 1.4">ꦲꦏꦸ</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 2px solid #2F3456">
+<button style="height: 50px; border: 0; background: #FFFDF8; font-family: inherit; font-weight: 800; font-size: 15px; color: #2F3456; display: flex; align-items: center; justify-content: center; gap: 8px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2F3456" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12"></rect><path d="M16 8V4H4v12h4"></path></svg>Salin</button>
+<button style="height: 50px; border: 0; border-left: 2px solid #2F3456; background: #FFFDF8; font-family: inherit; font-weight: 800; font-size: 15px; color: #2F3456; display: flex; align-items: center; justify-content: center; gap: 8px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2F3456" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"></path><path d="M16.5 8.5a5 5 0 0 1 0 7"></path></svg>Dengar</button>
+</div>
+</div>
+
+<div class="hand" style="margin: 20px 18px 4px; font-size: 22px; color: #8C5A3C">Cara menulisnya</div>
+<div style="margin: 0 18px; display: flex; flex-direction: column; gap: 8px">
+<div style="height: 60px; border: 2px solid #2F3456; background: #FFFDF8; display: flex; align-items: center; gap: 12px; padding: 0 12px">
+<div class="jv" style="width: 52px; font-size: 30px; text-align: center">ꦲ</div>
+<div style="flex: 1"><div style="font-size: 16px; font-weight: 800">ha</div><div style="font-size: 12px; color: #4A4F6E">aksara carakan</div></div>
+<div style="font-size: 13px; font-weight: 700; color: #4A4F6E">dibaca</div>
+<div style="min-width: 44px; height: 32px; box-sizing: border-box; background: #F6CF63; border: 2px solid #2F3456; display: flex; align-items: center; justify-content: center; font-weight: 800">a</div>
+</div>
+<div style="height: 84px; border: 2px solid #2F3456; background: #FFFDF8; display: flex; align-items: center; gap: 12px; padding: 0 12px">
+<div class="jv" style="width: 52px; font-size: 26px; line-height: 1; text-align: center; padding-bottom: 22px">ꦏꦸ</div>
+<div style="flex: 1"><div style="font-size: 16px; font-weight: 800">ka + suku</div><div style="font-size: 12px; color: #4A4F6E">suku mengubah a → u</div></div>
+<div style="font-size: 13px; font-weight: 700; color: #4A4F6E">dibaca</div>
+<div style="min-width: 44px; height: 32px; box-sizing: border-box; background: #9DB0EF; border: 2px solid #2F3456; display: flex; align-items: center; justify-content: center; font-weight: 800">ku</div>
+</div>
+</div>
+
+<nav aria-label="Main" style="position: absolute; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 2px solid #2F3456; background: #F7F3EA">
+<a href="01-learn-path.html" style="height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #4A4F6E; text-decoration: none; font-weight: 700; font-size: 13px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M3 5c3-1 6-1 9 1 3-2 6-2 9-1v14c-3-1-6-1-9 1-3-2-6-2-9-1z"></path><path d="M12 6v14"></path></svg>Learn</a>
+<a href="05-chart.html" style="height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-left: 2px solid #2F3456; color: #4A4F6E; text-decoration: none; font-weight: 700; font-size: 13px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7"></rect><rect x="13.5" y="3.5" width="7" height="7"></rect><rect x="3.5" y="13.5" width="7" height="7"></rect><rect x="13.5" y="13.5" width="7" height="7"></rect></svg>Chart</a>
+<a href="08-review.html" style="height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-left: 2px solid #2F3456; color: #4A4F6E; text-decoration: none; font-weight: 700; font-size: 13px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10a8 8 0 0 1 14-4l2 2M20 14a8 8 0 0 1-14 4l-2-2"></path><path d="M20 4v4h-4M4 20v-4h4"></path></svg>Review</a>
+<a href="07-converter.html" aria-current="page" style="height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-left: 2px solid #2F3456; background: #2F3456; color: #F7F3EA; text-decoration: none; font-weight: 800; font-size: 13px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h15l-4-4M20 16H5l4 4"></path></svg>Convert</a>
+</nav>
+</div>
+
+</body>
+</html>

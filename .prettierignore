@@ -9,3 +9,4 @@ fonts/
 test-results/
 playwright-report/
 .flow/
+docs/design/buku-poster/

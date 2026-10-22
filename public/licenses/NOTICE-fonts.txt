@@ -3,6 +3,12 @@ Fonts bundled with Carakan:
 - MPLUS Rounded 1c, "Copyright 2016 The Rounded M+ Project Authors",
   SIL Open Font License 1.1 (license text: ofl-mplus.txt;
   https://scripts.sil.org/OFL).
+- Bricolage Grotesque, "Copyright 2022 The Bricolage Grotesque Project Authors",
+  SIL Open Font License 1.1 (license text: ofl-bricolage-grotesque.txt;
+  https://scripts.sil.org/OFL).
+- Patrick Hand, "Copyright (c) 2010-2012 Patrick Wagesreiter",
+  SIL Open Font License 1.1 (license text: ofl-patrick-hand.txt;
+  https://scripts.sil.org/OFL).
 - nyk Ngayogyan Jejeg, "Typeface © (Aprinugroho). 2018-2020. All Rights
   Reserved" (font name table). Result of the Kajian Fonta Tim Kongres
   Aksara Jawa, Seksi Bahasa dan Sastra, Dinas Kebudayaan (Kundha

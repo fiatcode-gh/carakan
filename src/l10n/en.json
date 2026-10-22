@@ -57,7 +57,7 @@
   "rulesetNamePedoman": "Pedoman Penulisan Aksara Jawa 2002",
   "rulesetNameKaj": "Kongres Aksara Jawa I 2021, Simplified style",
   "fontHeading": "Fonts",
-  "fontBody": "Javanese script: nyk Ngayogyan Jejeg, Typeface © Apri Nugroho 2018–2020. From the Kongres Aksara Jawa font study, Language and Literature Section, Dinas Kebudayaan (Kundha Kabudayan) Daerah Istimewa Yogyakarta, 2020; developed by Apri Nugroho and Arif Budiarto. Latin text: MPLUS Rounded 1c (SIL Open Font License 1.1). License notes in licenses/.",
+  "fontBody": "Javanese script: nyk Ngayogyan Jejeg, Typeface © Apri Nugroho 2018–2020. From the Kongres Aksara Jawa font study, Language and Literature Section, Dinas Kebudayaan (Kundha Kabudayan) Daerah Istimewa Yogyakarta, 2020; developed by Apri Nugroho and Arif Budiarto. Latin text: Bricolage Grotesque, Patrick Hand and MPLUS Rounded 1c (SIL Open Font License 1.1). License notes in licenses/.",
   "corpusHeading": "Word corpus",
   "corpusBody": "Base words from Wiktionary (CC BY-SA 4.0, attributed per word in content/v1/words.json) and native-speaker review.",
   "teacherTitle": "For teachers",

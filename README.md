@@ -47,6 +47,8 @@ Carakan is a port of the Flutter app aksara-app at commit `ebc7cb5`, which stays
 ## Fonts and licensing
 
 - MPLUS Rounded 1c: SIL Open Font License 1.1 (`public/licenses/ofl-mplus.txt`).
+- Bricolage Grotesque: SIL Open Font License 1.1 (`public/licenses/ofl-bricolage-grotesque.txt`).
+- Patrick Hand: SIL Open Font License 1.1 (`public/licenses/ofl-patrick-hand.txt`).
 - nyk Ngayogyan Jejeg is served unmodified for aksara. No license text ships with it, and the rights holder's written permission is still pending; the maintainer accepted deploying it in the meantime. See `public/licenses/NOTICE-fonts.txt`.
 - Icons are Lucide (ISC, `public/licenses/lucide-LICENSE.txt`).
 - Word-list sources and licensing: [`docs/references/wordlist-licensing.md`](docs/references/wordlist-licensing.md).

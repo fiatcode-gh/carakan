@@ -74,8 +74,8 @@ const carried: ReadonlyArray<readonly [string, string]> = [
   ],
   [
     "public/licenses/NOTICE-fonts.txt",
-    // updated for the Carakan deploy note (Task 18)
-    "f255809fdb90951a6ecabf9dc164eba84251bbb1195252af776a4c4d8befcdc6",
+    // Buku Poster fonts (buku-poster-redesign)
+    "72a17c918f246cdeb49f5c3d4e7f1c7a4feaa5e7bd2e94a46c5114cc9a39b7e9",
   ],
   [
     "public/licenses/ofl-mplus.txt",
