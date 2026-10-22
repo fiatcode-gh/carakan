@@ -1,5 +1,6 @@
 import {
   LatinParseError,
+  latinToken,
   withAksara,
   type LatinToken,
 } from "./latin/latin-tokenizer.ts";
@@ -85,4 +86,56 @@ export function applyInitialMurda(
   const link = pedomanMurda.find((m) => m.baseId === base.id);
   if (link === undefined) return tokens;
   return [withAksara(first, link.aksara.unicodeName), ...tokens.slice(1)];
+}
+
+/** How a Pedoman ai/au is written: ha between the vowels (Ped p.33 baé) or a swara letter (Ped p.59 aula). */
+export type VowelPairReading = "ha" | "swara";
+
+/**
+ * Splits every ai/au token into its two vowels (a + i/u), with a synthetic ha
+ * between them for the "ha" reading. Each input span stays attributed: the
+ * first vowel keeps the first letter, the second the rest.
+ */
+export function splitVowelPairs(
+  tokens: readonly LatinToken[],
+  reading: VowelPairReading,
+): LatinToken[] {
+  const out: LatinToken[] = [];
+  for (const t of tokens) {
+    if (t.vowel !== "ai" && t.vowel !== "au") {
+      out.push(t);
+      continue;
+    }
+    out.push(
+      latinToken({
+        kind: "vowel",
+        text: "a",
+        vowel: "a",
+        capitalized: t.capitalized,
+        sourceIndex: t.sourceIndex,
+        sourceEnd: t.sourceIndex + 1,
+      }),
+    );
+    if (reading === "ha") {
+      out.push(
+        latinToken({
+          kind: "consonant",
+          text: "h",
+          sourceIndex: t.sourceIndex + 1,
+          aksaraUnicodeName: "JAVANESE LETTER HA",
+        }),
+      );
+    }
+    const second = t.vowel === "ai" ? "i" : "u";
+    out.push(
+      latinToken({
+        kind: "vowel",
+        text: second,
+        vowel: second,
+        sourceIndex: t.sourceIndex + 1,
+        sourceEnd: t.sourceEnd,
+      }),
+    );
+  }
+  return out;
 }

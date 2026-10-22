@@ -139,5 +139,7 @@
   "engineErrorSecondVowelSign": "One aksara has two vowel signs.",
   "engineErrorUnrecognizedCodepoint": "{codepoint} is not a recognized Javanese character.",
   "engineAmbiguousBareE": "A plain “e” can be pepet (ě) or taling (é). Pick one, or type ě/ê/é/è.",
+  "engineAmbiguousVowelPair": "In Pedoman 2002, “ai”/“au” is two aksara: ha between the vowels (sinahu) or a swara letter. Pick one, or type the h.",
+  "engineAmbiguousBareEAndVowelPair": "A plain “e” can be pepet (ě) or taling (é), and “ai”/“au” is two aksara (ha or a swara letter). Pick one.",
   "engineErrorGeneric": "This input cannot be converted."
 }

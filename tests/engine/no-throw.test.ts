@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
   javaneseCodepoints,
+  kajRulesetId,
+  pedomanRulesetId,
   toAksara,
   toLatin,
 } from "../../src/engine/index.ts";
@@ -25,11 +27,17 @@ const markerCodas: [input: string, marker: string][] = [
 ];
 
 describe("[P-D02] engine never throws", () => {
-  describe.each([false, true])("useMurda %s", (useMurda) => {
+  describe.each(
+    [false, true].flatMap((useMurda) =>
+      [kajRulesetId, pedomanRulesetId].map(
+        (ruleset) => [useMurda, ruleset] as const,
+      ),
+    ),
+  )("useMurda %s, %s", (useMurda, ruleset) => {
     test.each(markerCodas)(
       "%s: a cluster marker coda is an error at the marker",
       (input, marker) => {
-        const r = toAksara(input, { useMurda });
+        const r = toAksara(input, { useMurda, ruleset });
         expect(r).toMatchObject({
           kind: "error",
           message: MESSAGE,
@@ -51,6 +59,9 @@ describe("[P-D02] engine never throws", () => {
     for (const input of latinInputs) {
       for (const useMurda of [false, true]) {
         expect(() => toAksara(input, { useMurda })).not.toThrow();
+        expect(() =>
+          toAksara(input, { useMurda, ruleset: pedomanRulesetId }),
+        ).not.toThrow();
       }
     }
 
@@ -69,5 +80,5 @@ describe("[P-D02] engine never throws", () => {
         expect(() => toLatin(input, { scheme })).not.toThrow();
       }
     }
-  }, 30_000);
+  }, 60_000);
 });

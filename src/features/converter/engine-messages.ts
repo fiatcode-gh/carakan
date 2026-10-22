@@ -84,6 +84,14 @@ export const ENGINE_MESSAGES: readonly EngineMessageEntry[] = [
       "(KAJ I Daftar Transliterasi). Choose a reading, or type ě/ê/é/è.",
     "engineAmbiguousBareE",
   ),
+  literal(
+    '"ai"/"au" is two aksara in Pedoman 2002: ha between the vowels or a swara letter. Choose a reading, or type the h (sinahu).',
+    "engineAmbiguousVowelPair",
+  ),
+  literal(
+    'Bare "e" is pepet (ě) or taling (é), and "ai"/"au" is two aksara in Pedoman 2002 (ha or a swara letter). Choose a reading.',
+    "engineAmbiguousBareEAndVowelPair",
+  ),
 ];
 
 /** Control, format and separator characters are invisible in the UI. */

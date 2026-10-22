@@ -101,7 +101,7 @@ describe("engine message table", () => {
       untranslated.map((m) => `untranslated engine message: ${m}`),
     ).toEqual([]);
     expect(stale.map((m) => `stale row: ${m}`)).toEqual([]);
-    expect(ENGINE_MESSAGES).toHaveLength(18);
+    expect(ENGINE_MESSAGES).toHaveLength(20);
   });
 
   test("[P-U09] every message of the Dart fixture resolves to a specific key", () => {

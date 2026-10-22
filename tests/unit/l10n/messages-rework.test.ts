@@ -35,7 +35,7 @@ test("[P-L01] W14 reveal button copy", () => {
 
 test("[P-U09] W15 engine message keys are present with the planned copy", () => {
   const keys = Object.keys(id).filter((k) => /^engine/.test(k));
-  expect(keys).toHaveLength(18);
+  expect(keys).toHaveLength(20);
   expect(id.engineErrorUnknownCharacter).toBe(
     "Karakter “{char}” tidak dikenali.",
   );
