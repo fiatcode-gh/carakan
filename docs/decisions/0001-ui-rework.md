@@ -2,7 +2,7 @@
 
 - Date: 2026-10-04
 - Status: approved by the user
-- Superseded in part: items 1 (tokens), 2 (correct and wrong states) and W14 (review reveal) are replaced by [0003 Buku Poster](0003-buku-poster.md). Item 4 (app icon) stays in force.
+- Superseded in part: items 1 (tokens), 2 (correct and wrong states), 4 (app icon) and W14 (review reveal) are replaced by [0003 Buku Poster](0003-buku-poster.md).
 - Approved prototype: commit `bf8eac8` (`prototype/`, `docs/design/prototype-review.md`, `docs/design/screens/`)
 - Applies to: Task 10 (design system), Tasks 11–15 (features)
 
