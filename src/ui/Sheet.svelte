@@ -304,7 +304,9 @@
 
   @media (min-width: 48rem) {
     .sheet {
-      inset: 0;
+      inset: 0 calc(var(--book-right) + var(--space-4)) 0
+        calc(var(--book-left) + var(--space-4));
+      width: auto;
       margin: auto;
       height: fit-content;
       border: var(--border);

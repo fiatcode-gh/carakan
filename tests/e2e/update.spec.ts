@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { kajRulesetId } from "../../src/engine/index.ts";
 import { gotoRoute, tokenColor } from "./support/app.ts";
+import { frameBox, isWide } from "./support/book.ts";
 import { expect, test, trackForeignRequests } from "./support/fixtures.ts";
 import { advanceToQuestion, id } from "./support/lesson.ts";
 import { createSolver, type Solver } from "./support/solver.ts";
@@ -126,10 +127,21 @@ test("an update never interrupts a lesson, is offered on the ladder, can wait, a
       .getByRole("button", { name: id["updateLaterButton"]! })
       .evaluate((el) => getComputedStyle(el).color),
   ).toBe(await tokenColor(page, "--color-on-ink"));
-  const nav = page.locator("nav:visible").first();
-  expect(
-    (await bar.boundingBox())!.y + (await bar.boundingBox())!.height,
-  ).toBeLessThanOrEqual((await nav.boundingBox())!.y);
+  const box = (await bar.boundingBox())!;
+  if (isWide(page)) {
+    const frame = await frameBox(page);
+    expect(box.x).toBeGreaterThanOrEqual(frame.x);
+    expect(box.x + box.width).toBeLessThanOrEqual(frame.x + frame.width);
+    expect(
+      Math.abs(box.x + box.width / 2 - (frame.x + frame.width / 2)),
+    ).toBeLessThanOrEqual(1);
+    expect(box.y + box.height).toBeLessThanOrEqual(frame.y + frame.height);
+  } else {
+    const nav = page.locator("nav:visible").first();
+    expect(box.y + box.height).toBeLessThanOrEqual(
+      (await nav.boundingBox())!.y,
+    );
+  }
   await expect(
     page.getByRole("status").filter({ has: banner(page) }),
   ).toBeVisible();

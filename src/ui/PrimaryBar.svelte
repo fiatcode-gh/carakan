@@ -53,6 +53,12 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  @media (min-width: 48rem) {
+    .bar {
+      bottom: calc(var(--desk-block) + var(--border-width));
+    }
+  }
+
   .bar--split {
     grid-template-columns: 1fr 2fr;
   }

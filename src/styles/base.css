@@ -12,6 +12,14 @@
   box-sizing: border-box;
 }
 
+:root {
+  --paper-rules: repeating-linear-gradient(
+    to bottom,
+    transparent 0 calc(var(--rule-gap) - 1px),
+    var(--color-rule) calc(var(--rule-gap) - 1px) var(--rule-gap)
+  );
+}
+
 html {
   color-scheme: light;
   -webkit-text-size-adjust: 100%;
@@ -31,11 +39,7 @@ body {
   font-weight: var(--weight-bold);
   line-height: var(--leading-body);
   background-color: var(--color-paper);
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0 calc(var(--rule-gap) - 1px),
-    var(--color-rule) calc(var(--rule-gap) - 1px) var(--rule-gap)
-  );
+  background-image: var(--paper-rules);
 }
 
 h1,
@@ -238,9 +242,70 @@ body[data-chrome="tabs"] .page {
   padding-bottom: calc(var(--nav-height) + var(--space-9));
 }
 
-@media (min-width: 60rem) {
+/* Wide: the page is a book lying on a desk (src/app/Desk.svelte). The desk
+   geometry is declared here; `100%` resolves where it is used: margins of the
+   in-flow book (desk width), insets of fixed elements and dialogs (viewport).
+   Use it only in margin-inline, left, right and inset, never in a width. */
+@media (min-width: 48rem) {
+  :root {
+    --desk-block: var(--space-4);
+    --desk-inline: var(--space-4);
+    --book-left: var(--desk-inline);
+    --book-right: var(--desk-tabs);
+    --book-centre: calc(
+      var(--book-left) + (100% - var(--book-left) - var(--book-right)) / 2
+    );
+  }
+
+  html {
+    scroll-padding-block: calc(var(--desk-block) + var(--border-width));
+  }
+
+  body {
+    background-color: var(--color-neutral);
+    background-image: none;
+  }
+
   body[data-chrome="tabs"] .page {
     padding-bottom: var(--space-9);
+  }
+
+  /* The book draws the margin line on every page. */
+  .page--margin {
+    padding-inline-start: var(--gutter);
+  }
+
+  .page--margin::before {
+    display: none;
+  }
+}
+
+@media (min-width: 64rem) {
+  :root {
+    --desk-block: var(--space-6);
+    --desk-inline: var(--space-6);
+    --book-left: calc(
+      (
+          100% -
+            min(
+              100% - var(--desk-wordmark) - var(--desk-tabs),
+              var(--book-max)
+            ) +
+            var(--desk-wordmark) - var(--desk-tabs)
+        ) /
+        2
+    );
+    --book-right: calc(
+      (
+          100% -
+            min(
+              100% - var(--desk-wordmark) - var(--desk-tabs),
+              var(--book-max)
+            ) -
+            var(--desk-wordmark) + var(--desk-tabs)
+        ) /
+        2
+    );
   }
 }
 

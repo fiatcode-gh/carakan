@@ -94,9 +94,17 @@
     bottom: var(--space-5);
   }
 
-  @media (min-width: 60rem) {
+  @media (min-width: 48rem) {
+    .update {
+      left: var(--book-centre);
+    }
+
     :global(body[data-chrome="tabs"]) .update {
-      bottom: var(--space-6);
+      bottom: calc(var(--desk-block) + var(--space-6));
+    }
+
+    :global(body[data-chrome="none"]) .update {
+      bottom: calc(var(--desk-block) + var(--space-5));
     }
   }
 </style>

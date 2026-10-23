@@ -3,6 +3,7 @@
   import { setI18n } from "../l10n/context.ts";
   import StateView from "../ui/StateView.svelte";
   import AppReady from "./AppReady.svelte";
+  import Desk from "./Desk.svelte";
   import UpdateBanner from "./UpdateBanner.svelte";
   import type { BootResult, LocaleRuntime } from "./bootstrap.ts";
 
@@ -52,27 +53,29 @@
   });
 </script>
 
-{#if phase.kind === "ready"}
-  <AppReady services={phase.services} />
-{:else if phase.kind === "loading"}
-  <StateView kind="loading" title={$t("loadingLabel")} page />
-{:else if phase.kind === "content-error"}
-  <StateView
-    kind="error"
-    title={$t("loadErrorTitle")}
-    actionLabel={$t("retryButton")}
-    onaction={start}
-    page
-  />
-{:else}
-  <StateView
-    kind="error"
-    title={$t("storageErrorTitle")}
-    icon="hard-drive"
-    actionLabel={$t("retryButton")}
-    onaction={start}
-    page
-  />
-{/if}
+<Desk>
+  {#if phase.kind === "ready"}
+    <AppReady services={phase.services} />
+  {:else if phase.kind === "loading"}
+    <StateView kind="loading" title={$t("loadingLabel")} page />
+  {:else if phase.kind === "content-error"}
+    <StateView
+      kind="error"
+      title={$t("loadErrorTitle")}
+      actionLabel={$t("retryButton")}
+      onaction={start}
+      page
+    />
+  {:else}
+    <StateView
+      kind="error"
+      title={$t("storageErrorTitle")}
+      icon="hard-drive"
+      actionLabel={$t("retryButton")}
+      onaction={start}
+      page
+    />
+  {/if}
+</Desk>
 
 <UpdateBanner />

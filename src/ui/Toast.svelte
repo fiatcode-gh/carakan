@@ -52,9 +52,17 @@
     bottom: var(--space-5);
   }
 
-  @media (min-width: 60rem) {
+  @media (min-width: 48rem) {
+    .toast {
+      left: var(--book-centre);
+    }
+
     :global(body[data-chrome="tabs"]) .toast {
-      bottom: var(--space-6);
+      bottom: calc(var(--desk-block) + var(--space-6));
+    }
+
+    :global(body[data-chrome="none"]) .toast {
+      bottom: calc(var(--desk-block) + var(--space-5));
     }
   }
 </style>

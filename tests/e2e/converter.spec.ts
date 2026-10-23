@@ -389,7 +389,12 @@ function clustersOf(latin: string) {
   return result;
 }
 
-/** Taps the centre of a glyph range on the real touch path; never the hit buttons. */
+/**
+ * Taps the centre of a glyph range on the real pointer path; never the hit
+ * buttons. A touch context taps; a mouse context (tablet and desktop projects)
+ * clicks, because `touchscreen.tap` needs `hasTouch`. The wrapper's `onclick`
+ * handles both.
+ */
 async function tapRange(page: Page, start: number, end: number): Promise<void> {
   const point = await page.locator(".cluster-result .aksara").evaluate(
     (el, [s, e]) => {
@@ -406,7 +411,9 @@ async function tapRange(page: Page, start: number, end: number): Promise<void> {
     },
     [start, end],
   );
-  await page.touchscreen.tap(point.x, point.y);
+  if (await page.evaluate(() => navigator.maxTouchPoints > 0))
+    await page.touchscreen.tap(point.x, point.y);
+  else await page.mouse.click(point.x, point.y);
 }
 
 async function tapCluster(
