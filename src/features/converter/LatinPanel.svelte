@@ -24,7 +24,7 @@
   import SoundButton from "../../ui/SoundButton.svelte";
   import ResultCard from "./ResultCard.svelte";
   import { markSpans } from "./source-echo.ts";
-  import { eLetters } from "./bare-e.ts";
+  import { bareEChoices, eLetters, writeE, type EReading } from "./bare-e.ts";
   import { insertAtCursor, trackCaret } from "./insert-at-cursor.ts";
 
   let { oncopied }: { oncopied: () => void } = $props();
@@ -38,6 +38,7 @@
   let value = $state("");
   let chartLocation = $state<ChartLocation | null>(null);
   let element = $state<HTMLInputElement | HTMLTextAreaElement>();
+  let resultElement = $state<HTMLElement>();
   // Null until the field has had a caret: a key then appends (as the picker).
   let caret: number | null = null;
 
@@ -45,6 +46,7 @@
     { reading: "taling", labelKey: "latinKeyTaling", nameKey: "eTalingName" },
     { reading: "pepet", labelKey: "latinKeyPepet", nameKey: "ePepetName" },
   ] as const;
+  const eReadings = ["pepet", "taling"] as const;
 
   $effect(() => {
     const field = element;
@@ -104,6 +106,14 @@
     caret = end;
   }
 
+  async function chooseE(index: number, reading: EReading): Promise<void> {
+    const leading = value.length - value.trimStart().length;
+    value = writeE(value, leading + index, reading);
+    converter.input(value);
+    await tick();
+    resultElement?.querySelector("button")?.focus();
+  }
+
   function openChart(id: string): void {
     chartLocation = findChartEntry(
       buildChartTabs({
@@ -159,7 +169,7 @@
     {/if}
   </div>
 
-  <div class="panel__result">
+  <div class="panel__result" bind:this={resultElement}>
     {#if $result.kind === "error"}
       {@const parts = splitAtIndex(value.trim(), $result.index)}
       <ErrorNotice message={$result.message}>
@@ -168,6 +178,34 @@
             >{/if}{parts.after}
         {/snippet}
       </ErrorNotice>
+    {:else if $result.kind === "bareE"}
+      <ResultCard label={$t("ambiguousTitle")}>
+        <ul class="e-choices">
+          {#each bareEChoices($result.input, $result.bareE) as choice (choice.index)}
+            <li class="e-choice">
+              <span class="e-choice__word latin"
+                >{choice.before}<mark>{choice.marked}</mark>{choice.after}</span
+              >
+              <span class="e-choice__options">
+                {#each eReadings as reading (reading)}
+                  <button
+                    type="button"
+                    class="e-option press"
+                    aria-label={$t(
+                      reading === "pepet" ? "eChoicePepet" : "eChoiceTaling",
+                      { position: choice.position, word: choice.word },
+                    )}
+                    onclick={() => void chooseE(choice.index, reading)}
+                  >
+                    <span class="e-option__letter">{eLetters[reading]}</span>
+                    {$t(reading === "pepet" ? "ePepetName" : "eTalingName")}
+                  </button>
+                {/each}
+              </span>
+            </li>
+          {/each}
+        </ul>
+      </ResultCard>
     {:else if $result.kind === "ambiguous"}
       <ResultCard label={$t(ambiguityTitleKey($result.reason))}>
         <div class="chips">
@@ -255,7 +293,8 @@
     gap: var(--space-3);
   }
 
-  .accent-key {
+  .accent-key,
+  .e-option {
     display: inline-flex;
     align-items: baseline;
     gap: var(--space-2);
@@ -268,7 +307,8 @@
     font-family: var(--font-latin);
   }
 
-  .accent-key__letter {
+  .accent-key__letter,
+  .e-option__letter {
     font-size: var(--text-xl);
     font-weight: var(--weight-black);
   }
@@ -279,6 +319,32 @@
   }
 
   .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .e-choices {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .e-choice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .e-choice__word {
+    font-size: var(--text-lg);
+    overflow-wrap: anywhere;
+  }
+
+  .e-choice__options {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-3);
@@ -298,7 +364,8 @@
     color: var(--color-ink-muted);
   }
 
-  .source-echo mark {
+  .source-echo mark,
+  .e-choice__word mark {
     padding-inline: 2px;
     background: var(--color-butter);
     color: var(--color-ink);

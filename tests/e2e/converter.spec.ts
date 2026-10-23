@@ -67,6 +67,20 @@ async function pickGlyph(page: Page, label: string): Promise<void> {
 const outputOf = (page: Page): Locator =>
   page.getByRole("region", { name: id["outputLabel"]! });
 
+const eChoice = (
+  page: Page,
+  reading: "pepet" | "taling",
+  word: string,
+  position: number,
+): Locator =>
+  page.getByRole("button", {
+    name: fmt(id[reading === "pepet" ? "eChoicePepet" : "eChoiceTaling"]!, {
+      word,
+      position: String(position),
+    }),
+    exact: true,
+  });
+
 test("[P-U01] the info button opens settings", async ({ page }) => {
   await gotoRoute(page, "#/converter");
   await page.getByRole("link", { name: id["aboutTitle"]! }).click();
@@ -129,24 +143,73 @@ test("[P-U02] switching direction clears input and output", async ({
   await expect(outputOf(page)).toHaveCount(0);
 });
 
-test("[P-U04] an ambiguous word shows two chips; choosing one shows it", async ({
+test("[P-U04] each plain e gets its own pepet/taling choice", async ({
   page,
 }) => {
   await gotoRoute(page, "#/converter");
-  await latinInput(page).fill("prelu");
-  const result = toAksara("prelu");
-  if (result.kind !== "ambiguous") throw new Error("prelu must be ambiguous");
+  await latinInput(page).fill("seneng kowe");
   const card = page.getByRole("region", { name: id["ambiguousTitle"]! });
-  const chips = card.getByRole("button");
-  await expect(chips).toHaveCount(2);
-  await expect(card.getByRole("button", { pressed: true })).toHaveCount(0);
+  await expect(card.getByRole("listitem")).toHaveCount(3);
+  await expect(card.getByRole("button")).toHaveCount(6);
+  await expect(outputOf(page)).toHaveCount(0);
   await settle(page);
   await shoot(page, "ambiguous");
-  await chips.nth(1).click();
+  await expectAccessible(page);
+  await expectTouchTargets(page);
+
+  await eChoice(page, "pepet", "seneng", 2).click();
+  await expect(latinInput(page)).toHaveValue("sêneng kowe");
+  await expect(eChoice(page, "pepet", "sêneng", 4)).toBeFocused();
+
+  await eChoice(page, "taling", "sêneng", 4).click();
+  await eChoice(page, "taling", "kowe", 4).click();
+  await expect(latinInput(page)).toHaveValue("sênéng kowé");
   await expect(outputOf(page).locator(".aksara")).toHaveText(
-    result.candidates[1]!.output,
+    successOutput("sênéng kowé"),
   );
-  await expect(card).toHaveCount(0);
+});
+
+test("[P-U04] choosing pepet in a cluster writes keret", async ({ page }) => {
+  await gotoRoute(page, "#/converter");
+  await latinInput(page).fill("prelu");
+  await eChoice(page, "pepet", "prelu", 3).click();
+  await expect(latinInput(page)).toHaveValue("prêlu");
+  const old = toAksara("prelu");
+  if (old.kind !== "ambiguous") throw new Error("prelu must be ambiguous");
+  expect(successOutput("prêlu")).toBe(old.candidates[0]!.output);
+  await expect(outputOf(page).locator(".aksara")).toHaveText(
+    successOutput("prêlu"),
+  );
+});
+
+test("[P-U04] a typed mix converts at once", async ({ page }) => {
+  await gotoRoute(page, "#/converter");
+  await latinInput(page).fill("émpêk");
+  await expect(outputOf(page).locator(".aksara")).toHaveText(
+    successOutput("émpêk"),
+  );
+  await expect(
+    page.getByRole("region", { name: id["ambiguousTitle"]! }),
+  ).toHaveCount(0);
+});
+
+test("[P-U04] edits elsewhere keep a choice", async ({ page }) => {
+  await gotoRoute(page, "#/converter");
+  await latinInput(page).fill("seneng");
+  await eChoice(page, "taling", "seneng", 2).click();
+  await expect(latinInput(page)).toHaveValue("séneng");
+  await latinInput(page).press("End");
+  await latinInput(page).pressSequentially(" kowe");
+  await expect(eChoice(page, "pepet", "séneng", 4)).toBeVisible();
+  await expect(eChoice(page, "pepet", "kowe", 4)).toBeVisible();
+  await expect(latinInput(page)).toHaveValue(/^sé/);
+});
+
+test("[P-U04] leading spaces do not shift the choice", async ({ page }) => {
+  await gotoRoute(page, "#/converter");
+  await latinInput(page).fill("  prelu");
+  await eChoice(page, "taling", "prelu", 3).click();
+  await expect(latinInput(page)).toHaveValue("  prélu");
 });
 
 test("[P-U05] [P-U09] an unknown character shows the localized message, never the engine text, and marks it", async ({
@@ -797,20 +860,20 @@ test.describe("[P-U10] tap an aksara to see where it came from", () => {
     );
   });
 
-  test("an ambiguous word has no hit buttons until a chip is chosen", async ({
+  test("an ambiguous word has no hit buttons until every e is chosen", async ({
     page,
   }) => {
     await gotoRoute(page, "#/converter");
     await latinInput(page).fill("prelu");
-    const result = toAksara("prelu");
-    if (result.kind !== "ambiguous") throw new Error("prelu must be ambiguous");
+    const result = toAksara("prélu");
+    if (result.kind !== "success") throw new Error("prélu must convert");
     const card = page.getByRole("region", { name: id["ambiguousTitle"]! });
     await expect(card.locator(".cluster-result__hit")).toHaveCount(0);
-    await card.getByRole("button").nth(1).click();
+    await eChoice(page, "taling", "prelu", 3).click();
     await expect(page.locator(".cluster-result__hit")).toHaveCount(
-      result.candidates[1]!.clusters.length,
+      result.clusters.length,
     );
-    const { start, end } = result.candidates[1]!.clusters[0]!.output;
+    const { start, end } = result.clusters[0]!.output;
     await tapRange(page, start, end);
     await expect(breakdown(page)).toBeVisible();
   });

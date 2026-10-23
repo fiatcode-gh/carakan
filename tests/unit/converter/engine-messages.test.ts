@@ -232,7 +232,7 @@ describe("ambiguityTitleKey", () => {
       "ambiguousTitleVowelPair",
     );
     expect(ambiguityTitleKey(reasonOf("rame sinau", pedomanRulesetId))).toBe(
-      "ambiguousTitleMixed",
+      "ambiguousTitle",
     );
   });
 

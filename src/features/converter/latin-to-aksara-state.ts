@@ -2,6 +2,7 @@ import { get, writable, type Readable } from "svelte/store";
 import {
   toAksara,
   type AksaraCluster,
+  type BareE,
   type RulesetId,
   type ToAksaraSuccess,
 } from "../../engine/index.ts";
@@ -20,6 +21,13 @@ export type LatinToAksaraState =
       selected: number | null;
     }
   | {
+      /** Plain e's left: the page asks for each one. */
+      kind: "bareE";
+      input: string;
+      bareE: readonly BareE[];
+    }
+  | {
+      /** Only Pedoman `ai`/`au` is ambiguous. */
       kind: "ambiguous";
       input: string;
       candidates: readonly ToAksaraSuccess[];
@@ -55,12 +63,20 @@ export class LatinToAksaraConverter {
         });
         break;
       case "ambiguous":
-        this.#state.set({
-          kind: "ambiguous",
-          input: trimmed,
-          candidates: result.candidates,
-          reason: result.reason,
-        });
+        if (result.bareE.length > 0) {
+          this.#state.set({
+            kind: "bareE",
+            input: trimmed,
+            bareE: result.bareE,
+          });
+        } else {
+          this.#state.set({
+            kind: "ambiguous",
+            input: trimmed,
+            candidates: result.candidates,
+            reason: result.reason,
+          });
+        }
         break;
       case "error":
         this.#state.set({

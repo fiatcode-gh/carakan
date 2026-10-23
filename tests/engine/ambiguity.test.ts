@@ -1,12 +1,16 @@
 import { describe, expect, test } from "vitest";
-import type { ConvertResult } from "../../src/engine/convert-result.ts";
+import type {
+  ConvertResult,
+  ToAksaraResult,
+} from "../../src/engine/convert-result.ts";
+import { pedomanRulesetId } from "../../src/engine/index.ts";
 import { latinToAksara } from "../../src/engine/latin-to-aksara.ts";
 import { ak } from "./support/aksara-builder.ts";
 
 describe("[P-D01] ambiguity", () => {
   const c = (input: string) => latinToAksara(input, false);
 
-  function ambiguous(r: ConvertResult) {
+  function ambiguous(r: ToAksaraResult) {
     expect(r.kind).toBe("ambiguous");
     if (r.kind !== "ambiguous") throw new Error("expected ConvertAmbiguous");
     return r;
@@ -52,8 +56,28 @@ describe("[P-D01] ambiguity", () => {
   });
 
   test("all bare-e occurrences in one word substitute uniformly", () => {
-    // Documented v1 rule: two candidates, not 2^n. Mixed pepet/taling
-    // readings inside one word are rare; the corpus phase can revisit.
+    // Engine candidates stay two whole-input readings, not 2^n; the UI
+    // resolves each e through `bareE`.
     expect(ambiguous(c("lesehan")).candidates.length).toBe(2);
+  });
+
+  test("[P-D01] ambiguity lists every plain e with its word", () => {
+    expect(ambiguous(c("seneng kowe")).bareE).toEqual([
+      { index: 1, word: { start: 0, end: 6 } },
+      { index: 3, word: { start: 0, end: 6 } },
+      { index: 10, word: { start: 7, end: 11 } },
+    ]);
+    expect(ambiguous(c("prelu")).bareE).toEqual([
+      { index: 2, word: { start: 0, end: 5 } },
+    ]);
+  });
+
+  test("[P-D01] ai/au alone leaves bareE empty", () => {
+    expect(
+      ambiguous(latinToAksara("sinau", false, pedomanRulesetId)).bareE,
+    ).toEqual([]);
+    expect(
+      ambiguous(latinToAksara("rame sinau", false, pedomanRulesetId)).bareE,
+    ).toHaveLength(1);
   });
 });

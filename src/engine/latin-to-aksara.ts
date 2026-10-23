@@ -2,6 +2,7 @@ import { ClusterWriter } from "./aksara-clusters.ts";
 import { angkaDigitToChar, angkaFlanker } from "./angka.ts";
 import { javaneseChar } from "./codepoints.ts";
 import type {
+  BareE,
   TextSpan,
   ToAksaraAmbiguous,
   ToAksaraResult,
@@ -91,7 +92,7 @@ export function latinToAksara(
     // Phase 1: tokenize every word so lexical errors surface before any
     // ambiguity handling.
     const tokenized: Item[] = [];
-    let bareE = false;
+    const bareE: BareE[] = [];
     let vowelPair = false;
     for (const chunk of chunks) {
       if (chunk.kind === "word") {
@@ -101,7 +102,17 @@ export function latinToAksara(
               ? checkPedomanTokens(tokenize(chunk.text))
               : tokenize(chunk.text);
           tokenized.push({ tokens, start: chunk.start });
-          if (tokens.some((t) => t.vowel === "eBare")) bareE = true;
+          for (const t of tokens) {
+            if (t.vowel === "eBare") {
+              bareE.push({
+                index: chunk.start + t.sourceIndex,
+                word: {
+                  start: chunk.start,
+                  end: chunk.start + chunk.text.length,
+                },
+              });
+            }
+          }
           if (
             ruleset === pedomanRulesetId &&
             tokens.some((t) => t.vowel === "ai" || t.vowel === "au")
@@ -124,7 +135,7 @@ export function latinToAksara(
       }
     }
 
-    if (bareE || vowelPair) {
+    if (bareE.length > 0 || vowelPair) {
       return ambiguous(input, tokenized, useMurda, bareE, vowelPair, ruleset);
     }
 
@@ -384,12 +395,13 @@ function ambiguous(
   input: string,
   tokenized: readonly Item[],
   useMurda: boolean,
-  bareE: boolean,
+  bareE: readonly BareE[],
   vowelPair: boolean,
   ruleset: RulesetId,
 ): ToAksaraAmbiguous {
   const candidates: ToAksaraSuccess[] = [];
-  const eReadings: (Vowel | null)[] = bareE ? ["ePepet", "eTaling"] : [null];
+  const hasBareE = bareE.length > 0;
+  const eReadings: (Vowel | null)[] = hasBareE ? ["ePepet", "eTaling"] : [null];
   const pairReadings: (VowelPairReading | null)[] = vowelPair
     ? ["ha", "swara"]
     : [null];
@@ -403,17 +415,19 @@ function ambiguous(
       kind: "ambiguous",
       input,
       candidates,
+      bareE,
       reason:
         'Bare "e" is pepet (ě) or taling (é) — PUJL does not mark ' +
         "the difference (KAJ I Daftar Transliterasi). Choose a reading, " +
         "or type ě/ê/é/è.",
     };
   }
-  if (!bareE) {
+  if (!hasBareE) {
     return {
       kind: "ambiguous",
       input,
       candidates,
+      bareE,
       reason:
         '"ai"/"au" is two aksara in Pedoman 2002: ha between the vowels or a swara letter. Choose a reading, or type the h (sinahu).',
     };
@@ -422,6 +436,7 @@ function ambiguous(
     kind: "ambiguous",
     input,
     candidates,
+    bareE,
     reason:
       'Bare "e" is pepet (ě) or taling (é), and "ai"/"au" is two aksara in Pedoman 2002 (ha or a swara letter). Choose a reading.',
   };

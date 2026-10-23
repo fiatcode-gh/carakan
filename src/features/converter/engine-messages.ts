@@ -130,8 +130,6 @@ export function ambiguityTitleKey(reason: string): MessageKey {
   switch (localizeEngineMessage(reason).key) {
     case "engineAmbiguousVowelPair":
       return "ambiguousTitleVowelPair";
-    case "engineAmbiguousBareEAndVowelPair":
-      return "ambiguousTitleMixed";
     default:
       return "ambiguousTitle";
   }
