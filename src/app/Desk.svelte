@@ -109,4 +109,16 @@
       line-height: 1;
     }
   }
+
+  /* A worksheet has no margin line and no wordmark. */
+  @media (min-width: 48rem) {
+    :global(body[data-layout="worksheet"]) .book {
+      padding-inline-start: var(--border-width);
+    }
+
+    :global(body[data-layout="worksheet"]) .book::before,
+    :global(body[data-layout="worksheet"]) .desk__wordmark {
+      display: none;
+    }
+  }
 </style>

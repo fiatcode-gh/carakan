@@ -9,7 +9,7 @@
   import TracePage from "../features/tracing/TracePage.svelte";
   import AppShell from "./AppShell.svelte";
   import RulesetScope from "./RulesetScope.svelte";
-  import { route, tabOf } from "./router.ts";
+  import { isActivityRoute, route, tabOf } from "./router.ts";
   import { setServices, type Services } from "./services.ts";
   import type { TabId } from "./router.ts";
 
@@ -31,6 +31,9 @@
 
   $effect(() => {
     document.body.dataset["chrome"] = covered ? "none" : "tabs";
+    document.body.dataset["layout"] = isActivityRoute($route)
+      ? "worksheet"
+      : "book";
   });
 
   /** The visible page's `<main>`; hash links are the router's, so no `#main`. */

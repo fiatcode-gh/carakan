@@ -13,6 +13,7 @@
 }
 
 :root {
+  --screen-min-height: 100dvh;
   --paper-rules: repeating-linear-gradient(
     to bottom,
     transparent 0 calc(var(--rule-gap) - 1px),
@@ -255,6 +256,20 @@ body[data-chrome="tabs"] .page {
     --book-centre: calc(
       var(--book-left) + (100% - var(--book-left) - var(--book-right)) / 2
     );
+    --screen-min-height: calc(
+      100dvh - 2 * var(--desk-block) - 2 * var(--border-width)
+    );
+  }
+
+  body[data-layout="worksheet"] {
+    --book-left: calc(
+      (100% - min(100% - 2 * var(--desk-inline), var(--worksheet-max))) / 2
+    );
+    --book-right: var(--book-left);
+  }
+
+  body[data-layout="worksheet"] .page {
+    max-width: none;
   }
 
   html {

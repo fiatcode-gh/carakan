@@ -1,13 +1,15 @@
-import type { Locator } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import {
   auditRoutes,
   href,
+  isActivityRoute,
   isTabRoot,
   tabIds,
   tabOf,
 } from "../../src/app/router.ts";
 import { SRS_ITEMS } from "../../src/core/db/schema.ts";
+import { kajRulesetId } from "../../src/engine/index.ts";
 import { expectNoHorizontalOverflow, settle } from "./support/a11y.ts";
 import { gotoRoute, tokenColor } from "./support/app.ts";
 import {
@@ -18,7 +20,8 @@ import {
   WIDE_MIN_PX,
 } from "./support/book.ts";
 import { expect, test } from "./support/fixtures.ts";
-import { writeRows } from "./support/lesson.ts";
+import { advanceToQuestion, writeRows } from "./support/lesson.ts";
+import { createSolver } from "./support/solver.ts";
 
 const id = JSON.parse(readFileSync("src/l10n/id.json", "utf8")) as Record<
   string,
@@ -27,6 +30,9 @@ const id = JSON.parse(readFileSync("src/l10n/id.json", "utf8")) as Record<
 
 const CONTENT_MAX_PX = 40 * 16;
 const CONTENT_WIDE_PX = 64 * 16;
+const WORKSHEET_PX = 46 * 16;
+
+const solver = await createSolver(kajRulesetId);
 
 const reviewSeed = () => {
   const now = Date.now();
@@ -94,9 +100,13 @@ for (const route of auditRoutes) {
       });
     const viewport = page.viewportSize()!.width;
     const wideRoot = viewport >= WIDE_MIN_PX && isTabRoot(route);
-    expect(inner).toBeLessThanOrEqual(
-      (wideRoot ? CONTENT_WIDE_PX : CONTENT_MAX_PX) + 1,
-    );
+    const bound =
+      viewport >= WIDE_MIN_PX && isActivityRoute(route)
+        ? WORKSHEET_PX
+        : wideRoot
+          ? CONTENT_WIDE_PX
+          : CONTENT_MAX_PX;
+    expect(inner).toBeLessThanOrEqual(bound + 1);
     if (viewport >= DESKTOP_MIN_PX && isTabRoot(route)) {
       expect(inner).toBeGreaterThan(CONTENT_MAX_PX);
     }
@@ -309,6 +319,103 @@ test("[P-A11Y] a toast sits inside the book", async ({ page }) => {
   ).toBeLessThanOrEqual(1);
   expect(box.y + box.height).toBeLessThanOrEqual(frame.y + frame.height);
 });
+
+type Screen = {
+  name: string;
+  open: (page: Page) => Promise<void>;
+  /** Fits the window without scrolling (trace joins in task 04). */
+  noScroll: boolean;
+  bar: boolean;
+  traceBand: boolean;
+};
+
+const WORKSHEET_SCREENS: Screen[] = [
+  {
+    name: "lesson meet",
+    open: async (page) => {
+      await gotoRoute(page, "#/lesson/g1");
+      await expect(page.locator(".meet")).toBeVisible();
+    },
+    noScroll: true,
+    bar: true,
+    traceBand: false,
+  },
+  {
+    name: "trace",
+    open: async (page) => {
+      await gotoRoute(page, "#/trace/pa");
+      await expect(page.locator(".trace-pad[data-font-size]")).toBeVisible();
+    },
+    noScroll: false,
+    bar: true,
+    traceBand: true,
+  },
+  {
+    name: "review quiz empty state",
+    open: async (page) => {
+      await gotoRoute(page, "#/review/quiz");
+      await expect(page.locator(".quiz-end")).toBeVisible();
+    },
+    noScroll: true,
+    bar: true,
+    traceBand: false,
+  },
+  {
+    name: "lesson quiz",
+    open: async (page) => {
+      await gotoRoute(page, "#/lesson/g1");
+      await advanceToQuestion(page, solver);
+      await expect(page.locator(".quiz")).toBeVisible();
+    },
+    noScroll: true,
+    bar: false,
+    traceBand: false,
+  },
+];
+
+for (const screen of WORKSHEET_SCREENS) {
+  test(`[P-A11Y] activity pages are a worksheet: centred, no tabs, the page filled, the bar on its bottom edge (${screen.name})`, async ({
+    page,
+  }) => {
+    test.skip(!isWide(page), "phones have no worksheet");
+    await screen.open(page);
+    await settle(page);
+    const f = await frameBox(page);
+    const vw = page.viewportSize()!.width;
+    expect(Math.abs(f.x - (vw - f.x - f.width))).toBeLessThanOrEqual(1);
+    expect(f.width).toBeLessThanOrEqual(WORKSHEET_PX + 0.5);
+    await expect(page.getByRole("navigation")).toHaveCount(0);
+    await expect(page.locator(".desk__wordmark")).toBeHidden();
+    const marginLine = await page
+      .locator(".book")
+      .evaluate((book) => getComputedStyle(book, "::before").display);
+    expect(marginLine).toBe("none");
+    if (screen.noScroll) {
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollHeight - window.innerHeight,
+      );
+      expect(overflow).toBeLessThanOrEqual(0);
+    }
+    if (screen.bar) {
+      const bar = (await page.locator(".bar:visible").boundingBox())!;
+      expect(Math.abs(bar.x - (f.x + 2))).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs(bar.x + bar.width - (f.x + f.width - 2)),
+      ).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs(bar.y + bar.height - (f.y + f.height - 2)),
+      ).toBeLessThanOrEqual(1);
+    }
+    if (screen.traceBand) {
+      const head = (await page.locator(".trace__head").boundingBox())!;
+      expect(Math.abs(head.x - (f.x + 2))).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs(head.x + head.width - (f.x + f.width - 2)),
+      ).toBeLessThanOrEqual(1);
+      expect(Math.abs(head.y - (f.y + 2))).toBeLessThanOrEqual(1);
+    }
+  });
+}
 
 const SIZES = [
   { width: 768, height: 1024 },

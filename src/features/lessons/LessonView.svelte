@@ -238,7 +238,7 @@
   .lesson-done {
     display: flex;
     flex-direction: column;
-    min-height: 100dvh;
+    min-height: var(--screen-min-height);
     margin: calc(-1 * var(--space-4)) calc(-1 * var(--gutter))
       calc(-1 * var(--space-9));
   }
@@ -314,6 +314,13 @@
     margin: 6px var(--gutter) 0;
     padding: 0;
     min-height: 20rem;
+  }
+
+  @media (min-width: 48rem) {
+    /* The worksheet fills the page: the card grows down to the bar. */
+    .meet :global(.meet__card) {
+      flex-grow: 1;
+    }
   }
 
   .meet__tape {
