@@ -2,6 +2,7 @@
   import type { Snippet } from "svelte";
   import { getI18n } from "../l10n/context.ts";
   import IconButton from "./IconButton.svelte";
+  import { closesSheet, releaseVelocity, type Sample } from "./sheet-drag.ts";
 
   interface Props {
     title: string;
@@ -30,6 +31,7 @@
   let dialog: HTMLDialogElement;
   let heading: HTMLHeadingElement;
   let body: HTMLDivElement;
+  let zone: HTMLDivElement;
   // A scrolling region must be reachable by keyboard (WCAG 2.1.1).
   let scrolls = $state(false);
 
@@ -55,6 +57,97 @@
       if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
     };
   });
+
+  // Drag to close, on a phone: a pull on the grab handle or the head moves the
+  // sheet with the pointer; a long or fast enough pull closes it the way the
+  // close button does, any other release springs it back. The body is not part
+  // of the zone, so it scrolls as usual.
+  $effect(() => {
+    const centred = matchMedia("(min-width: 48rem)");
+    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+    let drag: { pointerId: number; startY: number; samples: Sample[] } | null =
+      null;
+    let distance = 0;
+    let closing = false;
+
+    const motion = () => {
+      const style = getComputedStyle(dialog);
+      return {
+        duration: parseFloat(style.getPropertyValue("--dur-fast")),
+        easing: style.getPropertyValue("--ease-out").trim(),
+      };
+    };
+
+    const slideAway = () => {
+      if (reducedMotion.matches) return dialog.close();
+      const to = `0 ${dialog.offsetHeight}px`;
+      const slide = dialog.animate(
+        { translate: [`0 ${distance}px`, to] },
+        { ...motion(), fill: "forwards" },
+      );
+      dialog.style.translate = to;
+      // Cancelled when the sheet unmounts first: nothing left to close.
+      slide.finished.then(
+        () => dialog.close(),
+        () => {},
+      );
+    };
+
+    const springBack = () => {
+      dialog.style.translate = "";
+      if (reducedMotion.matches || distance === 0) return;
+      dialog.animate({ translate: [`0 ${distance}px`, "0 0"] }, motion());
+    };
+
+    const start = (event: PointerEvent) => {
+      if (drag !== null || closing || centred.matches || !event.isPrimary) {
+        return;
+      }
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      if ((event.target as Element).closest("button, a, input")) return;
+      drag = {
+        pointerId: event.pointerId,
+        startY: event.clientY,
+        samples: [{ y: event.clientY, t: event.timeStamp }],
+      };
+      distance = 0;
+      try {
+        zone.setPointerCapture(event.pointerId);
+      } catch {
+        // A pointer that cannot be captured still reports to the zone it began on.
+      }
+    };
+
+    const move = (event: PointerEvent) => {
+      if (drag?.pointerId !== event.pointerId) return;
+      distance = Math.max(0, event.clientY - drag.startY);
+      dialog.style.translate = `0 ${distance}px`;
+      drag.samples.push({ y: event.clientY, t: event.timeStamp });
+    };
+
+    const end = (event: PointerEvent) => {
+      if (drag?.pointerId !== event.pointerId) return;
+      const velocity = releaseVelocity(drag.samples, event.timeStamp);
+      drag = null;
+      const close =
+        event.type === "pointerup" &&
+        closesSheet({ distance, height: dialog.offsetHeight, velocity });
+      if (close) closing = true;
+      if (close) slideAway();
+      else springBack();
+    };
+
+    zone.addEventListener("pointerdown", start);
+    zone.addEventListener("pointermove", move);
+    zone.addEventListener("pointerup", end);
+    zone.addEventListener("pointercancel", end);
+    return () => {
+      zone.removeEventListener("pointerdown", start);
+      zone.removeEventListener("pointermove", move);
+      zone.removeEventListener("pointerup", end);
+      zone.removeEventListener("pointercancel", end);
+    };
+  });
 </script>
 
 <dialog
@@ -64,26 +157,30 @@
   aria-describedby={describedby}
   {onclose}
 >
-  <span class="sheet__grab" aria-hidden="true"></span>
-  <div class={["sheet__head", titleStyle === "eyebrow" && "sheet__head--bare"]}>
-    <h2
-      class={[
-        "sheet__title",
-        titleStyle === "eyebrow"
-          ? "eyebrow sheet__title--eyebrow"
-          : "sheet__title--heading",
-      ]}
-      id={titleId}
-      tabindex="-1"
-      bind:this={heading}
+  <div class="sheet__top" data-sheet-drag bind:this={zone}>
+    <span class="sheet__grab" aria-hidden="true"></span>
+    <div
+      class={["sheet__head", titleStyle === "eyebrow" && "sheet__head--bare"]}
     >
-      {title}
-    </h2>
-    <IconButton
-      icon="x"
-      label={$t("closeButton")}
-      onclick={() => dialog.close()}
-    />
+      <h2
+        class={[
+          "sheet__title",
+          titleStyle === "eyebrow"
+            ? "eyebrow sheet__title--eyebrow"
+            : "sheet__title--heading",
+        ]}
+        id={titleId}
+        tabindex="-1"
+        bind:this={heading}
+      >
+        {title}
+      </h2>
+      <IconButton
+        icon="x"
+        label={$t("closeButton")}
+        onclick={() => dialog.close()}
+      />
+    </div>
   </div>
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
   <div
@@ -197,6 +294,14 @@
     border-top: var(--border);
   }
 
+  /* The bottom sheet of a phone is dragged by its top; the centred dialog is not. */
+  @media (max-width: 47.99rem) {
+    .sheet__top {
+      touch-action: none;
+      user-select: none;
+    }
+  }
+
   @media (min-width: 48rem) {
     .sheet {
       inset: 0;
@@ -204,6 +309,10 @@
       height: fit-content;
       border: var(--border);
       box-shadow: var(--shadow-hero);
+    }
+
+    .sheet__grab {
+      display: none;
     }
   }
 </style>

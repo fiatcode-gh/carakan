@@ -16,10 +16,13 @@ html {
   color-scheme: light;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* No pull-to-refresh (decision W03): a pull down is never the browser's. */
+  overscroll-behavior-y: contain;
 }
 
 body {
   margin: 0;
+  overscroll-behavior-y: contain;
   min-height: 100vh;
   min-height: 100dvh;
   color: var(--color-ink);
