@@ -30,6 +30,16 @@ export type ChartSectionId =
   | "vowelKiller"
   | "pasangan";
 
+/** Sections whose entries are read as a syllable: their detail sheet has a Dengar button. */
+const soundSections: ReadonlySet<ChartSectionId> = new Set([
+  "carakan",
+  "rekan",
+  "pasangan",
+]);
+export function sectionHasSound(id: ChartSectionId): boolean {
+  return soundSections.has(id);
+}
+
 export interface ChartEntry {
   readonly id: string;
   readonly name: string;

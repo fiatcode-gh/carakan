@@ -23,6 +23,7 @@ import {
   murdaVariant,
   pasanganString,
   rekanChar,
+  sectionHasSound,
   subjoinedForm,
   type ChartSection,
   type ChartSectionId,
@@ -360,6 +361,33 @@ describe("buildChartTabs per ruleset", () => {
   };
   const ids = (list: readonly ChartSection[], id: ChartSectionId) =>
     list.find((s) => s.id === id)?.entries.map((e) => e.id);
+
+  test("[P-S11] only carakan, rekan and pasangan sections have a sound button", async () => {
+    const seen = new Set<ChartSectionId>();
+    for (const rulesetId of [pedomanRulesetId, kajRulesetId]) {
+      for (const s of await sectionsOf(rulesetId)) {
+        seen.add(s.id);
+        expect(sectionHasSound(s.id), `${rulesetId} ${s.id}`).toBe(
+          ["carakan", "rekan", "pasangan"].includes(s.id),
+        );
+      }
+    }
+    expect([...seen].sort()).toEqual(
+      [
+        "carakan",
+        "murda",
+        "swara",
+        "rekan",
+        "angka",
+        "pada",
+        "vowelChanging",
+        "syllableClosing",
+        "consonantModifying",
+        "vowelKiller",
+        "pasangan",
+      ].sort(),
+    );
+  });
 
   test("[P-C08] a Pedoman view lists 7 murda, 7 swara and 5 rekan", async () => {
     const real = await sectionsOf(pedomanRulesetId);
