@@ -346,7 +346,7 @@ const WORKSHEET_SCREENS: Screen[] = [
       await gotoRoute(page, "#/trace/pa");
       await expect(page.locator(".trace-pad[data-font-size]")).toBeVisible();
     },
-    noScroll: false,
+    noScroll: true,
     bar: true,
     traceBand: true,
   },
