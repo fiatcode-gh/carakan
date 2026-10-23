@@ -33,6 +33,11 @@ export type ChartSectionId =
 export interface ChartEntry {
   readonly id: string;
   readonly name: string;
+  /**
+   * Shorter text for the tile's label strip when the name is too long for it;
+   * the name stays the accessible name. Absent: the strip shows the name.
+   */
+  readonly tileLabel?: string;
   readonly char: string;
   /** e.g. `ha / ha`, or `na / na — has murda`. */
   readonly subtitle: string;
@@ -322,6 +327,7 @@ export function buildChartTabs({
     entries: nglegena.map((a) => ({
       id: `${pasanganEntryPrefix}${a.id}`,
       name: strings.pasanganName(nameOf(a.id)),
+      tileLabel: nameOf(a.id),
       char: pasanganString(a.id),
       subtitle: `${a.latinPujl} / ${a.latinJgst}`,
       reading: a.latinPujl,

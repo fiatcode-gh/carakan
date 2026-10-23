@@ -27,6 +27,7 @@ import {
 } from "./support/a11y.ts";
 import { gotoRoute, seedLocale } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
+import { inkGaps } from "./support/ink.ts";
 
 type Catalog = Record<string, string>;
 
@@ -637,4 +638,92 @@ test("[P-B21] the English ha detail shows the English shape note", async ({
       })
       .locator(".head .shape-note"),
   ).toHaveText("ha is pa with one more leg.");
+});
+
+for (const width of [360, 390]) {
+  test.describe(`at ${width}px wide`, () => {
+    test.use({ viewport: { width, height: 755 } });
+
+    test("[P-C02] no label strip is cut short, on any tab", async ({
+      page,
+    }) => {
+      for (const t of tabs) {
+        await openTab(page, t.id);
+        await settle(page);
+        const cut = await page
+          .locator("#tab-chart .aksara-tile__strip")
+          .evaluateAll((strips) =>
+            strips
+              .filter((strip) =>
+                [strip, ...strip.querySelectorAll(".reading")].some(
+                  (el) => el.scrollWidth > el.clientWidth,
+                ),
+              )
+              .map((strip) => strip.textContent),
+          );
+        expect(cut, `${t.id} strips with clipped text`).toEqual([]);
+      }
+    });
+
+    test("[P-C02] the tiles of one row are as tall as each other, with their strips level", async ({
+      page,
+    }) => {
+      await openTab(page, "sandhangan");
+      await settle(page);
+      const rows = await page.locator("#tab-chart .grid").evaluateAll((grids) =>
+        grids.map((grid) => {
+          const byTop = new Map<number, string[]>();
+          for (const tile of grid.querySelectorAll(".aksara-tile")) {
+            const box = tile.getBoundingClientRect();
+            const strip = tile
+              .querySelector(".aksara-tile__strip")!
+              .getBoundingClientRect();
+            const row = Math.round(box.top);
+            byTop.set(row, [
+              ...(byTop.get(row) ?? []),
+              `${Math.round(box.height)}/${Math.round(strip.top - box.top)}`,
+            ]);
+          }
+          return [...byTop.values()];
+        }),
+      );
+      for (const row of rows.flat()) {
+        expect(new Set(row).size, row.join(" ")).toBe(1);
+      }
+    });
+  });
+}
+
+test("[P-C09] a pasangan label shows the base syllable; the tile is still named in full", async ({
+  page,
+}) => {
+  await openTab(page, "pasangan");
+  for (const letter of nglegena) {
+    const base = content.aksara.find((a) => a.id === letter.id)!.name;
+    const entry = page.locator(
+      `#tab-chart [data-entry="pasangan-${letter.id}"]`,
+    );
+    await expect(entry.locator(".aksara-tile__strip")).toHaveText(base);
+    await expect(entry).toHaveAccessibleName(
+      fmt(id["breakdownPasangan"]!, { name: base }),
+    );
+  }
+});
+
+test("[P-C09] no pasangan tail runs into the label strip or off the top of its tile", async ({
+  page,
+}) => {
+  await openTab(page, "pasangan");
+  await settle(page);
+  for (const letter of nglegena) {
+    const area = page.locator(
+      `#tab-chart [data-entry="pasangan-${letter.id}"] .aksara-tile__glyph`,
+    );
+    const gaps = await inkGaps(page, area);
+    expect(gaps, letter.id).not.toBeNull();
+    expect(gaps!.bottom, `${letter.id} below the ink`).toBeGreaterThanOrEqual(
+      4,
+    );
+    expect(gaps!.top, `${letter.id} above the ink`).toBeGreaterThanOrEqual(2);
+  }
 });

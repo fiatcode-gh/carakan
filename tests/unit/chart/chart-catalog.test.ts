@@ -182,10 +182,20 @@ describe("buildChartTabs", () => {
     expect(entries[0]).toEqual({
       id: "pasangan-ha",
       name: "pasangan ha",
+      tileLabel: "ha",
       char: pasanganString("ha"),
       subtitle: "ha / ha",
       reading: "ha",
     });
+    for (const e of entries)
+      expect(e.name, e.id).toBe(`pasangan ${e.tileLabel}`);
+    // Only the Pasangan tab shortens its label; every other entry keeps its name.
+    expect(
+      sections
+        .filter((s) => s.id !== "pasangan")
+        .flatMap((s) => s.entries)
+        .filter((e) => e.tileLabel !== undefined),
+    ).toEqual([]);
     for (const [i, a] of nglegena.entries()) {
       expect(entries[i]?.char).toBe(pasanganString(a.id));
       expect(entries[i]?.reading).toBe(a.latinPujl);

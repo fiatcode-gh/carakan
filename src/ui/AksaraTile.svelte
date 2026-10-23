@@ -7,22 +7,37 @@
   interface Props extends Omit<HTMLButtonAttributes, "children"> {
     /** Aksara string, built from engine or content data, never typed. */
     glyph: string;
-    /** Latin name on the label strip; the accessible name of the tile. */
+    /** Latin name; the accessible name of the tile, and the strip text unless `label` is set. */
     name: string;
+    /** A shorter text for the label strip; the tile is still named by `name`. */
+    label?: string;
     /** Unit colour of the label strip; null (no unit teaches it) is neutral. */
     accent: UnitAccent | null;
+    /** The glyph hangs deep below its baseline (pasangan): it gets room underneath. */
+    stacked?: boolean;
   }
 
-  /** Longer names (pasangan nya, pa cerek (rě)) get a smaller strip face to fit. */
+  /** Longer texts (pa cerek (rě) panjang) get a smaller strip face to fit. */
   const LONG_NAME = 7;
 
-  let { glyph, name, accent, class: className, ...rest }: Props = $props();
+  let {
+    glyph,
+    name,
+    label,
+    accent,
+    stacked = false,
+    class: className,
+    ...rest
+  }: Props = $props();
+
+  const shown = $derived(label ?? name);
 </script>
 
 <button
   {...rest}
   type="button"
-  class={["aksara-tile", "press", className]}
+  aria-label={label === undefined ? undefined : name}
+  class={["aksara-tile", stacked && "aksara-tile--stacked", "press", className]}
   style:--accent={accentVar(accent)}
 >
   <span class="aksara-tile__glyph">
@@ -31,19 +46,25 @@
   <span
     class={[
       "aksara-tile__strip",
-      name.length > LONG_NAME && "aksara-tile__strip--long",
+      shown.length > LONG_NAME && "aksara-tile__strip--long",
     ]}
   >
-    <Reading text={name} />
+    <Reading text={shown} />
   </span>
 </button>
 
 <style>
+  /*
+   * Two rows (glyph, strip) of the parent grid, shared through a subgrid: the
+   * strips of one row of tiles are as tall as the longest label needs, and
+   * stay level, while a short label does not shrink the glyph room.
+   */
   .aksara-tile {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-row: span 2;
+    grid-template-rows: subgrid;
+    row-gap: 0;
     width: 100%;
-    height: var(--tile-height);
     padding: 0;
     overflow: hidden;
     border: var(--border);
@@ -53,42 +74,46 @@
   }
 
   .aksara-tile__glyph {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 0;
+    min-height: var(--tile-glyph);
   }
 
   .aksara-tile__glyph :global(.aksara) {
     font-size: var(--aksara-tile);
   }
 
+  /* Pasangan tails reach below the line box; the room lifts the glyph clear of the strip. */
+  .aksara-tile--stacked .aksara-tile__glyph :global(.aksara) {
+    padding-block-end: var(--aksara-room);
+    line-height: 1.25;
+  }
+
   .aksara-tile__strip {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex: none;
-    height: var(--tile-strip);
-    padding-inline: var(--space-1);
+    min-height: var(--tile-strip);
+    padding: var(--space-1);
     background: var(--accent);
     border-top: var(--border);
     color: var(--color-ink);
     font-size: var(--text-sm);
     font-weight: var(--weight-bold);
-    line-height: 1;
-    white-space: nowrap;
+    line-height: 1.1;
+    text-align: center;
+    overflow-wrap: anywhere;
   }
 
   .aksara-tile__strip--long {
-    padding-inline: 0;
+    padding-inline: 2px;
     font-size: var(--text-caption);
     letter-spacing: -0.02em;
   }
 
   .aksara-tile__strip :global(.reading) {
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    text-wrap: balance;
   }
 </style>
