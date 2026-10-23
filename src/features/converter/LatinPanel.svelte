@@ -43,8 +43,8 @@
   let caret: number | null = null;
 
   const accentKeys = [
-    { reading: "taling", labelKey: "latinKeyTaling", nameKey: "eTalingName" },
     { reading: "pepet", labelKey: "latinKeyPepet", nameKey: "ePepetName" },
+    { reading: "taling", labelKey: "latinKeyTaling", nameKey: "eTalingName" },
   ] as const;
   const eReadings = ["pepet", "taling"] as const;
 

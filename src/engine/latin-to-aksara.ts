@@ -389,7 +389,9 @@ function applyMurda(tokens: readonly LatinToken[]): readonly LatinToken[] {
 
 /**
  * Spec 6.2: bare "e" is unresolvable by rule — PUJL writes pepet and
- * taling alike. Return both readings; the UI (converter toggle) chooses.
+ * taling alike. The two whole-input readings stay for API callers and the
+ * differential; `bareE` lists each plain e (index and word) so a caller can
+ * settle them one by one, as the converter does.
  */
 function ambiguous(
   input: string,
