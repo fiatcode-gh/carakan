@@ -107,7 +107,6 @@
                   glyph={entry.char}
                   name={entry.name}
                   label={entry.tileLabel}
-                  stacked={tab.id === "pasangan"}
                   accent={units.get(entry.id)?.accent ?? null}
                   title={entry.name}
                   data-entry={entry.id}

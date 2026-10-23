@@ -710,20 +710,26 @@ test("[P-C09] a pasangan label shows the base syllable; the tile is still named 
   }
 });
 
-test("[P-C09] no pasangan tail runs into the label strip or off the top of its tile", async ({
+test("[P-C02] no tile's marks run into the label strip or off the top of the tile, on any tab", async ({
   page,
 }) => {
-  await openTab(page, "pasangan");
-  await settle(page);
-  for (const letter of nglegena) {
-    const area = page.locator(
-      `#tab-chart [data-entry="pasangan-${letter.id}"] .aksara-tile__glyph`,
-    );
-    const gaps = await inkGaps(page, area);
-    expect(gaps, letter.id).not.toBeNull();
-    expect(gaps!.bottom, `${letter.id} below the ink`).toBeGreaterThanOrEqual(
-      4,
-    );
-    expect(gaps!.top, `${letter.id} above the ink`).toBeGreaterThanOrEqual(2);
+  const tight: string[] = [];
+  for (const t of tabs) {
+    await openTab(page, t.id);
+    await settle(page);
+    const tiles = page.locator("#tab-chart [data-entry]");
+    // Some ids repeat across sections, so walk the tiles by position.
+    for (let at = 0; at < (await tiles.count()); at += 1) {
+      const tile = tiles.nth(at);
+      const gaps = await inkGaps(page, tile.locator(".aksara-tile__glyph"));
+      const name = `${t.id}/${await tile.getAttribute("data-entry")}`;
+      if (gaps === null) tight.push(`${name} (nothing drawn)`);
+      else if (gaps.bottom < 4 || gaps.top < 2) {
+        tight.push(`${name} (above ${gaps.top}px, below ${gaps.bottom}px)`);
+      }
+    }
   }
+  expect(tight, "tiles with less than 2px above or 4px below the ink").toEqual(
+    [],
+  );
 });

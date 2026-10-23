@@ -13,8 +13,6 @@
     label?: string;
     /** Unit colour of the label strip; null (no unit teaches it) is neutral. */
     accent: UnitAccent | null;
-    /** The glyph hangs deep below its baseline (pasangan): it gets room underneath. */
-    stacked?: boolean;
   }
 
   /** Longer texts (pa cerek (rě) panjang) get a smaller strip face to fit. */
@@ -25,7 +23,6 @@
     name,
     label,
     accent,
-    stacked = false,
     class: className,
     ...rest
   }: Props = $props();
@@ -37,7 +34,7 @@
   {...rest}
   type="button"
   aria-label={label === undefined ? undefined : name}
-  class={["aksara-tile", stacked && "aksara-tile--stacked", "press", className]}
+  class={["aksara-tile", "press", className]}
   style:--accent={accentVar(accent)}
 >
   <span class="aksara-tile__glyph">
@@ -77,17 +74,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Room for every mark of every entry: the tallest rise and the deepest tail. */
     min-height: var(--tile-glyph);
   }
 
   .aksara-tile__glyph :global(.aksara) {
     font-size: var(--aksara-tile);
-  }
-
-  /* Pasangan tails reach below the line box; the room lifts the glyph clear of the strip. */
-  .aksara-tile--stacked .aksara-tile__glyph :global(.aksara) {
-    padding-block-end: var(--aksara-room);
-    line-height: 1.25;
   }
 
   .aksara-tile__strip {
