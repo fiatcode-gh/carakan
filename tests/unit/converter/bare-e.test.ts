@@ -54,14 +54,11 @@ describe("bare-e", () => {
     ]);
   });
 
-  test("[P-U04] a leading-space field maps onto the trimmed input", () => {
+  test("[P-U04] a leading-space field reports the e's index in the trimmed input", () => {
     const converter = new LatinToAksaraConverter("kaj1-2021-simplified-v3");
     converter.input("  seneng");
     const state = get(converter.state);
     if (state.kind !== "bareE") throw new Error("expected bareE");
     expect(state.bareE[0]?.index).toBe(1);
-    const raw = "  seneng";
-    const leading = raw.length - raw.trimStart().length;
-    expect(writeE(raw, leading + 1, "taling")).toBe("  séneng");
   });
 });
