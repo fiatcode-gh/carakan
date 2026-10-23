@@ -18,6 +18,7 @@ const types: Record<string, RegExp> = {
   ".ttf": /^font\/ttf\b/,
   ".png": /^image\/png\b/,
   ".svg": /^image\/svg\+xml\b/,
+  ".ico": /^image\/(x-icon|vnd\.microsoft\.icon)\b/,
   ".txt": /^text\/plain\b/,
 };
 
