@@ -938,3 +938,52 @@ test.describe("English chart search", () => {
     ).toBeVisible();
   });
 });
+
+test("[P-C01] the tab row keeps its height on a phone when a query is typed", async ({
+  page,
+}) => {
+  const list = page.locator("#tab-chart").getByRole("tablist");
+  for (const width of [360, 390]) {
+    await page.setViewportSize({ width, height: 740 });
+    await chartSearch(page).fill("");
+    const empty = (await list.boundingBox())!.height;
+    await chartSearch(page).fill("ka");
+    await expect(countedTab(page, "pasangan", 1)).toBeVisible();
+    expect((await list.boundingBox())!.height, `${width}px, ka`).toBeCloseTo(
+      empty,
+      0,
+    );
+    await chartSearch(page).fill("zzz");
+    await expect(countedTab(page, "pasangan", 0)).toBeVisible();
+    expect((await list.boundingBox())!.height, `${width}px, zzz`).toBeCloseTo(
+      empty,
+      0,
+    );
+    await expectNoHorizontalOverflow(page);
+  }
+});
+
+test("[P-C01] the no-match message is a status that exists before typing and gets its text after a miss", async ({
+  page,
+}) => {
+  const status = page.locator("#tab-chart").getByRole("status");
+  await expect(status).toHaveCount(1);
+  await expect(status).toHaveText("");
+  await chartSearch(page).fill("zzz");
+  await expect(status).toHaveCount(1);
+  await expect(status).toHaveText(id["searchNoMatch"]!);
+  await countedTab(page, "pasangan", 0).click();
+  await expect(status).toHaveText(id["searchNoMatch"]!);
+  await chartSearch(page).fill("ka");
+  await expect(status).toHaveCount(1);
+  await expect(status).toHaveText("");
+});
+
+test("[P-C01] the search field turns off autocorrect, autocapitalize and spellcheck", async ({
+  page,
+}) => {
+  const field = chartSearch(page);
+  await expect(field).toHaveAttribute("autocorrect", "off");
+  await expect(field).toHaveAttribute("autocapitalize", "off");
+  await expect(field).toHaveAttribute("spellcheck", "false");
+});

@@ -99,29 +99,31 @@
     <HandNote tilt>{$t("chartNote")}</HandNote>
   {/snippet}
   <div class="search">
-    <TextField label={$t("chartSearchLabel")} bind:value={query} />
+    <TextField label={$t("chartSearchLabel")} search bind:value={query} />
   </div>
   <Tabs
     label={$t("chartTabsLabel")}
-    tabs={shownTabs.map((tab) => ({
-      id: tab.id,
-      label:
-        shownTabs === chartTabs
-          ? $t(tabLabels[tab.id])
-          : $t("chartTabCount", {
-              name: $t(tabLabels[tab.id]),
-              count: chartTabCount(tab),
-            }),
-    }))}
+    tabs={shownTabs.map((tab) => {
+      const label = $t(tabLabels[tab.id]);
+      if (shownTabs === chartTabs) return { id: tab.id, label };
+      const count = chartTabCount(tab);
+      return {
+        id: tab.id,
+        label,
+        count,
+        name: $t("chartTabCount", { name: label, count }),
+      };
+    })}
     selected={selectedTab}
     onselect={(id) => (selectedTab = id as ChartTabId)}
   >
     {#snippet panel(id)}
       {@const tab = shownTabs.find((candidate) => candidate.id === id)!}
+      <!-- Always rendered, so a screen reader announces the text when it appears. -->
+      <p class="none" role="status">
+        {chartTabCount(tab) === 0 ? $t("searchNoMatch") : ""}
+      </p>
       <div class="stack">
-        {#if chartTabCount(tab) === 0}
-          <p class="none" role="status">{$t("searchNoMatch")}</p>
-        {/if}
         {#each tab.sections as section (section.id)}
           <section class="section" aria-labelledby={`${uid}-h-${section.id}`}>
             <h2
@@ -182,6 +184,10 @@
   .none {
     padding-block: var(--space-4);
     color: var(--color-ink-muted);
+  }
+
+  .none:empty {
+    padding-block: 0;
   }
 
   .section {

@@ -23,11 +23,12 @@
 
 <Sheet title={$t("glyphPickerTitle")} {onclose}>
   <div class="search">
-    <TextField label={$t("pickerSearchLabel")} bind:value={query} />
+    <TextField label={$t("pickerSearchLabel")} search bind:value={query} />
+    <!-- Always rendered, so a screen reader announces the text when it appears. -->
+    <p class="none" role="status">
+      {shown.length === 0 ? $t("searchNoMatch") : ""}
+    </p>
   </div>
-  {#if shown.length === 0}
-    <p class="none" role="status">{$t("searchNoMatch")}</p>
-  {/if}
   {#each shown as section (section.titleKey)}
     <section class="section">
       <h2 class="section__title eyebrow">{section.title}</h2>
@@ -61,7 +62,12 @@
   }
 
   .none {
+    padding-block-start: var(--space-2);
     color: var(--color-ink-muted);
+  }
+
+  .none:empty {
+    padding-block-start: 0;
   }
 
   .section {

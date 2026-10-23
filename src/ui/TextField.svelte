@@ -17,6 +17,8 @@
     /** Aksara input: Jejeg line metrics. */
     aksara?: boolean;
     invalid?: boolean;
+    /** A search box: the phone keyboard must not correct, capitalise or spell-check the query. */
+    search?: boolean;
     /** The native control, for caret handling. */
     element?: HTMLInputElement | HTMLTextAreaElement;
     oninput?: (event: Event) => void;
@@ -33,6 +35,7 @@
     rows = 3,
     aksara = false,
     invalid = false,
+    search = false,
     element = $bindable(),
     oninput,
     trailing,
@@ -84,6 +87,9 @@
           invalid && "field__input--error",
         ]}
         type="text"
+        autocapitalize={search ? "off" : undefined}
+        autocorrect={search ? "off" : undefined}
+        spellcheck={search ? false : undefined}
         {placeholder}
         aria-invalid={invalid ? "true" : undefined}
         aria-describedby={hint ? hintId : undefined}

@@ -1058,3 +1058,32 @@ test.describe("[P-U10] tap an aksara to see where it came from", () => {
     });
   });
 });
+
+test("[P-U08] the picker's no-match message is a status that exists before typing", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+  const status = picker(page).getByRole("status");
+  await expect(status).toHaveCount(1);
+  await expect(status).toHaveText("");
+  await pickerSearch(page).fill("zzz");
+  await expect(status).toHaveCount(1);
+  await expect(status).toHaveText(id["searchNoMatch"]!);
+  await pickerSearch(page).fill("ka");
+  await expect(status).toHaveCount(1);
+  await expect(status).toHaveText("");
+});
+
+test("[P-U08] the picker search turns off autocorrect, autocapitalize and spellcheck; the converter input keeps them", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+  const field = pickerSearch(page);
+  await expect(field).toHaveAttribute("autocorrect", "off");
+  await expect(field).toHaveAttribute("autocapitalize", "off");
+  await expect(field).toHaveAttribute("spellcheck", "false");
+  await expect(aksaraInput(page)).not.toHaveAttribute("autocorrect", "off");
+  await expect(aksaraInput(page)).not.toHaveAttribute("spellcheck", "false");
+});

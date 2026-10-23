@@ -4,7 +4,14 @@
   interface Props {
     /** Accessible name of the tab list. */
     label: string;
-    tabs: readonly { id: string; label: string }[];
+    tabs: readonly {
+      id: string;
+      label: string;
+      /** A number shown as a small badge after the label. */
+      count?: number;
+      /** Accessible name when it must state the count; the badge is then hidden from it. */
+      name?: string;
+    }[];
     selected: string;
     onselect: (id: string) => void;
     /** The one tab panel; receives the selected tab's id. */
@@ -45,6 +52,8 @@
       role="tab"
       class="segmented__cell"
       id={tabId(tab.id)}
+      class:segmented__cell--counted={tab.count !== undefined}
+      aria-label={tab.name}
       aria-selected={tab.id === selected}
       aria-controls={panelId}
       tabindex={tab.id === selected ? 0 : -1}
@@ -52,6 +61,9 @@
       onkeydown={(event) => onkeydown(event, index)}
     >
       {tab.label}
+      {#if tab.count !== undefined}
+        <span class="tabs__count" aria-hidden="true">{tab.count}</span>
+      {/if}
     </button>
   {/each}
 </div>
@@ -67,6 +79,28 @@
 </div>
 
 <style>
+  /*
+   * A counted cell stays one line on a phone: the badge is small and the
+   * cell gives up some side padding, so the row never grows when a query is
+   * typed.
+   */
+  .segmented__cell--counted {
+    gap: var(--space-1);
+    padding-inline: var(--space-1);
+    white-space: nowrap;
+  }
+
+  .tabs__count {
+    min-width: 1.25rem;
+    padding: 0 var(--space-1);
+    border: var(--border);
+    background: var(--color-card);
+    color: var(--color-ink);
+    font-size: var(--text-caption);
+    font-weight: var(--weight-black);
+    line-height: 1.25rem;
+  }
+
   .tabs__panel {
     margin-block-start: var(--space-4);
   }
