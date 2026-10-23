@@ -24,6 +24,8 @@
   import SoundButton from "../../ui/SoundButton.svelte";
   import ResultCard from "./ResultCard.svelte";
   import { markSpans } from "./source-echo.ts";
+  import { eLetters } from "./bare-e.ts";
+  import { insertAtCursor, trackCaret } from "./insert-at-cursor.ts";
 
   let { oncopied }: { oncopied: () => void } = $props();
 
@@ -35,6 +37,20 @@
   const result = converter.state;
   let value = $state("");
   let chartLocation = $state<ChartLocation | null>(null);
+  let element = $state<HTMLInputElement | HTMLTextAreaElement>();
+  // Null until the field has had a caret: a key then appends (as the picker).
+  let caret: number | null = null;
+
+  const accentKeys = [
+    { reading: "taling", labelKey: "latinKeyTaling", nameKey: "eTalingName" },
+    { reading: "pepet", labelKey: "latinKeyPepet", nameKey: "ePepetName" },
+  ] as const;
+
+  $effect(() => {
+    const field = element;
+    if (field === undefined) return;
+    return trackCaret(field, (c) => (caret = c));
+  });
 
   /** The modal sheet must be closed before the shell goes inert for the pushed page. */
   async function trace(glyphId: string): Promise<void> {
@@ -77,6 +93,17 @@
     converter.input(value);
   }
 
+  async function typeLetter(letter: string): Promise<void> {
+    const offset = Math.min(Math.max(caret ?? value.length, 0), value.length);
+    value = insertAtCursor(value, offset, letter);
+    converter.input(value);
+    await tick();
+    const end = offset + letter.length;
+    element?.focus();
+    element?.setSelectionRange(end, end);
+    caret = end;
+  }
+
   function openChart(id: string): void {
     chartLocation = findChartEntry(
       buildChartTabs({
@@ -105,9 +132,23 @@
       multiline
       rows={2}
       bind:value
+      bind:element
       oninput={onInput}
       invalid={$result.kind === "error"}
     />
+    <div class="accent-keys" role="group" aria-label={$t("latinKeysLabel")}>
+      {#each accentKeys as key (key.reading)}
+        <button
+          type="button"
+          class="accent-key press"
+          aria-label={$t(key.labelKey)}
+          onclick={() => void typeLetter(eLetters[key.reading])}
+        >
+          <span class="accent-key__letter">{eLetters[key.reading]}</span>
+          <span class="accent-key__name">{$t(key.nameKey)}</span>
+        </button>
+      {/each}
+    </div>
     {#if detail}
       <p class="source-echo latin">
         <span class="source-echo__label">{$t("sourceEchoLabel")}</span>
@@ -207,6 +248,34 @@
       display: grid;
       gap: var(--space-4);
     }
+  }
+
+  .accent-keys {
+    display: flex;
+    gap: var(--space-3);
+  }
+
+  .accent-key {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    min-height: var(--touch-min);
+    min-width: var(--touch-min);
+    padding: var(--space-1) var(--space-4);
+    border: var(--border);
+    background: var(--color-card);
+    color: var(--color-ink);
+    font-family: var(--font-latin);
+  }
+
+  .accent-key__letter {
+    font-size: var(--text-xl);
+    font-weight: var(--weight-black);
+  }
+
+  .accent-key__name {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
   }
 
   .chips {

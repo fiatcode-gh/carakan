@@ -164,6 +164,44 @@ test("[P-U05] [P-U09] an unknown character shows the localized message, never th
   await shoot(page, "error-id");
 });
 
+test("[P-U04] the é and ê keys insert at the caret and re-convert", async ({
+  page,
+}) => {
+  await gotoRoute(page, "#/converter");
+  const field = latinInput(page);
+  await field.fill("sng");
+  await field.click();
+  await page.keyboard.press("Home");
+  await page.keyboard.press("ArrowRight");
+  await page
+    .getByRole("button", { name: id["latinKeyPepet"]!, exact: true })
+    .click();
+  await expect(field).toHaveValue("sêng");
+  await expect(outputOf(page).locator(".aksara")).toHaveText(
+    successOutput("sêng"),
+  );
+  await expect(field).toBeFocused();
+  await page.keyboard.press("End");
+  await page.keyboard.type("k");
+  await page
+    .getByRole("button", { name: id["latinKeyTaling"]!, exact: true })
+    .click();
+  await expect(field).toHaveValue("sêngké");
+  await expect(outputOf(page).locator(".aksara")).toHaveText(
+    successOutput("sêngké"),
+  );
+  await expectAccessible(page);
+  await expectTouchTargets(page);
+});
+
+test("[P-U04] a key with no caret yet appends", async ({ page }) => {
+  await gotoRoute(page, "#/converter");
+  await page
+    .getByRole("button", { name: id["latinKeyTaling"]!, exact: true })
+    .click();
+  await expect(latinInput(page)).toHaveValue("é");
+});
+
 test.describe("English UI", () => {
   test.use({ locale: "en-US" });
 
@@ -188,6 +226,15 @@ test.describe("English UI", () => {
     await expect(
       page.getByRole("region", { name: en["ambiguousTitle"]! }),
     ).toBeVisible();
+  });
+
+  test("[P-L04] the accent keys have English names", async ({ page }) => {
+    await gotoRoute(page, "#/converter");
+    for (const name of [en["latinKeyTaling"]!, en["latinKeyPepet"]!]) {
+      await expect(
+        page.getByRole("button", { name, exact: true }),
+      ).toBeVisible();
+    }
   });
 });
 
