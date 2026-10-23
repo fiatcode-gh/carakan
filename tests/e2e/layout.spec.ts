@@ -516,3 +516,36 @@ for (const { width, height } of SIZES) {
     expect(await columnsOf(chart)).toBe(chartColumns(width));
   });
 }
+
+test("[P-A11Y] tab-root header buttons end at the header's content edge", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "desktop",
+    "one run is enough: each test sets its own viewport",
+  );
+  const withActions = new Set<string>();
+  for (const width of [360, 390, 768, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    for (const tabId of tabIds) {
+      await gotoRoute(page, href({ kind: tabId }));
+      const header = page.locator(`#tab-${tabId} header.top-bar--tab`);
+      if ((await header.locator(".top-bar__actions").count()) === 0) continue;
+      withActions.add(tabId);
+      const contentRight = await header.evaluate(
+        (el) =>
+          el.getBoundingClientRect().right -
+          parseFloat(getComputedStyle(el).paddingRight),
+      );
+      const last = (await header
+        .locator(".top-bar__actions > *")
+        .last()
+        .boundingBox())!;
+      expect(
+        Math.abs(last.x + last.width - contentRight),
+        `${tabId} at ${width}px`,
+      ).toBeLessThanOrEqual(1);
+    }
+  }
+  expect([...withActions]).toEqual(["ladder", "review", "converter"]);
+});

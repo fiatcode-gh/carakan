@@ -260,6 +260,20 @@ test("[P-B02][P-S07] each tile and the hero show their first glyph as an aria-hi
     .toBe(true);
 });
 
+test("[P-B02] the hero watermark is as faint as a tile watermark", async ({
+  page,
+}) => {
+  await gotoRoute(page, "");
+  const hero = await page
+    .locator(".hero .aksara")
+    .evaluate((el) => getComputedStyle(el).opacity);
+  const tile = await rowButton(page, 2)
+    .locator(".aksara")
+    .evaluate((el) => getComputedStyle(el).opacity);
+  expect(hero).toBe(tile);
+  expect(tile).toBe("0.25");
+});
+
 test("[P-B03] on a fresh install only unit 1 is ready", async ({ page }) => {
   await gotoRoute(page, "");
   await expect(rowButton(page, 1)).toHaveAttribute("data-status", "ready");

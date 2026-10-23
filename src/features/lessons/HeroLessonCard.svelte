@@ -98,7 +98,7 @@
     font-size: 300px;
     line-height: 1;
     white-space: nowrap;
-    opacity: 0.5;
+    opacity: 0.25;
     pointer-events: none;
   }
 
