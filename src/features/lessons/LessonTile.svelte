@@ -4,6 +4,7 @@
   import AksaraText from "../../ui/AksaraText.svelte";
   import Icon from "../../ui/Icon.svelte";
   import Reading from "../../ui/Reading.svelte";
+  import Tape from "../../ui/Tape.svelte";
   import type { UnitStatus } from "./ladder.ts";
   import { accentVar, type UnitAccent } from "../../ui/accent.ts";
   import { splitUnitName } from "./unit-display.ts";
@@ -35,6 +36,16 @@
     ready: "play",
     completed: "circle-check",
   } as const;
+  /** Tilt per tape layout: 0 top centre, 1 right edge, 2 left edge, 3 top left. */
+  const tapeRotations = [3, 6, -5, -2] as const;
+  // Tiles sit two per row from number 2. Rows alternate between tapes on the
+  // top edge and tapes on the outer side edge, so no two tapes meet in a gap.
+  const tapeVariant = $derived.by(() => {
+    const row = Math.floor((number - 2) / 2);
+    const leftColumn = number % 2 === 0;
+    if (row % 2 === 1) return leftColumn ? 2 : 1;
+    return (row % 4 === 0) === leftColumn ? 0 : 3;
+  });
 </script>
 
 <button
@@ -46,8 +57,14 @@
   aria-disabled={status === "locked" ? "true" : undefined}
   onclick={status === "locked" ? undefined : onopen}
 >
+  <span class="tile__tape" data-variant={tapeVariant}
+    ><Tape rotate={tapeRotations[tapeVariant]} on={accent} /></span
+  >
   {#if watermark !== ""}
-    <AksaraText text={watermark} class="tile__mark" aria-hidden="true" />
+    <!-- Crops the watermark at the tile edge; the tile itself does not clip, so the tape can stick out above it. -->
+    <span class="tile__crop" aria-hidden="true">
+      <AksaraText text={watermark} class="tile__mark" aria-hidden="true" />
+    </span>
   {/if}
   <span class="eyebrow tile__number" aria-hidden="true"
     >{String(number).padStart(2, "0")}</span
@@ -71,21 +88,80 @@
     width: 100%;
     height: 130px;
     padding: 0;
-    overflow: hidden;
     border: var(--border);
     background: var(--accent);
     color: var(--color-ink);
     text-align: start;
   }
 
+  /*
+   * Four tape layouts, picked by grid position so a grid looks stuck on by hand.
+   * Each stays clear of the number (top left), the status icon (top right)
+   * and the title (bottom left).
+   */
+  .tile__tape {
+    position: absolute;
+    top: -9px;
+    z-index: 1;
+  }
+
+  .tile__tape :global(.tape) {
+    height: 18px;
+  }
+
+  .tile__tape[data-variant="0"] {
+    left: calc(50% - 28px);
+  }
+
+  .tile__tape[data-variant="0"] :global(.tape) {
+    width: 56px;
+  }
+
+  /*
+   * Side tapes are upright strips with a slight tilt, not rotated horizontal
+   * ones: a rotated strip's layout box would still poke past the page edge.
+   * Each sticks out 9px past the outer edge of its column.
+   */
+  .tile__tape[data-variant="1"] {
+    top: 50px;
+    right: -9px;
+  }
+
+  .tile__tape[data-variant="2"] {
+    top: 34px;
+    left: -9px;
+  }
+
+  .tile__tape[data-variant="1"] :global(.tape),
+  .tile__tape[data-variant="2"] :global(.tape) {
+    width: 18px;
+    height: 44px;
+  }
+
+  .tile__tape[data-variant="3"] {
+    left: 30%;
+  }
+
+  .tile__tape[data-variant="3"] :global(.tape) {
+    width: 64px;
+  }
+
+  .tile__crop {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  /* Big and cropped as decoration, but most of the glyph stays readable. */
   .tile :global(.tile__mark) {
     position: absolute;
-    right: -12px;
-    bottom: -40px;
-    font-size: 120px;
+    right: -24px;
+    bottom: -26px;
+    font-size: 140px;
     line-height: 1;
     white-space: nowrap;
-    opacity: 0.28;
+    opacity: 0.25;
     pointer-events: none;
   }
 

@@ -116,7 +116,9 @@
         </header>
 
         <Surface tone={accentOf(unit.id)} shadow="hero" class="meet__card">
-          <span class="meet__tape"><Tape rotate={-3} /></span>
+          <span class="meet__tape"
+            ><Tape rotate={-3} on={accentOf(unit.id)} /></span
+          >
           <div
             class="meet__glyph"
             role="img"

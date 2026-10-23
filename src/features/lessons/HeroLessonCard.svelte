@@ -34,9 +34,12 @@
   class="hero"
   aria-labelledby={titleId}
 >
-  <span class="hero__tape"><Tape rotate={-3} /></span>
+  <span class="hero__tape"><Tape rotate={-3} on={accent} /></span>
   {#if watermark !== ""}
-    <AksaraText text={watermark} class="hero__mark" aria-hidden="true" />
+    <!-- Crops the watermark at the card edge; the card itself does not clip, so the tape can stick out above it. -->
+    <span class="hero__crop" aria-hidden="true">
+      <AksaraText text={watermark} class="hero__mark" aria-hidden="true" />
+    </span>
   {/if}
   <p class="eyebrow hero__eyebrow">
     {String(number).padStart(2, "0")}{name.head === null
@@ -70,7 +73,13 @@
     gap: var(--space-2);
     min-height: 250px;
     padding: var(--space-4);
+  }
+
+  .hero__crop {
+    position: absolute;
+    inset: 0;
     overflow: hidden;
+    pointer-events: none;
   }
 
   .hero__tape {
@@ -81,14 +90,15 @@
     z-index: 2;
   }
 
+  /* Big and cropped as decoration, but most of the glyph stays readable. */
   :global(.hero .hero__mark) {
     position: absolute;
-    right: -24px;
-    bottom: -72px;
-    font-size: 270px;
+    right: -40px;
+    bottom: -44px;
+    font-size: 300px;
     line-height: 1;
     white-space: nowrap;
-    opacity: 0.8;
+    opacity: 0.5;
     pointer-events: none;
   }
 
