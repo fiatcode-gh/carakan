@@ -77,6 +77,7 @@
         {id}
         class={[
           "field__input",
+          "field__input--line",
           labelStyle === "hand" && "field__input--hand",
           trailing && "field__input--trailing",
           aksara && "field__input--aksara",
@@ -132,6 +133,12 @@
     font-size: var(--text-lg);
     line-height: var(--leading-snug);
     resize: vertical;
+  }
+
+  /* One line of text: a search box is not the tall multi-line field. */
+  .field__input--line {
+    min-height: 3rem;
+    resize: none;
   }
 
   .field__input::placeholder {

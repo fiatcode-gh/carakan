@@ -2,16 +2,20 @@ import { describe, expect, test } from "vitest";
 import {
   javaneseChar,
   kajRulesetId,
+  nglegena,
   pedomanRulesetId,
   rulesetById,
   sandhanganById,
   toLatin,
 } from "../../../src/engine/index.ts";
 import {
+  buildChartTabs,
   rekanChar,
   sandhanganGroups,
 } from "../../../src/features/chart/chart-catalog.ts";
+import { chartStrings } from "../../../src/features/chart/chart-strings.ts";
 import {
+  filterPickerSections,
   pickerSections,
   type PickerSection,
 } from "../../../src/features/converter/glyph-picker.ts";
@@ -51,7 +55,7 @@ describe("pickerSections", () => {
       translator(id),
     );
     expect(pedomanSections.map((s) => s.entries.length)).toEqual([
-      20, 5, 3, 1, 3, 7, 7, 5, 10, 15,
+      20, 20, 5, 3, 1, 3, 7, 7, 5, 10, 15,
     ]);
     expect(
       pedomanSections
@@ -60,15 +64,16 @@ describe("pickerSections", () => {
     ).toEqual(["kha", "dza", "fa", "za", "gha"]);
   });
 
-  test("[P-U08] has the ten sections with the source sizes", () => {
+  test("[P-U08] has the eleven sections with the source sizes", () => {
     expect(sections.map((s) => s.entries.length)).toEqual([
-      20, 5, 3, 1, 3, 11, 11, 7, 10, 15,
+      20, 20, 5, 3, 1, 3, 11, 11, 7, 10, 15,
     ]);
   });
 
   test("[P-U08] [W12] titles come from the section keys, in both locales", () => {
     expect(sections.map((s) => s.titleKey)).toEqual([
       "sectionCarakan",
+      "pasanganLabel",
       "sectionSandhanganVowel",
       "sectionSandhanganClosing",
       "sectionSandhanganKiller",
@@ -98,6 +103,7 @@ describe("pickerSections", () => {
       label: "ha",
       char: ak("HA"),
       glyph: ak("HA"),
+      reading: "ha",
     });
     for (const s of sections) {
       for (const e of s.entries) expect(e.char).not.toBe("");
@@ -190,6 +196,110 @@ describe("pickerSections", () => {
       kind: "success",
       output: "kra",
     });
+  });
+
+  test("[P-U08] the Pasangan section follows Carakan with the 20 pasangan in nglegena order", () => {
+    expect(sections.slice(0, 2).map((s) => s.titleKey)).toEqual([
+      "sectionCarakan",
+      "pasanganLabel",
+    ]);
+    const entries = section("pasanganLabel").entries;
+    expect(entries.map((e) => e.label)).toEqual(
+      nglegena.map(
+        (a) => `pasangan ${aksara.find((i) => i.id === a.id)!.name}`,
+      ),
+    );
+    expect(entries.map((e) => e.reading)).toEqual(
+      nglegena.map((a) => a.latinPujl),
+    );
+  });
+
+  test("[P-U08] a pasangan inserts pangkon and its letter, and shows the chart's carrier form", () => {
+    const chart = buildChartTabs({
+      aksara,
+      sandhangan: content.sandhangan,
+      strings: chartStrings(translator(id)),
+      ruleset: kaj,
+    })
+      .find((tab) => tab.id === "pasangan")!
+      .sections.flatMap((s) => s.entries);
+    const entries = section("pasanganLabel").entries;
+    expect(entries).toHaveLength(chart.length);
+    for (const [i, entry] of entries.entries()) {
+      expect(entry.label).toBe(chart[i]!.name);
+      expect(entry.glyph).toBe(chart[i]!.char);
+      expect(entry.char).toBe(ak("PANGKON") + nglegena[i]!.char);
+      expect(entry.glyph.startsWith(ak("KA PANGKON"))).toBe(true);
+    }
+  });
+
+  test("[P-U08] ka + pasangan ra reads like ka + pangkon + ra", () => {
+    const ra = section("pasanganLabel").entries.find(
+      (e) => e.label === "pasangan ra",
+    )!;
+    expect(toLatin(ak("KA") + ra.char)).toEqual(toLatin(ak("KA PANGKON RA")));
+    expect(toLatin(ak("KA") + ra.char)).toEqual({
+      kind: "success",
+      output: "kra",
+    });
+  });
+
+  test("[P-U08] pasangan labels follow the UI language", () => {
+    const english = pickerSections(
+      aksara,
+      content.sandhangan,
+      kaj,
+      translator(en),
+    );
+    expect(
+      english.find((s) => s.titleKey === "pasanganLabel")!.entries[0]!.label,
+    ).toBe(en["breakdownPasangan"]!.replace("{name}", "ha"));
+  });
+
+  test("[P-U08] every entry with a reading carries its PUJL reading", () => {
+    const reading = (label: string) =>
+      sections.flatMap((s) => s.entries).find((e) => e.label === label)!
+        .reading;
+    expect(reading("ka")).toBe("ka");
+    expect(reading("ka murda")).toBe(
+      kaj.murda.find((m) => m.baseId === "ka")!.aksara.latinPujl,
+    );
+    expect(reading("wulu (i)")).toBe("i");
+    expect(reading("angka 3")).toBeNull();
+    expect(reading("pada adeg-adeg")).toBeNull();
+  });
+
+  test("[P-U08] filtering by ka keeps the entries with a word starting with ka, never cakra", () => {
+    const shown = filterPickerSections(sections, "ka");
+    expect(
+      shown.map((s) => [s.titleKey, s.entries.map((e) => e.label)]),
+    ).toEqual([
+      ["sectionCarakan", ["ka"]],
+      ["pasanganLabel", ["pasangan ka"]],
+      ["sectionMurda", ["ka murda"]],
+      ["sectionPada", ["rerenggan kanan"]],
+    ]);
+    expect(
+      sections
+        .flatMap((s) => s.entries)
+        .some((e) => e.label.startsWith("cakra")),
+    ).toBe(true);
+    expect(
+      shown.flatMap((s) => s.entries).some((e) => e.label.includes("cakra")),
+    ).toBe(false);
+  });
+
+  test("[P-U08] filtering by e finds the é entries", () => {
+    const labels = filterPickerSections(sections, "e").flatMap((s) =>
+      s.entries.map((e) => e.label),
+    );
+    expect(labels).toContain("é");
+  });
+
+  test("[P-U08] a blank query shows every section, a query without a hit none", () => {
+    expect(filterPickerSections(sections, "")).toBe(sections);
+    expect(filterPickerSections(sections, "  ")).toBe(sections);
+    expect(filterPickerSections(sections, "zzz")).toEqual([]);
   });
 
   test("[P-C08] rekan follow the active ruleset and read back", async () => {

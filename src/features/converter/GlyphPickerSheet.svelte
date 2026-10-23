@@ -3,7 +3,8 @@
   import AksaraText from "../../ui/AksaraText.svelte";
   import Reading from "../../ui/Reading.svelte";
   import Sheet from "../../ui/Sheet.svelte";
-  import type { PickerSection } from "./glyph-picker.ts";
+  import TextField from "../../ui/TextField.svelte";
+  import { filterPickerSections, type PickerSection } from "./glyph-picker.ts";
 
   interface Props {
     sections: readonly PickerSection[];
@@ -15,10 +16,19 @@
   let { sections, onpick, onclose }: Props = $props();
 
   const { t } = getI18n();
+  // A sheet is mounted per opening, so every opening starts with no query.
+  let query = $state("");
+  const shown = $derived(filterPickerSections(sections, query));
 </script>
 
 <Sheet title={$t("glyphPickerTitle")} {onclose}>
-  {#each sections as section (section.titleKey)}
+  <div class="search">
+    <TextField label={$t("pickerSearchLabel")} bind:value={query} />
+  </div>
+  {#if shown.length === 0}
+    <p class="none" role="status">{$t("searchNoMatch")}</p>
+  {/if}
+  {#each shown as section (section.titleKey)}
     <section class="section">
       <h2 class="section__title eyebrow">{section.title}</h2>
       <div class="grid">
@@ -41,6 +51,19 @@
 </Sheet>
 
 <style>
+  .search {
+    position: sticky;
+    top: calc(var(--space-5) * -1);
+    z-index: 1;
+    margin: calc(var(--space-5) * -1) calc(var(--space-5) * -1) 0;
+    padding: var(--space-4) var(--space-5) var(--space-2);
+    background: var(--color-paper);
+  }
+
+  .none {
+    color: var(--color-ink-muted);
+  }
+
   .section {
     display: grid;
     gap: var(--space-3);
