@@ -172,7 +172,7 @@
   "chartNote": "Tap for details",
   "chartTabsLabel": "Aksara type",
   "chartSearchLabel": "Search the chart",
-  "chartTabCount": "{name} ({count})",
+  "chartTabCount": "{name} {count} matches",
   "chartTabSandhangan": "Sandhangan",
   "chartLegendLabel": "Unit colours",
   "chartDetailTitle": "{name} · {section} {number} / {total}",

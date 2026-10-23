@@ -172,7 +172,7 @@
   "chartNote": "Ketuk untuk detail",
   "chartTabsLabel": "Jenis aksara",
   "chartSearchLabel": "Cari di tabel",
-  "chartTabCount": "{name} ({count})",
+  "chartTabCount": "{name} {count} cocok",
   "chartTabSandhangan": "Sandhangan",
   "chartLegendLabel": "Warna unit",
   "chartDetailTitle": "{name} · {section} {number} / {total}",

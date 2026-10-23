@@ -936,6 +936,10 @@ test.describe("English chart search", () => {
     await expect(
       page.locator("#tab-chart").getByText(en["searchNoMatch"]!),
     ).toBeVisible();
+    await page.setViewportSize({ width: 320, height: 640 });
+    await chartSearch(page, en).fill("ka");
+    await expect(countedTab(page, "pasangan", 1, en)).toBeVisible();
+    await expectNoHorizontalOverflow(page);
   });
 });
 
@@ -943,7 +947,7 @@ test("[P-C01] the tab row keeps its height on a phone when a query is typed", as
   page,
 }) => {
   const list = page.locator("#tab-chart").getByRole("tablist");
-  for (const width of [360, 390]) {
+  for (const width of [390, 360]) {
     await page.setViewportSize({ width, height: 740 });
     await chartSearch(page).fill("");
     const empty = (await list.boundingBox())!.height;
@@ -986,4 +990,34 @@ test("[P-C01] the search field turns off autocorrect, autocapitalize and spellch
   await expect(field).toHaveAttribute("autocorrect", "off");
   await expect(field).toHaveAttribute("autocapitalize", "off");
   await expect(field).toHaveAttribute("spellcheck", "false");
+});
+
+test("[P-C01] a filtered chart has no horizontal overflow at 320 px", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  for (const query of ["ka", "zzz"]) {
+    await chartSearch(page).fill(query);
+    await expect(
+      countedTab(page, "pasangan", query === "ka" ? 1 : 0),
+    ).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await expectTouchTargets(page);
+  }
+});
+
+test("[P-C01] a counted tab's accessible name contains its visible text", async ({
+  page,
+}) => {
+  await chartSearch(page).fill("ka");
+  for (const [tabId, count] of [
+    ["carakan", 4],
+    ["sandhangan", 0],
+    ["pasangan", 1],
+  ] as const) {
+    const cell = countedTab(page, tabId, count);
+    const visible = (await cell.innerText()).replace(/\s+/g, " ").trim();
+    expect(visible).toBe(`${id[tabLabelKey[tabId]]!} ${count}`);
+    expect(await cell.getAttribute("aria-label")).toContain(visible);
+  }
 });

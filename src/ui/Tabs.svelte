@@ -80,25 +80,48 @@
 
 <style>
   /*
-   * A counted cell stays one line on a phone: the badge is small and the
-   * cell gives up some side padding, so the row never grows when a query is
-   * typed.
+   * A counted cell stays one line on a phone: the badge is small, the label
+   * gets a smaller face and the cell gives up its side padding, so the row
+   * never grows when a query is typed. A label that still cannot fit breaks
+   * inside its cell instead of widening the page.
    */
   .segmented__cell--counted {
+    min-width: 0;
     gap: var(--space-1);
     padding-inline: var(--space-1);
-    white-space: nowrap;
+    overflow-wrap: anywhere;
   }
 
   .tabs__count {
+    box-sizing: border-box;
     min-width: 1.25rem;
-    padding: 0 var(--space-1);
+    padding-inline: 2px;
     border: var(--border);
     background: var(--color-card);
     color: var(--color-ink);
     font-size: var(--text-caption);
     font-weight: var(--weight-black);
-    line-height: 1.25rem;
+    line-height: 1.125rem;
+  }
+
+  @media (max-width: 25rem) {
+    .segmented__cell--counted {
+      font-size: var(--text-caption);
+    }
+  }
+
+  @media (max-width: 22.5rem) {
+    .segmented__cell--counted {
+      gap: 2px;
+      padding-inline: 2px;
+      font-size: 0.6875rem;
+    }
+
+    .tabs__count {
+      min-width: 1rem;
+      font-size: 0.6875rem;
+      line-height: 1rem;
+    }
   }
 
   .tabs__panel {
