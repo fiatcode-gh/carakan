@@ -62,6 +62,20 @@ The user tried the build on an Android phone (Chrome, 392×755 CSS px) and found
 - The review quiz always asks glyph → sound.
 - Quiz prompts carry no reading label.
 
+### Notebook layout for tablet and desktop, 2026-10-23
+
+Contract `wide-notebook-layout`, mockup C "Notebook index tabs". Phones are unchanged.
+
+- **W1.** Wide starts at 48rem (768px), one breakpoint for the whole wide layout. The rules that switched at 60rem (tab bar, shell, toast, update banner, base) moved to 48rem. Sheets already switched there. Desktop steps in at 64rem (wordmark, wider desk, side-by-side Review and Converter); 75rem gives 4 Learn tiles and 10 chart columns.
+- **W2.** The book: on wide screens the page is one exercise-book page of ruled paper with the margin line, a 2px ink border and the hero hard shadow, on a darker desk (`--color-neutral`). The document still scrolls. A fixed frame draws the border and shadow, and two fixed desk bands cover content that scrolls past the page edges, so the page looks fixed and scrolls inside. Keyboard, wheel, focus scrolling and `scrollIntoView` work as before.
+- **W3.** Index tabs replace the rail. There is still one `TabBar` landmark: the bottom bar on a phone, four divider tabs on the book's right edge from 48rem, in order Belajar coral, Bagan periwinkle, Ulangi sage, Ubah butter. Each shows its icon, its label and a small decorative aksara (aria-hidden). The current tab sticks out further, carries the hard shadow and has `aria-current="page"`. Text on every tab is ink. These colours name sections, not lesson groups: a deliberate exception to D4's unit colours.
+- **W4.** Wordmark: "Carakan" stands on the desk to the left of the book on desktop. It is left out on tablet, where the desk margin is narrow, and on worksheets.
+- **W5.** Settings and teacher stay where they are: the menu and graduation-cap buttons stay in the Learn page header at every size. No duplicate controls on tabs or desk.
+- **W6.** Grids grow inside the book: Learn shows 3 (4 from 75rem) tiles per row under a full-width hero; the chart shows 5 (10 from 75rem) columns; Review puts the "Hari ini" card and the strength list side by side from 64rem; the converter puts input and result side by side from 64rem. Settings, help and teacher keep a readable column.
+- **W7.** Activity pages (lesson, standalone trace, review quiz) are a worksheet: the book narrows to a centred worksheet width with no index tabs, no margin line and no wordmark. The coloured header is the page's top band, edge to edge. The worksheet fills the window height and the primary bar docks on the page's bottom edge, inside the frame. The trace pad grows: it is the phone pad magnified (logical 320×336), so the judge, its constants and its fixture are unchanged.
+
+Phones are proven unchanged by a pixel diff: `npm run design:compare` captures the screens at 390×844 and 360×740, and `npm run design:diff` reports 0 differing pixels against a build of the source before this work.
+
 ## Consequences
 
 - Every screen uses the new system; components were renamed or removed as listed in the plan (`Surface`, `AksaraTile`, `QuizStep`; `Medallion`, `OrnamentDivider`, `Flashcard` and `ladderPreview` are gone).
@@ -78,5 +92,6 @@ The user tried the build on an Android phone (Chrome, 392×755 CSS px) and found
 - The converter copy toast can overlap the action row.
 - Long units (u7 with 20 glyphs, u8 with 18) show many meet chips; chips wrap onto their own row.
 - Cross-window erase limits are unchanged.
+- The wide layout is tested in Chromium only. Tablet browsers whose toolbars collapse (`dvh`) are unchecked on a device.
 - Stroke-order data and audio recordings do not exist yet.
 - The Jejeg licence question is unchanged.
