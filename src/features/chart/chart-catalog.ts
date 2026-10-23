@@ -1,5 +1,6 @@
 import type { AksaraItem } from "../../content/aksara-item.ts";
 import type { SandhanganItem } from "../../content/sandhangan-item.ts";
+import { searchMatcher } from "../../core/text-search.ts";
 import {
   angkaDigitToChar,
   angkaFlanker,
@@ -140,6 +141,33 @@ export function findChartEntry(
     }
   }
   return null;
+}
+
+/**
+ * The tabs with only the entries whose name or reading matches the query. A
+ * section without a match is dropped; a tab without one stays, empty, so the
+ * three tabs and their counts do not move. Entries are the catalog's own
+ * objects. A blank query returns `tabs` itself.
+ */
+export function filterChartTabs(
+  tabs: readonly ChartTab[],
+  query: string,
+): readonly ChartTab[] {
+  const matches = searchMatcher(query);
+  if (matches === null) return tabs;
+  return tabs.map((tab) => ({
+    ...tab,
+    sections: tab.sections
+      .map((section) => ({
+        ...section,
+        entries: section.entries.filter((e) => matches(e.name, e.reading)),
+      }))
+      .filter((section) => section.entries.length > 0),
+  }));
+}
+
+export function chartTabCount(tab: ChartTab): number {
+  return tab.sections.reduce((sum, section) => sum + section.entries.length, 0);
 }
 
 export function murdaVariant(baseId: string, ruleset: Ruleset): string | null {

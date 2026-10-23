@@ -416,6 +416,7 @@ test("[P-U08] [W11] [W12] [W13] the picker is a modal sheet with stacked section
   await expect(headings).toHaveText([
     id["glyphPickerTitle"]!,
     id["sectionCarakan"]!,
+    id["pasanganLabel"]!,
     id["sectionSandhanganVowel"]!,
     id["sectionSandhanganClosing"]!,
     id["sectionSandhanganKiller"]!,
@@ -480,6 +481,171 @@ test("[P-U08] ka, pangkon, ra gives the pasangan reading", async ({ page }) => {
   await expect(aksaraInput(page)).toHaveValue(value);
   await expect(outputOf(page).locator(".latin")).toHaveText("kra");
   expect(toLatin(value)).toEqual({ kind: "success", output: "kra" });
+});
+
+const pickerSearch = (page: Page, catalog = id): Locator =>
+  picker(page, catalog).getByRole("textbox", {
+    name: catalog["pickerSearchLabel"]!,
+  });
+
+/** The labels of the entries of the open picker, sorted; the close button is not one. */
+const entryNames = async (page: Page): Promise<string[]> =>
+  (
+    await picker(page)
+      .locator("button.entry")
+      .evaluateAll((buttons) =>
+        buttons.map((b) => b.getAttribute("aria-label") ?? ""),
+      )
+  ).sort();
+
+test("[P-U08] the Pasangan section lists the 20 pasangan after Carakan, each on a carrier with no dotted circle", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+  const sheet = picker(page);
+  const section = sheet.locator("section").filter({
+    has: page.getByRole("heading", {
+      level: 2,
+      name: id["pasanganLabel"]!,
+      exact: true,
+    }),
+  });
+  const tiles = section.locator("button.entry");
+  await expect(tiles).toHaveCount(20);
+  await expect(tiles.first()).toHaveAttribute("aria-label", "pasangan ha");
+  await expect(tiles.nth(1)).toHaveAttribute("aria-label", "pasangan na");
+  const ra = sheet.getByRole("button", { name: "pasangan ra", exact: true });
+  const glyph = await ra.locator(".aksara").textContent();
+  expect(glyph).toBe(
+    javaneseChar("JAVANESE LETTER KA") +
+      sandhanganPangkon.char +
+      javaneseChar("JAVANESE LETTER RA"),
+  );
+  expect(glyph).not.toContain("\u25cc");
+  const order = await sheet
+    .getByRole("heading", { level: 2 })
+    .allTextContents();
+  expect(order.slice(1, 3)).toEqual([
+    id["sectionCarakan"]!,
+    id["pasanganLabel"]!,
+  ]);
+});
+
+test("[P-U08] ka then the pasangan ra reads like ka, pangkon, ra", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await pickGlyph(page, "ka");
+  await pickGlyph(page, "pasangan ra");
+  const value =
+    javaneseChar("JAVANESE LETTER KA") +
+    sandhanganPangkon.char +
+    javaneseChar("JAVANESE LETTER RA");
+  await expect(aksaraInput(page)).toHaveValue(value);
+  await expect(outputOf(page).locator(".latin")).toHaveText("kra");
+});
+
+test("[P-U08] searching ka lists the words that start with ka, never cakra", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+  await pickerSearch(page).fill("ka");
+  await expect(picker(page).getByRole("heading", { level: 2 })).toHaveText([
+    id["glyphPickerTitle"]!,
+    id["sectionCarakan"]!,
+    id["pasanganLabel"]!,
+    id["sectionMurda"]!,
+    id["sectionPada"]!,
+  ]);
+  await expect
+    .poll(() => entryNames(page))
+    .toEqual(["ka", "ka murda", "pasangan ka", "rerenggan kanan"].sort());
+  await expect(picker(page).getByRole("button", { name: /cakra/ })).toHaveCount(
+    0,
+  );
+  await expectAccessible(page);
+  await expectTouchTargets(page);
+  await shoot(page, "picker-search");
+});
+
+test("[P-U08] searching e finds the é entry; matching ignores case and accents", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+  await pickerSearch(page).fill("E");
+  await expect.poll(() => entryNames(page)).not.toContain("ha");
+  expect(await entryNames(page)).toContain("é");
+  await pickerSearch(page).fill("é");
+  await expect.poll(() => entryNames(page)).not.toContain("ha");
+  expect(await entryNames(page)).toContain("é");
+});
+
+test("[P-U08] a search without a hit shows the message; clearing it restores every section", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+  const sheet = picker(page);
+  const all = await entryNames(page);
+  await pickerSearch(page).fill("zzz");
+  await expect(sheet.getByText(id["searchNoMatch"]!)).toBeVisible();
+  await expect(sheet.locator("button.entry")).toHaveCount(0);
+  await expect(sheet.getByRole("heading", { level: 2 })).toHaveText([
+    id["glyphPickerTitle"]!,
+  ]);
+  await expectAccessible(page);
+  await pickerSearch(page).fill("");
+  await expect(sheet.getByText(id["searchNoMatch"]!)).toHaveCount(0);
+  await expect(sheet.getByRole("heading", { level: 2 })).toHaveCount(11 + 1);
+  await expect.poll(() => entryNames(page)).toEqual(all);
+});
+
+test("[P-U08] picking while filtered inserts at the caret, closes the sheet and focuses the input; reopening starts empty", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await pickGlyph(page, "ha");
+  await pickGlyph(page, "na");
+  await page.keyboard.press("ArrowLeft");
+  await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+  await pickerSearch(page).fill("ca");
+  const sheet = picker(page);
+  await sheet.getByRole("button", { name: "ca", exact: true }).click();
+  await expect(sheet).toBeHidden();
+  await expect(aksaraInput(page)).toBeFocused();
+  await expect(aksaraInput(page)).toHaveValue(successOutput("hacana"));
+  await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+  await expect(pickerSearch(page)).toHaveValue("");
+  await expect(
+    sheet.getByRole("button", { name: "ra", exact: true }),
+  ).toBeVisible();
+});
+
+test.describe("English UI picker search", () => {
+  test.use({ locale: "en-US" });
+
+  test("[P-U08] [P-L04] the search field and the pasangan labels follow the UI language", async ({
+    page,
+  }) => {
+    await openAksara(page, en);
+    await page.getByRole("button", { name: en["glyphPickerTitle"]! }).click();
+    await expect(pickerSearch(page, en)).toBeVisible();
+    await pickerSearch(page, en).fill("zzz");
+    await expect(
+      picker(page, en).getByText(en["searchNoMatch"]!),
+    ).toBeVisible();
+    await pickerSearch(page, en).fill("pasangan k");
+    expect(
+      await picker(page, en)
+        .locator("button.entry")
+        .evaluateAll((buttons) =>
+          buttons.map((b) => b.getAttribute("aria-label")),
+        ),
+    ).toEqual(["pasangan ka"]);
+  });
 });
 
 test("[P-U08] sandhangan tiles show the mark on a ha carrier", async ({
@@ -891,4 +1057,33 @@ test.describe("[P-U10] tap an aksara to see where it came from", () => {
       );
     });
   });
+});
+
+test("[P-U08] the picker's no-match message is a status that exists before typing", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+  const status = picker(page).getByRole("status");
+  await expect(status).toHaveCount(1);
+  await expect(status).toHaveText("");
+  await pickerSearch(page).fill("zzz");
+  await expect(status).toHaveCount(1);
+  await expect(status).toHaveText(id["searchNoMatch"]!);
+  await pickerSearch(page).fill("ka");
+  await expect(status).toHaveCount(1);
+  await expect(status).toHaveText("");
+});
+
+test("[P-U08] the picker search turns off autocorrect, autocapitalize and spellcheck; the converter input keeps them", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+  const field = pickerSearch(page);
+  await expect(field).toHaveAttribute("autocorrect", "off");
+  await expect(field).toHaveAttribute("autocapitalize", "off");
+  await expect(field).toHaveAttribute("spellcheck", "false");
+  await expect(aksaraInput(page)).not.toHaveAttribute("autocorrect", "off");
+  await expect(aksaraInput(page)).not.toHaveAttribute("spellcheck", "false");
 });

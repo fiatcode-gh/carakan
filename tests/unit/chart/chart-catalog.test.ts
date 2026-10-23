@@ -19,6 +19,8 @@ import {
 import {
   angkaFlanked,
   buildChartTabs,
+  chartTabCount,
+  filterChartTabs,
   findChartEntry,
   murdaVariant,
   pasanganString,
@@ -29,6 +31,7 @@ import {
   type ChartSection,
   type ChartSectionId,
   type ChartStrings,
+  type ChartTab,
 } from "../../../src/features/chart/chart-catalog.ts";
 import { ak } from "../../engine/support/aksara-builder.ts";
 import { loadFromPublic, loadView } from "../../support/content-files.ts";
@@ -479,5 +482,73 @@ describe("buildChartTabs per ruleset", () => {
       ...swaraCatalogue.map((s) => s.id),
     ]);
     expect(ids(real, "rekan")).toEqual(rekan.map((r) => r.id));
+  });
+});
+
+describe("filterChartTabs", () => {
+  const realTabs = async () => {
+    const content = await loadView(kajRulesetId);
+    return buildChartTabs({
+      aksara: content.aksara,
+      sandhangan: content.sandhangan,
+      strings,
+      ruleset: content.ruleset,
+    });
+  };
+  const names = (tab: ChartTab) =>
+    tab.sections.flatMap((s) => s.entries.map((e) => e.name));
+
+  test("[P-C01] a blank query returns the tabs themselves", async () => {
+    const all = await realTabs();
+    expect(filterChartTabs(all, "")).toBe(all);
+    expect(filterChartTabs(all, "  ")).toBe(all);
+  });
+
+  test("[P-C01] ka leaves the words starting with ka on Carakan and pasangan ka on Pasangan, with counts that match", async () => {
+    const shown = filterChartTabs(await realTabs(), "ka");
+    expect(shown.map((t) => t.id)).toEqual([
+      "carakan",
+      "sandhangan",
+      "pasangan",
+    ]);
+    expect(shown.map((t) => t.sections.map((s) => s.id))).toEqual([
+      ["carakan", "murda", "swara", "pada"],
+      [],
+      ["pasangan"],
+    ]);
+    expect(names(shown[0]!)).toEqual([
+      "ka",
+      "ka murda",
+      "i kawi",
+      "rerenggan kanan",
+    ]);
+    expect(names(shown[2]!)).toEqual(["pasangan ka"]);
+    expect(shown.map(chartTabCount)).toEqual([4, 0, 1]);
+  });
+
+  test("[P-C01] a query without a hit empties every tab but keeps the three tabs", async () => {
+    const shown = filterChartTabs(await realTabs(), "zzz");
+    expect(shown.map((t) => t.id)).toEqual([
+      "carakan",
+      "sandhangan",
+      "pasangan",
+    ]);
+    expect(shown.map(chartTabCount)).toEqual([0, 0, 0]);
+  });
+
+  test("[P-C01] the name and the Latin reading both match; accents are ignored", async () => {
+    const shown = filterChartTabs(await realTabs(), "e");
+    const swara = shown[0]!.sections.find((s) => s.id === "swara")!;
+    expect(swara.entries.map((e) => e.name)).toContain("é");
+    // pasangan ha reads `ha`: a name word `ha` does not start with `e`.
+    expect(names(shown[2]!)).not.toContain("pasangan ha");
+  });
+
+  test("[P-C01] filtered entries are the catalog's own, so a lookup still finds them whole", async () => {
+    const all = await realTabs();
+    const shown = filterChartTabs(all, "ka");
+    const entry = shown[2]!.sections[0]!.entries[0]!;
+    expect(findChartEntry(all, entry.id)?.entry).toBe(entry);
+    expect(findChartEntry(all, entry.id)?.position).toBe(5);
   });
 });

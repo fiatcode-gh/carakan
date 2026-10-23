@@ -769,3 +769,255 @@ test("[P-C02] no tile's marks run into the label strip or off the top of the til
     [],
   );
 });
+
+const chartSearch = (page: Page, c: Catalog = id): Locator =>
+  page
+    .locator("#tab-chart")
+    .getByRole("textbox", { name: c["chartSearchLabel"]!, exact: true });
+
+/** A tab's name while a query is set: its label and the number of entries that match. */
+const countedTab = (
+  page: Page,
+  tabId: ChartTabId,
+  count: number,
+  c: Catalog = id,
+): Locator =>
+  page.locator("#tab-chart").getByRole("tab", {
+    name: fmt(c["chartTabCount"]!, {
+      name: c[tabLabelKey[tabId]]!,
+      count: String(count),
+    }),
+    exact: true,
+  });
+
+/** The ids of the tiles the selected tab shows. */
+const shownIds = (page: Page): Promise<(string | null)[]> =>
+  page
+    .locator("#tab-chart [data-entry]")
+    .evaluateAll((els) => els.map((el) => el.getAttribute("data-entry")));
+
+test("[P-C01] a search field with a visible label sits above the three tabs", async ({
+  page,
+}) => {
+  const chart = page.locator("#tab-chart");
+  await expect(
+    chart.locator("label", { hasText: id["chartSearchLabel"]! }),
+  ).toBeVisible();
+  const [field, list] = await Promise.all([
+    chartSearch(page).boundingBox(),
+    chart.getByRole("tablist").boundingBox(),
+  ]);
+  expect(field!.y + field!.height).toBeLessThanOrEqual(list!.y);
+  for (const t of tabs) await expect(chartTab(page, t.id)).toBeVisible();
+});
+
+test("[P-C01] ka leaves the words starting with ka on Carakan and pasangan ka on Pasangan, with matching tab counts", async ({
+  page,
+}) => {
+  await chartSearch(page).fill("ka");
+  await expect(countedTab(page, "carakan", 4)).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(countedTab(page, "sandhangan", 0)).toBeVisible();
+  await expect(countedTab(page, "pasangan", 1)).toBeVisible();
+  expect(await shownIds(page)).toEqual([
+    "ka",
+    "kaMurda",
+    "iKawi",
+    "rerengganTengen",
+  ]);
+  await expect(
+    page.locator("#tab-chart").getByRole("heading", { level: 2 }),
+  ).toHaveText([
+    id["sectionCarakan"]!,
+    id["sectionMurda"]!,
+    id["sectionSwara"]!,
+    id["sectionPada"]!,
+  ]);
+  await countedTab(page, "pasangan", 1).click();
+  expect(await shownIds(page)).toEqual(["pasangan-ka"]);
+});
+
+test("[P-C01] a search without a hit shows the message in every tab", async ({
+  page,
+}) => {
+  await chartSearch(page).fill("zzz");
+  for (const t of tabs) {
+    await countedTab(page, t.id, 0).click();
+    await expect(
+      page.locator("#tab-chart").getByText(id["searchNoMatch"]!),
+    ).toBeVisible();
+    expect(await shownIds(page)).toEqual([]);
+  }
+  await chartSearch(page).fill("");
+  await expect(
+    page.locator("#tab-chart").getByText(id["searchNoMatch"]!),
+  ).toHaveCount(0);
+  await expect(chartTab(page, "pasangan")).toBeVisible();
+  expect(await shownIds(page)).toHaveLength(20);
+});
+
+test("[P-C01] the query survives a tab switch and a detail sheet, which opens as unfiltered", async ({
+  page,
+}) => {
+  await chartSearch(page).fill("ka");
+  await countedTab(page, "pasangan", 1).click();
+  await countedTab(page, "carakan", 4).click();
+  const ka = page.locator('#tab-chart [data-entry="ka"]');
+  await ka.click();
+  await expect(sheet(page, "ka")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(sheet(page, "ka")).toBeHidden();
+  await expect(chartSearch(page)).toHaveValue("ka");
+  expect(await shownIds(page)).toHaveLength(4);
+  await expect(ka).toBeFocused();
+
+  await countedTab(page, "pasangan", 1).click();
+  await page.locator('#tab-chart [data-entry="pasangan-ka"]').click();
+  await expect(sheet(page, "pasangan-ka")).toBeVisible();
+  await sheet(page, "pasangan-ka")
+    .getByRole("button", { name: id["closeButton"]! })
+    .click();
+  await expect(sheet(page, "pasangan-ka")).toBeHidden();
+  await expect(chartSearch(page)).toHaveValue("ka");
+  expect(await shownIds(page)).toEqual(["pasangan-ka"]);
+});
+
+test("[P-C01] leaving the Bagan tab and coming back starts with no query", async ({
+  page,
+}) => {
+  await chartSearch(page).fill("ka");
+  await expect(countedTab(page, "carakan", 4)).toBeVisible();
+  const nav = page.getByRole("navigation", { name: id["mainNavLabel"]! });
+  await nav.getByRole("link", { name: id["navConverter"]! }).click();
+  await expect(page.locator("#tab-chart")).toBeHidden();
+  await nav.getByRole("link", { name: id["navChart"]! }).click();
+  await expect(chartSearch(page)).toHaveValue("");
+  await expect(chartTab(page, "carakan")).toBeVisible();
+  await expect(chartTab(page, "sandhangan")).toBeVisible();
+  await expect(chartTab(page, "pasangan")).toBeVisible();
+  expect((await shownIds(page)).length).toBeGreaterThan(4);
+});
+
+test("[P-C01] the filtered chart passes axe, touch targets and fits the viewport on every tab", async ({
+  page,
+}) => {
+  await chartSearch(page).fill("ka");
+  for (const [tabId, count] of [
+    ["carakan", 4],
+    ["sandhangan", 0],
+    ["pasangan", 1],
+  ] as const) {
+    await countedTab(page, tabId, count).click();
+    await expectAccessible(page);
+    await expectTouchTargets(page);
+    await expectNoHorizontalOverflow(page);
+  }
+  await chartSearch(page).fill("zzz");
+  await expectAccessible(page);
+  await expectTouchTargets(page);
+  await expectNoHorizontalOverflow(page);
+  await shoot(page, "chart-search");
+});
+
+test.describe("English chart search", () => {
+  test.use({ locale: "en-US" });
+
+  test("[P-C01] [P-L04] the field and the tab counts follow the UI language", async ({
+    page,
+  }) => {
+    await seedLocale(page, "en");
+    await page.reload();
+    await page.locator('#app[data-boot="ready"]').waitFor();
+    await expect(chartSearch(page, en)).toBeVisible();
+    await chartSearch(page, en).fill("zzz");
+    await expect(countedTab(page, "carakan", 0, en)).toBeVisible();
+    await expect(
+      page.locator("#tab-chart").getByText(en["searchNoMatch"]!),
+    ).toBeVisible();
+    await page.setViewportSize({ width: 320, height: 640 });
+    await chartSearch(page, en).fill("ka");
+    await expect(countedTab(page, "pasangan", 1, en)).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+  });
+});
+
+test("[P-C01] the tab row keeps its height on a phone when a query is typed", async ({
+  page,
+}) => {
+  const list = page.locator("#tab-chart").getByRole("tablist");
+  for (const width of [390, 360]) {
+    await page.setViewportSize({ width, height: 740 });
+    await chartSearch(page).fill("");
+    const empty = (await list.boundingBox())!.height;
+    await chartSearch(page).fill("ka");
+    await expect(countedTab(page, "pasangan", 1)).toBeVisible();
+    expect((await list.boundingBox())!.height, `${width}px, ka`).toBeCloseTo(
+      empty,
+      0,
+    );
+    await chartSearch(page).fill("zzz");
+    await expect(countedTab(page, "pasangan", 0)).toBeVisible();
+    expect((await list.boundingBox())!.height, `${width}px, zzz`).toBeCloseTo(
+      empty,
+      0,
+    );
+    await expectNoHorizontalOverflow(page);
+  }
+});
+
+test("[P-C01] the no-match message is a status that exists before typing and gets its text after a miss", async ({
+  page,
+}) => {
+  const status = page.locator("#tab-chart").getByRole("status");
+  await expect(status).toHaveCount(1);
+  await expect(status).toHaveText("");
+  await chartSearch(page).fill("zzz");
+  await expect(status).toHaveCount(1);
+  await expect(status).toHaveText(id["searchNoMatch"]!);
+  await countedTab(page, "pasangan", 0).click();
+  await expect(status).toHaveText(id["searchNoMatch"]!);
+  await chartSearch(page).fill("ka");
+  await expect(status).toHaveCount(1);
+  await expect(status).toHaveText("");
+});
+
+test("[P-C01] the search field turns off autocorrect, autocapitalize and spellcheck", async ({
+  page,
+}) => {
+  const field = chartSearch(page);
+  await expect(field).toHaveAttribute("autocorrect", "off");
+  await expect(field).toHaveAttribute("autocapitalize", "off");
+  await expect(field).toHaveAttribute("spellcheck", "false");
+});
+
+test("[P-C01] a filtered chart has no horizontal overflow at 320 px", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 640 });
+  for (const query of ["ka", "zzz"]) {
+    await chartSearch(page).fill(query);
+    await expect(
+      countedTab(page, "pasangan", query === "ka" ? 1 : 0),
+    ).toBeVisible();
+    await expectNoHorizontalOverflow(page);
+    await expectTouchTargets(page);
+  }
+});
+
+test("[P-C01] a counted tab's accessible name contains its visible text", async ({
+  page,
+}) => {
+  await chartSearch(page).fill("ka");
+  for (const [tabId, count] of [
+    ["carakan", 4],
+    ["sandhangan", 0],
+    ["pasangan", 1],
+  ] as const) {
+    const cell = countedTab(page, tabId, count);
+    const visible = (await cell.innerText()).replace(/\s+/g, " ").trim();
+    expect(visible).toBe(`${id[tabLabelKey[tabId]]!} ${count}`);
+    expect(await cell.getAttribute("aria-label")).toContain(visible);
+  }
+});
