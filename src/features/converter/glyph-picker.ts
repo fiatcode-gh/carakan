@@ -1,4 +1,5 @@
 import type { AksaraItem } from "../../content/aksara-item.ts";
+import type { SandhanganItem } from "../../content/sandhangan-item.ts";
 import {
   angkaDigitToChar,
   javaneseChar,
@@ -9,12 +10,23 @@ import {
   swara,
 } from "../../engine/index.ts";
 import type { MessageKey, MessageParams } from "../../l10n/i18n.ts";
+import { rekanChar, sandhanganGroups } from "../chart/chart-catalog.ts";
+
+/** Section title per sandhangan function, as in the chart. */
+const sandhanganTitleKeys: Record<string, MessageKey> = {
+  vowelChanging: "sectionSandhanganVowel",
+  syllableClosing: "sectionSandhanganClosing",
+  vowelKiller: "sectionSandhanganKiller",
+  consonantModifying: "sectionSandhanganConsonant",
+};
 
 export interface GlyphPickerEntry {
   /** Content display name, e.g. `na murda` (W13). */
   readonly label: string;
   /** The aksara string to insert. */
   readonly char: string;
+  /** What the entry shows: `char`, except a sandhangan, which is shown on a ha carrier. */
+  readonly glyph: string;
 }
 
 export interface PickerSection {
@@ -40,10 +52,13 @@ function letterFor(baseId: string): string {
 
 /**
  * Sections of the in-app glyph picker: nobody has a Javanese keyboard, and the
- * aksara to Latin direction needs one. Labels are the content display names.
+ * aksara to Latin direction needs one. Order: carakan, sandhangan by function
+ * (as in the chart), swara, murda, rekan, angka, pada. Labels are the content
+ * display names.
  */
 export function pickerSections(
   aksara: readonly AksaraItem[],
+  sandhangan: readonly SandhanganItem[],
   ruleset: Ruleset,
   t: (key: MessageKey, params?: MessageParams) => string,
 ): PickerSection[] {
@@ -52,28 +67,54 @@ export function pickerSections(
   const entry = (id: string, char: string): GlyphPickerEntry => ({
     label: nameOf(id),
     char,
+    glyph: char,
   });
   const section = (
     titleKey: MessageKey,
     entries: GlyphPickerEntry[],
   ): PickerSection => ({ titleKey, title: t(titleKey), entries });
+  const sandhanganSections = [...sandhanganGroups(sandhangan)].map(
+    ([fn, group]) => {
+      const titleKey = sandhanganTitleKeys[fn];
+      if (titleKey === undefined) {
+        throw new RangeError(`unknown function: ${fn}`);
+      }
+      return section(
+        titleKey,
+        group.map((item) => ({
+          label: item.name,
+          char: javaneseChar(item.unicodeName),
+          glyph: item.carrierChar,
+        })),
+      );
+    },
+  );
 
   return [
     section(
       "sectionCarakan",
       nglegena.map((a) => entry(a.id, a.char)),
     ),
+    ...sandhanganSections,
     section("sectionSwara", [
       ...swara.map((s) => entry(s.id, s.char)),
-      ...ruleset.swaraLongForms.map((f) => ({
-        label: t("longFormName", { name: nameOf(f.baseId) }),
-        char:
-          javaneseChar(`JAVANESE LETTER ${letterFor(f.baseId)}`) + f.tarungChar,
-      })),
+      ...ruleset.swaraLongForms.map((f) => {
+        const char =
+          javaneseChar(`JAVANESE LETTER ${letterFor(f.baseId)}`) + f.tarungChar;
+        return {
+          label: t("longFormName", { name: nameOf(f.baseId) }),
+          char,
+          glyph: char,
+        };
+      }),
     ]),
     section(
       "sectionMurda",
       ruleset.murda.map((m) => entry(m.aksara.id, m.aksara.char)),
+    ),
+    section(
+      "sectionRekan",
+      ruleset.rekan.map((r) => entry(r.id, rekanChar(r.id))),
     ),
     section(
       "sectionAngka",

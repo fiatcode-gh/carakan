@@ -1,6 +1,13 @@
 import type { Locator, Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
-import { javaneseChar, toAksara, toLatin } from "../../src/engine/index.ts";
+import {
+  javaneseChar,
+  pedomanRulesetId,
+  sandhanganPangkon,
+  sandhanganWulu,
+  toAksara,
+  toLatin,
+} from "../../src/engine/index.ts";
 import { localizeEngineMessage } from "../../src/features/converter/engine-messages.ts";
 import {
   expectAccessible,
@@ -299,8 +306,13 @@ test("[P-U08] [W11] [W12] [W13] the picker is a modal sheet with stacked section
   await expect(headings).toHaveText([
     id["glyphPickerTitle"]!,
     id["sectionCarakan"]!,
+    id["sectionSandhanganVowel"]!,
+    id["sectionSandhanganClosing"]!,
+    id["sectionSandhanganKiller"]!,
+    id["sectionSandhanganConsonant"]!,
     id["sectionSwara"]!,
     id["sectionMurda"]!,
+    id["sectionRekan"]!,
     id["sectionAngka"]!,
     id["sectionPada"]!,
   ]);
@@ -311,8 +323,13 @@ test("[P-U08] [W11] [W12] [W13] the picker is a modal sheet with stacked section
   await expectTouchTargets(page);
   await shoot(page, "picker");
   for (const name of [
+    id["sectionSandhanganVowel"]!,
+    id["sectionSandhanganClosing"]!,
+    id["sectionSandhanganKiller"]!,
+    id["sectionSandhanganConsonant"]!,
     id["sectionSwara"]!,
     id["sectionMurda"]!,
+    id["sectionRekan"]!,
     id["sectionAngka"]!,
     id["sectionPada"]!,
   ]) {
@@ -329,6 +346,85 @@ test("[P-U08] [W11] [W12] [W13] the picker is a modal sheet with stacked section
   await shoot(page, "picker-pada");
   await sheet.getByRole("button", { name: id["closeButton"]! }).click();
   await expect(sheet).toBeHidden();
+});
+
+test("[P-U08] a sandhangan inserts only its mark: ka then wulu reads ki", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await pickGlyph(page, "ka");
+  await pickGlyph(page, "wulu (i)");
+  await expect(aksaraInput(page)).toHaveValue(successOutput("ki"));
+  await expect(outputOf(page).locator(".latin")).toHaveText("ki");
+});
+
+test("[P-U08] ka, pangkon, ra gives the pasangan reading", async ({ page }) => {
+  await openAksara(page);
+  await pickGlyph(page, "ka");
+  await pickGlyph(page, "pangkon (pemati)");
+  await pickGlyph(page, "ra");
+  const value =
+    javaneseChar("JAVANESE LETTER KA") +
+    sandhanganPangkon.char +
+    javaneseChar("JAVANESE LETTER RA");
+  await expect(aksaraInput(page)).toHaveValue(value);
+  await expect(outputOf(page).locator(".latin")).toHaveText("kra");
+  expect(toLatin(value)).toEqual({ kind: "success", output: "kra" });
+});
+
+test("[P-U08] sandhangan tiles show the mark on a ha carrier", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+  const wulu = picker(page).getByRole("button", {
+    name: "wulu (i)",
+    exact: true,
+  });
+  await expect(wulu.locator(".aksara")).toHaveText(
+    javaneseChar("JAVANESE LETTER HA") + sandhanganWulu.char,
+  );
+});
+
+const rekanSection = (sheet: Locator): Locator =>
+  sheet.locator("section").filter({
+    has: sheet.page().getByRole("heading", {
+      level: 2,
+      name: id["sectionRekan"]!,
+      exact: true,
+    }),
+  });
+
+test("[P-C08] the rekan section lists the ruleset's rekan; fa reads fa", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+  await expect(rekanSection(picker(page)).getByRole("button")).toHaveCount(7);
+  await picker(page).getByRole("button", { name: "fa", exact: true }).click();
+  await expect(outputOf(page).locator(".latin")).toHaveText("fa");
+});
+
+test.describe("Pedoman picker", () => {
+  test.use({ ruleset: pedomanRulesetId });
+
+  test("[P-C08] the rekan section lists the five Pedoman rekan; fa reads fa", async ({
+    page,
+  }) => {
+    await openAksara(page);
+    await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+    const buttons = rekanSection(picker(page)).getByRole("button");
+    await expect(buttons).toHaveCount(5);
+    await expect(buttons.locator(".entry__label")).toHaveText([
+      "kha",
+      "dza",
+      "fa",
+      "za",
+      "gha",
+    ]);
+    await picker(page).getByRole("button", { name: "fa", exact: true }).click();
+    await expect(outputOf(page).locator(".latin")).toHaveText("fa");
+  });
 });
 
 test("[P-U08] a Pada entry inserts into the aksara input", async ({ page }) => {

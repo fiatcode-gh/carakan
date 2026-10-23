@@ -23,6 +23,7 @@ import {
   murdaVariant,
   pasanganString,
   rekanChar,
+  sandhanganGroups,
   sectionHasSound,
   subjoinedForm,
   type ChartSection,
@@ -297,6 +298,18 @@ describe("buildChartTabs entries", () => {
       ["vowelChanging", "vowel", 1],
       ["vowelKiller", "killer", 1],
     ]);
+  });
+
+  test("[P-C01] sandhanganGroups keeps first-appearance order", async () => {
+    const content = await loadView(kajRulesetId);
+    const groups = sandhanganGroups(content.sandhangan);
+    expect([...groups.keys()]).toEqual([
+      "vowelChanging",
+      "syllableClosing",
+      "vowelKiller",
+      "consonantModifying",
+    ]);
+    expect([...groups.values()].map((g) => g.length)).toEqual([5, 3, 1, 3]);
   });
 
   test("[P-C03] swara long forms are the swara letter plus tarung", () => {

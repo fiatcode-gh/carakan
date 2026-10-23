@@ -1,29 +1,41 @@
 import { describe, expect, test } from "vitest";
 import {
-  contentFor,
-  readContent,
-} from "../../../src/content/content-repository.ts";
-import {
   javaneseChar,
   kajRulesetId,
   pedomanRulesetId,
   rulesetById,
+  sandhanganById,
+  toLatin,
 } from "../../../src/engine/index.ts";
-import { pickerSections } from "../../../src/features/converter/glyph-picker.ts";
+import {
+  rekanChar,
+  sandhanganGroups,
+} from "../../../src/features/chart/chart-catalog.ts";
+import {
+  pickerSections,
+  type PickerSection,
+} from "../../../src/features/converter/glyph-picker.ts";
 import en from "../../../src/l10n/en.json";
 import { formatMessage, type MessageKey } from "../../../src/l10n/i18n.ts";
 import id from "../../../src/l10n/id.json";
 import { ak } from "../../engine/support/aksara-builder.ts";
-import { loadFromPublic, loadView } from "../../support/content-files.ts";
+import { loadView } from "../../support/content-files.ts";
 
-const { aksara } = await loadView(kajRulesetId);
+const content = await loadView(kajRulesetId);
+const pedoman = await loadView(pedomanRulesetId);
+const { aksara } = content;
 const translator =
   (catalog: Record<MessageKey, string>) =>
   (key: MessageKey, params?: Record<string, string | number>) =>
     formatMessage(catalog[key], params);
 
 const kaj = rulesetById(kajRulesetId);
-const sections = pickerSections(aksara, kaj, translator(id));
+const sections = pickerSections(
+  aksara,
+  content.sandhangan,
+  kaj,
+  translator(id),
+);
 const section = (key: MessageKey) => {
   const found = sections.find((s) => s.titleKey === key);
   if (found === undefined) throw new Error(`no section ${key}`);
@@ -31,37 +43,51 @@ const section = (key: MessageKey) => {
 };
 
 describe("pickerSections", () => {
-  test("[P-C08] a Pedoman picker has 7 swara (no long forms) and 7 murda", async () => {
-    const pedomanContent = contentFor(
-      await readContent(loadFromPublic),
-      pedomanRulesetId,
-    );
+  test("[P-C08] a Pedoman picker has 7 swara (no long forms), 7 murda and 5 rekan", () => {
     const pedomanSections = pickerSections(
-      pedomanContent.aksara,
-      pedomanContent.ruleset,
+      pedoman.aksara,
+      pedoman.sandhangan,
+      pedoman.ruleset,
       translator(id),
     );
     expect(pedomanSections.map((s) => s.entries.length)).toEqual([
-      20, 7, 7, 10, 15,
+      20, 5, 3, 1, 3, 7, 7, 5, 10, 15,
     ]);
+    expect(
+      pedomanSections
+        .find((s) => s.titleKey === "sectionRekan")!
+        .entries.map((e) => e.label),
+    ).toEqual(["kha", "dza", "fa", "za", "gha"]);
   });
 
-  test("[P-U08] has the five sections with the source sizes", () => {
-    expect(sections.map((s) => s.entries.length)).toEqual([20, 11, 11, 10, 15]);
+  test("[P-U08] has the ten sections with the source sizes", () => {
+    expect(sections.map((s) => s.entries.length)).toEqual([
+      20, 5, 3, 1, 3, 11, 11, 7, 10, 15,
+    ]);
   });
 
   test("[P-U08] [W12] titles come from the section keys, in both locales", () => {
     expect(sections.map((s) => s.titleKey)).toEqual([
       "sectionCarakan",
+      "sectionSandhanganVowel",
+      "sectionSandhanganClosing",
+      "sectionSandhanganKiller",
+      "sectionSandhanganConsonant",
       "sectionSwara",
       "sectionMurda",
+      "sectionRekan",
       "sectionAngka",
       "sectionPada",
     ]);
     expect(sections.map((s) => s.title)).toEqual(
       sections.map((s) => id[s.titleKey!]),
     );
-    const english = pickerSections(aksara, kaj, translator(en));
+    const english = pickerSections(
+      aksara,
+      content.sandhangan,
+      kaj,
+      translator(en),
+    );
     expect(english.map((s) => s.title)).toEqual(
       english.map((s) => en[s.titleKey!]),
     );
@@ -71,6 +97,7 @@ describe("pickerSections", () => {
     expect(section("sectionCarakan").entries[0]).toEqual({
       label: "ha",
       char: ak("HA"),
+      glyph: ak("HA"),
     });
     for (const s of sections) {
       for (const e of s.entries) expect(e.char).not.toBe("");
@@ -112,7 +139,8 @@ describe("pickerSections", () => {
 
   test("[P-U08] [W13] long forms use longFormName on the base name, per locale", () => {
     const labels = (cat: Record<MessageKey, string>) =>
-      pickerSections(aksara, kaj, translator(cat))[1]!
+      pickerSections(aksara, content.sandhangan, kaj, translator(cat))
+        .find((s) => s.titleKey === "sectionSwara")!
         .entries.slice(7)
         .map((e) => e.label);
     expect(labels(id)).toEqual([
@@ -127,6 +155,63 @@ describe("pickerSections", () => {
       "long o",
       "long pa cerek (rě)",
     ]);
+  });
+
+  test("[P-U08] a sandhangan inserts only its mark and shows it on a ha carrier", () => {
+    const marks = sandhanganGroups(content.sandhangan);
+    const entries = [...marks.values()].flat();
+    expect(entries).toHaveLength(12);
+    const picked = sections.flatMap((s) => s.entries);
+    for (const item of entries) {
+      const found = picked.find((e) => e.label === item.name);
+      expect(found, item.id).toBeDefined();
+      expect(found!.char, item.id).toBe(sandhanganById(item.id)!.char);
+      expect([...found!.char], item.id).toHaveLength(1);
+      expect(found!.glyph, item.id).toBe(
+        javaneseChar("JAVANESE LETTER HA") + found!.char,
+      );
+    }
+  });
+
+  test("[P-U08] ka + wulu reads ki; ka + pangkon + ra reads as pasangan", () => {
+    const char = (name: string) => {
+      const found = sections
+        .flatMap((s) => s.entries)
+        .find((e) => e.label === name);
+      if (found === undefined) throw new Error(`no entry ${name}`);
+      return found.char;
+    };
+    const ka = ak("KA");
+    expect(toLatin(ka + char("wulu (i)"))).toEqual({
+      kind: "success",
+      output: "ki",
+    });
+    expect(toLatin(ka + char("pangkon (pemati)") + ak("RA"))).toEqual({
+      kind: "success",
+      output: "kra",
+    });
+  });
+
+  test("[P-C08] rekan follow the active ruleset and read back", async () => {
+    const pedomanSections = pickerSections(
+      pedoman.aksara,
+      pedoman.sandhangan,
+      pedoman.ruleset,
+      translator(id),
+    );
+    const rekanOf = (list: PickerSection[]) =>
+      list.find((s) => s.titleKey === "sectionRekan")!.entries;
+    const kajRekan = rekanOf(sections);
+    expect(kajRekan).toHaveLength(7);
+    expect(kajRekan.map((e) => e.char)).toEqual(
+      kaj.rekan.map((r) => rekanChar(r.id)),
+    );
+    expect(rekanOf(pedomanSections)).toHaveLength(5);
+    for (const list of [kajRekan, rekanOf(pedomanSections)]) {
+      const fa = list.find((e) => e.label === "fa")!;
+      expect(fa.char).toBe(rekanChar("fa"));
+      expect(toLatin(fa.char)).toEqual({ kind: "success", output: "fa" });
+    }
   });
 });
 

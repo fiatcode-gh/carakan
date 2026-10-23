@@ -125,7 +125,12 @@
 
 {#if pickerOpen}
   <GlyphPickerSheet
-    sections={pickerSections(content.aksara, content.ruleset, $t)}
+    sections={pickerSections(
+      content.aksara,
+      content.sandhangan,
+      content.ruleset,
+      $t,
+    )}
     onpick={pick}
     onclose={() => (pickerOpen = false)}
   />
