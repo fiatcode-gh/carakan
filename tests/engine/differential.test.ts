@@ -103,6 +103,22 @@ const approvedToLatin: ReadonlyMap<string, Rec> = new Map(
   ),
 );
 
+// C1c (contract converter-and-chart-fixes, spec section 3): a typed pepet
+// after consonant + r is keret, like the plain-e pepet reading. Dart wrote
+// ra agung + pepet for this one record.
+const label = (input: string, murda: boolean): string =>
+  `toAksara(${JSON.stringify(input)}, useMurda: ${murda})`;
+const approvedLabel = label("RlÈjRêL", true);
+const approvedToAksara: ReadonlyMap<string, Rec> = new Map([
+  [
+    approvedLabel,
+    [
+      "s",
+      ak("RA_AGUNG PANGKON LA TALING JA_MAHAPRANA PANGKON PA_CEREK LA PANGKON"),
+    ] as Rec,
+  ],
+]);
+
 describe("[P-D02] differential: Dart engine @ebc7cb5 vs TS engine", () => {
   test("fixture is the pinned Dart revision and ruleset", () => {
     expect(fixture.source.commit).toBe(
@@ -128,8 +144,21 @@ describe("[P-D02] differential: Dart engine @ebc7cb5 vs TS engine", () => {
       (input, murda) =>
         `toAksara(${JSON.stringify(input)}, useMurda: ${murda})`,
     );
-    expect(mismatches.slice(0, 20)).toEqual([]);
-    expect(mismatches).toHaveLength(0);
+    // C1c pin (contract converter-and-chart-fixes, spec section 3): the
+    // Dart record still reads ra agung + pepet; the TS record is keret.
+    const dart = fixture.toAksara.find(
+      ([input, murda]) => label(input, murda) === approvedLabel,
+    );
+    expect(dart?.[2]).toEqual([
+      "s",
+      ak(
+        "RA_AGUNG PANGKON LA TALING JA_MAHAPRANA PANGKON RA_AGUNG PEPET LA PANGKON",
+      ),
+    ]);
+    const { rest, hits } = withoutApproved(mismatches, approvedToAksara);
+    expect(rest.slice(0, 20)).toEqual([]);
+    expect(rest).toHaveLength(0);
+    expect(hits).toBe(1);
   });
 
   test("toLatin matches the Dart engine for every recorded input", () => {

@@ -165,10 +165,11 @@ function renderSentence(
 
   for (const item of items) {
     if ("tokens" in item) {
-      let tokens =
+      let tokens = fuseKeret(
         eSubstitution === null
           ? item.tokens
-          : substituteE(item.tokens, eSubstitution);
+          : substituteE(item.tokens, eSubstitution),
+      );
       if (vowelPair !== null) tokens = splitVowelPairs(tokens, vowelPair);
       if (breakPending) {
         w.write(zwnj, []);
@@ -426,27 +427,37 @@ function ambiguous(
   };
 }
 
-/**
- * Replace every bare-e token with `substitution`.
- *
- * For pepet after a consonant cluster ending in r (C+r+ě), restructure
- * the token list so the syllabifier takes the keret path: mark r as
- * isCerekR and drop the vowel token (keret carries an implicit pepet).
- * KAJ I Bab I A.5.b: "clusters use keret".
- */
+/** Replace every bare-e token with a `substitution` vowel token. */
 function substituteE(
   tokens: readonly LatinToken[],
   substitution: Vowel,
 ): LatinToken[] {
+  return tokens.map((t) =>
+    t.vowel !== "eBare"
+      ? t
+      : latinToken({
+          kind: "vowel",
+          text: substitution === "ePepet" ? "ě" : "é",
+          vowel: substitution,
+          capitalized: t.capitalized,
+          sourceIndex: t.sourceIndex,
+          sourceEnd: t.sourceEnd,
+        }),
+  );
+}
+
+/**
+ * For a pepet after a consonant cluster ending in r (C+r+ě), restructure
+ * the token list so the syllabifier takes the keret path: mark r as
+ * isCerekR and drop the vowel token (keret carries an implicit pepet).
+ * KAJ I Bab I A.5.b: "clusters use keret". Applies to a typed pepet and
+ * to a substituted one alike; JGST ŕ keeps its explicit cakra.
+ */
+function fuseKeret(tokens: readonly LatinToken[]): LatinToken[] {
   const result: LatinToken[] = [];
   for (const t of tokens) {
-    if (t.vowel !== "eBare") {
-      result.push(t);
-      continue;
-    }
-    // C+r+ě → keret: cluster ending in RA + pepet substitution.
     if (
-      substitution === "ePepet" &&
+      t.vowel === "ePepet" &&
       result.length >= 2 &&
       result[result.length - 1]!.kind === "consonant" &&
       result[result.length - 1]!.aksaraUnicodeName === "JAVANESE LETTER RA" &&
@@ -458,25 +469,15 @@ function substituteE(
           kind: r.kind,
           text: r.text,
           sourceIndex: r.sourceIndex,
-          // The dropped e stays attributed to the keret cluster.
+          // The dropped vowel stays attributed to the keret cluster.
           sourceEnd: t.sourceEnd,
           aksaraUnicodeName: r.aksaraUnicodeName,
           isCerekR: true,
           capitalized: r.capitalized,
         }),
       );
-      // Vowel token is dropped — keret carries implicit pepet.
     } else {
-      result.push(
-        latinToken({
-          kind: "vowel",
-          text: substitution === "ePepet" ? "ě" : "é",
-          vowel: substitution,
-          capitalized: t.capitalized,
-          sourceIndex: t.sourceIndex,
-          sourceEnd: t.sourceEnd,
-        }),
-      );
+      result.push(t);
     }
   }
   return result;
