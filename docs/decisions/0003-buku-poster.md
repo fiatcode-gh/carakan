@@ -44,6 +44,16 @@ D1 to D9 were settled with the user in the contract.
 - **Touch targets.** 44 px, as in the contract invariant. The spec said 48 px before.
 - **Design comparison.** `npm run design:compare` captures the app at 390×844 next to the reference screenshots.
 
+### Phone check, 2026-10-23
+
+The user tried the build on an Android phone (Chrome, 392×755 CSS px) and found five defects. All five are fixed.
+
+- **Trace result in view.** The result line (`traceEmpty`, `traceFail`, `tracePass`) sat under the three slots, where the sticky bar covered it. It now shares the hint row above the pad and replaces the hint while it shows. It is still a polite live region.
+- **Sheet drag.** On a phone the grab handle and the sheet head drag the sheet down. A release past a quarter of the sheet height, or a downward fling (0.5 px/ms after at least 24 px), closes it through the same close path as the close button, so Escape, Android back and focus return behave the same. Any other release springs back. The body is not part of the drag zone and scrolls as before. Under reduced motion there is no slide. From 48 rem the sheet is a centred dialog with no handle and no drag. The rules live in `src/ui/sheet-drag.ts`.
+- **No pull-to-refresh (W03).** Dragging the sheet started Chrome's pull-to-refresh in a browser tab. `overscroll-behavior-y: contain` is now set on the root and the body; the sheet body already had it. This keeps decision W03 true outside the installed app too.
+- **Pasangan room.** A pasangan stack is about 1.25 em of ink and reaches below its line box, so the tails ran into the label strip. Pasangan tiles now use the same room under the glyph as the trace slots (`--aksara-room`), which clears every tail by at least 9 px. The tile height is unchanged.
+- **Whole labels.** Label strips wrap instead of ending in an ellipsis. Each tile spans two rows of the chart grid and shares them through a subgrid, so the strips of one row stay level and as tall as the longest label needs. The Pasangan tab shows the base syllable only (`da`); the tile keeps `pasangan da` as its accessible name. The tile height token `--tile-height` became `--tile-glyph` (the room above the strip).
+
 ### User decisions, 2026-10-22
 
 - Keep "Lewati" on the trace screen.
