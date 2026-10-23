@@ -162,7 +162,8 @@
   .ladder__tiles {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    /* Rows leave room for the tape that sticks out above each tile. */
+    gap: var(--space-6) 12px;
     margin: 0;
     padding: 0;
     list-style: none;

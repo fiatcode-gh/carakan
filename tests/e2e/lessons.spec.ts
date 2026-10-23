@@ -163,7 +163,7 @@ test("[P-B01] the note counts the base letters learned: 0 / 20 fresh, 3 / 20 aft
   await expect(note).toHaveText("3 / 20 aksara");
 });
 
-test("[P-B01] every Learn card's tape sticks out past its edge without covering the number, status or title, and its watermark stays cropped", async ({
+test("[P-B01] every Learn card's tape sticks out above its top edge, clear of other cards and of the number, status or title, and its watermark stays cropped", async ({
   page,
 }) => {
   await gotoRoute(page, "");
@@ -179,26 +179,28 @@ test("[P-B01] every Learn card's tape sticks out past its edge without covering 
     variants.add(
       `${Math.round(strip.width)}:${Math.round(strip.x - box.x)}:${Math.round(strip.y - box.y)}`,
     );
-    // A point of the tape outside the card edge is painted, not clipped away.
-    const outside =
-      strip.y < box.y
-        ? [strip.x + strip.width / 2, (strip.y + box.y) / 2]
-        : strip.x < box.x
-          ? [(strip.x + box.x) / 2, strip.y + strip.height / 2]
-          : [
-              (strip.x + strip.width + box.x + box.width) / 2,
-              strip.y + strip.height / 2,
-            ];
-    expect(
-      strip.y < box.y ||
-        strip.x < box.x ||
-        strip.x + strip.width > box.x + box.width,
-    ).toBe(true);
+    // On the top edge only: it starts above the card, inside its sides.
+    expect(strip.y).toBeLessThan(box.y);
+    expect(strip.y + strip.height).toBeGreaterThan(box.y);
+    expect(strip.x).toBeGreaterThanOrEqual(box.x);
+    expect(strip.x + strip.width).toBeLessThanOrEqual(box.x + box.width);
+    // The part above the card's top edge is painted, not clipped away.
     const painted = await page.evaluate(
       ([x, y]) => document.elementFromPoint(x!, y!)?.classList.contains("tape"),
-      outside,
+      [strip.x + strip.width / 2, (strip.y + box.y) / 2],
     );
     expect(painted, (await card.getAttribute("class")) ?? "").toBe(true);
+    // It reaches no other card.
+    for (const other of await cards.all()) {
+      const o = (await other.boundingBox())!;
+      if (o.x === box.x && o.y === box.y) continue;
+      const overlaps =
+        strip.x < o.x + o.width &&
+        o.x < strip.x + strip.width &&
+        strip.y < o.y + o.height &&
+        o.y < strip.y + strip.height;
+      expect(overlaps, "tape over another card").toBe(false);
+    }
     // The tape covers none of the card's text or icons.
     for (const part of await card
       .locator(

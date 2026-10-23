@@ -36,16 +36,9 @@
     ready: "play",
     completed: "circle-check",
   } as const;
-  /** Tilt per tape layout: 0 top centre, 1 right edge, 2 left edge, 3 top left. */
-  const tapeRotations = [3, 6, -5, -2] as const;
-  // Tiles sit two per row from number 2. Rows alternate between tapes on the
-  // top edge and tapes on the outer side edge, so no two tapes meet in a gap.
-  const tapeVariant = $derived.by(() => {
-    const row = Math.floor((number - 2) / 2);
-    const leftColumn = number % 2 === 0;
-    if (row % 2 === 1) return leftColumn ? 2 : 1;
-    return (row % 4 === 0) === leftColumn ? 0 : 3;
-  });
+  /** Tilt per tape layout: 0 centre, 1 right, 2 left, 3 wide left of centre. */
+  const tapeRotations = [3, -5, 4, -2] as const;
+  const tapeVariant = $derived(((number - 2) % 4) as 0 | 1 | 2 | 3);
 </script>
 
 <button
@@ -95,13 +88,14 @@
   }
 
   /*
-   * Four tape layouts, picked by grid position so a grid looks stuck on by hand.
-   * Each stays clear of the number (top left), the status icon (top right)
-   * and the title (bottom left).
+   * Four tape layouts along the top edge, cycled by tile number so a grid
+   * looks stuck on by hand. The tape sits above the row with the number and
+   * the status icon, so it covers neither. The grid's row gap leaves room for
+   * the part that sticks out above the tile.
    */
   .tile__tape {
     position: absolute;
-    top: -9px;
+    top: -12px;
     z-index: 1;
   }
 
@@ -117,25 +111,20 @@
     width: 56px;
   }
 
-  /*
-   * Side tapes are upright strips with a slight tilt, not rotated horizontal
-   * ones: a rotated strip's layout box would still poke past the page edge.
-   * Each sticks out 9px past the outer edge of its column.
-   */
   .tile__tape[data-variant="1"] {
-    top: 50px;
-    right: -9px;
+    right: 14px;
+  }
+
+  .tile__tape[data-variant="1"] :global(.tape) {
+    width: 48px;
   }
 
   .tile__tape[data-variant="2"] {
-    top: 34px;
-    left: -9px;
+    left: 14px;
   }
 
-  .tile__tape[data-variant="1"] :global(.tape),
   .tile__tape[data-variant="2"] :global(.tape) {
-    width: 18px;
-    height: 44px;
+    width: 52px;
   }
 
   .tile__tape[data-variant="3"] {
