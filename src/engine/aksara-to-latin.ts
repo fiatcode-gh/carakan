@@ -5,7 +5,7 @@ import type { ConvertResult } from "./convert-result.ts";
 import { murdaLinks } from "./murda.ts";
 import { nglegenaByCodepoint } from "./nglegena.ts";
 import { padaByCodepoint, zeroWidthNonJoiner } from "./pada.ts";
-import { cecakTelu } from "./rekan.ts";
+import { cecakTelu, rekan, rekanCatalogue, type Rekan } from "./rekan.ts";
 import {
   sandhanganByCodepoint,
   sandhanganCakra,
@@ -22,6 +22,13 @@ import {
   sandhanganWulu,
 } from "./sandhangan.ts";
 import { swaraByCodepoint, swaraLongForms } from "./swara.ts";
+
+/** Rekan written as a base + cecak telu, by base (KAJ I Bab I A.4; Ped p.16-17). */
+const rekanOnBase: ReadonlyMap<string, Rekan> = new Map(
+  [...rekan, ...rekanCatalogue]
+    .filter((r) => r.baseUnicodeName !== null)
+    .map((r) => [r.baseUnicodeName!, r] as const),
+);
 
 /**
  * Latin output scheme.
@@ -157,14 +164,11 @@ export function aksaraToLatin(
       };
     }
 
-    // Rekan: cecak telu after PA/WA reads as f/v — the base onset is
-    // NOT written (KAJ I Bab I A.4).
+    // Cecak telu after a rekan base reads as that rekan's onset; the base
+    // onset is NOT written (KAJ I Bab I A.4).
     if (i + 1 < runes.length && runes[i + 1] === cecakTelu.codepoint) {
-      if (base.id === "pa") {
-        out += "f";
-      } else if (base.id === "wa") {
-        out += "v";
-      } else {
+      const rk = rekanOnBase.get(base.unicodeName);
+      if (rk === undefined) {
         return {
           kind: "error",
           input,
@@ -172,6 +176,8 @@ export function aksaraToLatin(
           message: "Cecak telu on an unsupported base",
         };
       }
+      // Every rekan's Latin ends in the inherent `a`.
+      out += (jgst ? rk.latinJgst : rk.latinPujl).slice(0, -1);
       i += 2; // base + cecak telu
     } else {
       out += onset(base, { jgst });

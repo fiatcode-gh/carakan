@@ -210,7 +210,24 @@ describe("pickerSections", () => {
     for (const list of [kajRekan, rekanOf(pedomanSections)]) {
       const fa = list.find((e) => e.label === "fa")!;
       expect(fa.char).toBe(rekanChar("fa"));
-      expect(toLatin(fa.char)).toEqual({ kind: "success", output: "fa" });
+      for (const entry of list) {
+        expect(toLatin(entry.char).kind, entry.label).toBe("success");
+      }
+    }
+    expect(rekanOf(pedomanSections).map((e) => e.label)).toEqual([
+      "kha",
+      "dza",
+      "fa",
+      "za",
+      "gha",
+    ]);
+    // KAJ au/reu read back as oau/rereu (out of scope), so they are unasserted.
+    for (const label of ["fa", "va", "le", "ai", "leu"]) {
+      const entry = kajRekan.find((e) => e.label === label)!;
+      expect(toLatin(entry.char), label).toEqual({
+        kind: "success",
+        output: label,
+      });
     }
   });
 });

@@ -6,6 +6,7 @@ import {
   toLatin,
   type ConvertResult,
 } from "../../src/engine/index.ts";
+import { ak } from "./support/aksara-builder.ts";
 
 const FIXTURE =
   process.env["DIFF_FIXTURE"] ??
@@ -74,6 +75,34 @@ function compare(
   return mismatches;
 }
 
+/** Approved deviations: exact call label → the TS record it must produce. */
+function withoutApproved(
+  mismatches: Mismatch[],
+  approved: ReadonlyMap<string, Rec>,
+): { rest: Mismatch[]; hits: number } {
+  const rest = mismatches.filter(
+    ({ call, ts }) => JSON.stringify(approved.get(call)) !== JSON.stringify(ts),
+  );
+  return { rest, hits: mismatches.length - rest.length };
+}
+
+const approvedToLatin: ReadonlyMap<string, Rec> = new Map(
+  (["pujl", "jgst"] as const).flatMap((scheme) =>
+    (
+      [
+        [ak("DA CECAK_TELU"), "dza"],
+        [ak("DA CECAK_TELU PANGKAT KA"), "dzaka"],
+      ] as const
+    ).map(
+      ([input, latin]) =>
+        [
+          `toLatin(${JSON.stringify(input)}, scheme: ${scheme})`,
+          ["s", latin] as Rec,
+        ] as const,
+    ),
+  ),
+);
+
 describe("[P-D02] differential: Dart engine @ebc7cb5 vs TS engine", () => {
   test("fixture is the pinned Dart revision and ruleset", () => {
     expect(fixture.source.commit).toBe(
@@ -109,7 +138,11 @@ describe("[P-D02] differential: Dart engine @ebc7cb5 vs TS engine", () => {
       (input, scheme: "pujl" | "jgst") => toLatin(input, { scheme }),
       (input, scheme) => `toLatin(${JSON.stringify(input)}, scheme: ${scheme})`,
     );
-    expect(mismatches.slice(0, 20)).toEqual([]);
-    expect(mismatches).toHaveLength(0);
+    // Approved deviation (converter-and-chart-fixes task 04, spec section 3):
+    // DA + cecak telu reads dza where Dart returned an error.
+    const { rest, hits } = withoutApproved(mismatches, approvedToLatin);
+    expect(rest.slice(0, 20)).toEqual([]);
+    expect(rest).toHaveLength(0);
+    expect(hits).toBe(4);
   });
 });

@@ -425,6 +425,20 @@ test.describe("Pedoman picker", () => {
     await picker(page).getByRole("button", { name: "fa", exact: true }).click();
     await expect(outputOf(page).locator(".latin")).toHaveText("fa");
   });
+
+  for (const name of ["kha", "dza", "fa", "za", "gha"]) {
+    test(`[P-C08] the Pedoman rekan ${name} from the picker reads back`, async ({
+      page,
+    }) => {
+      await openAksara(page);
+      await aksaraInput(page).fill("");
+      await pickGlyph(page, name);
+      const value = await aksaraInput(page).inputValue();
+      expect(toLatin(value)).toEqual({ kind: "success", output: name });
+      await expect(outputOf(page).locator(".latin")).toHaveText(name);
+      await expect(page.getByRole("alert")).toHaveCount(0);
+    });
+  }
 });
 
 test("[P-U08] a Pada entry inserts into the aksara input", async ({ page }) => {
