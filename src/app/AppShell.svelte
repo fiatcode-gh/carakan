@@ -4,6 +4,7 @@
   import ConverterPage from "../features/converter/ConverterPage.svelte";
   import LadderPage from "../features/lessons/LadderPage.svelte";
   import ReviewPage from "../features/review/ReviewPage.svelte";
+  import { nglegenaById } from "../engine/index.ts";
   import TabBar from "../ui/TabBar.svelte";
   import { routeLink, type TabId } from "./router.ts";
   import { getServices } from "./services.ts";
@@ -22,10 +23,34 @@
   $effect(() => setActiveTab(activeTab));
 
   const tabs = $derived([
-    { id: "ladder", label: $t("navLadder"), icon: "book-open" },
-    { id: "chart", label: $t("navChart"), icon: "layout-grid" },
-    { id: "review", label: $t("navReview"), icon: "refresh-cw" },
-    { id: "converter", label: $t("navConverter"), icon: "arrow-left-right" },
+    {
+      id: "ladder",
+      label: $t("navLadder"),
+      icon: "book-open",
+      accent: "coral",
+      mark: nglegenaById("ha")!.char,
+    },
+    {
+      id: "chart",
+      label: $t("navChart"),
+      icon: "layout-grid",
+      accent: "periwinkle",
+      mark: nglegenaById("na")!.char,
+    },
+    {
+      id: "review",
+      label: $t("navReview"),
+      icon: "refresh-cw",
+      accent: "sage",
+      mark: nglegenaById("ca")!.char,
+    },
+    {
+      id: "converter",
+      label: $t("navConverter"),
+      icon: "arrow-left-right",
+      accent: "butter",
+      mark: nglegenaById("ra")!.char,
+    },
   ] as const);
 </script>
 
@@ -42,15 +67,9 @@
       ...routeLink({ kind: tab.id }),
       label: tab.label,
       icon: tab.icon,
+      accent: tab.accent,
+      mark: tab.mark,
       current: tab.id === activeTab,
     }))}
   />
 </div>
-
-<style>
-  @media (min-width: 60rem) {
-    .shell {
-      padding-inline-start: var(--rail-width);
-    }
-  }
-</style>

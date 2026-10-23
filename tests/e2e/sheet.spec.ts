@@ -1,12 +1,20 @@
 import type { CDPSession, Locator, Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { gotoRoute } from "./support/app.ts";
+import { frameBox, isWide } from "./support/book.ts";
 import { expect, test } from "./support/fixtures.ts";
 
 const id = JSON.parse(readFileSync("src/l10n/id.json", "utf8")) as Record<
   string,
   string
 >;
+
+/** The phone sheet drags; from 48rem it is a centred dialog that does not. */
+const skipFromWide = (page: Page): void =>
+  test.skip(
+    isWide(page),
+    "from 48rem the sheet is a centred dialog that does not drag (P-C03)",
+  );
 
 // The chart's detail sheet stands for every sheet: they are all `Sheet`.
 const dialog = (page: Page): Locator => page.getByRole("dialog");
@@ -49,6 +57,7 @@ async function dragFrom(
 test("[P-C03] the grab handle drags the sheet down with the pointer and never above its resting place", async ({
   page,
 }) => {
+  skipFromWide(page);
   await openSheet(page);
   const rest = await top(dialog(page));
   const [x, y] = await centre(grab(page));
@@ -65,6 +74,7 @@ test("[P-C03] the grab handle drags the sheet down with the pointer and never ab
 test("[P-C03] a drag past a quarter of the sheet closes it and returns focus to the tile", async ({
   page,
 }) => {
+  skipFromWide(page);
   await openSheet(page);
   const height = (await dialog(page).boundingBox())!.height;
   await dragFrom(page, await centre(grab(page)), Math.ceil(height * 0.3));
@@ -78,6 +88,7 @@ test("[P-C03] a drag past a quarter of the sheet closes it and returns focus to 
 test("[P-C03] a drag that starts on the sheet title closes it too", async ({
   page,
 }) => {
+  skipFromWide(page);
   await openSheet(page);
   const height = (await dialog(page).boundingBox())!.height;
   await dragFrom(
@@ -92,6 +103,7 @@ test("[P-C03] a drag that starts on the sheet title closes it too", async ({
 });
 
 test("[P-C03] a short slow drag springs the sheet back", async ({ page }) => {
+  skipFromWide(page);
   await openSheet(page);
   const rest = await top(dialog(page));
   await dragFrom(page, await centre(grab(page)), 30);
@@ -105,6 +117,7 @@ test("[P-C03] a short slow drag springs the sheet back", async ({ page }) => {
 test("[P-C03] a quick downward fling closes the sheet even when it moved little", async ({
   page,
 }) => {
+  skipFromWide(page);
   await openSheet(page);
   const height = (await dialog(page).boundingBox())!.height;
   const dy = 60;
@@ -130,6 +143,7 @@ test("[P-C03] dragging on the scrolling body does not move the sheet", async ({
 test("[P-C03] a finger drag on the handle closes the sheet", async ({
   page,
 }) => {
+  skipFromWide(page);
   await openSheet(page);
   const height = (await dialog(page).boundingBox())!.height;
   const [x, y] = await centre(grab(page));
@@ -157,6 +171,7 @@ test("[P-C03] a finger drag on the handle closes the sheet", async ({
 });
 
 test("[P-C03] the drag zone takes no browser panning", async ({ page }) => {
+  skipFromWide(page);
   await openSheet(page);
   const action = await grab(page).evaluate(
     (el) => getComputedStyle(el.closest("[data-sheet-drag]")!).touchAction,
@@ -182,6 +197,7 @@ test.describe("reduced motion", () => {
   test("[P-C03] the sheet follows the finger but neither springs back nor slides away", async ({
     page,
   }) => {
+    skipFromWide(page);
     await openSheet(page);
     const rest = await top(dialog(page));
     await dragFrom(page, await centre(grab(page)), 30);
@@ -229,6 +245,17 @@ test.describe("a wide screen", () => {
     expect(await top(dialog(page))).toBe(rest);
     await page.mouse.up();
     await expect(dialog(page)).toBeVisible();
+  });
+
+  test("[P-C03] the centred dialog sits on the book page", async ({ page }) => {
+    await openSheet(page);
+    const box = (await dialog(page).boundingBox())!;
+    const frame = await frameBox(page);
+    expect(box.x).toBeGreaterThanOrEqual(frame.x);
+    expect(box.x + box.width).toBeLessThanOrEqual(frame.x + frame.width);
+    expect(
+      Math.abs(box.x + box.width / 2 - (frame.x + frame.width / 2)),
+    ).toBeLessThanOrEqual(1);
   });
 });
 

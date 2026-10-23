@@ -33,8 +33,9 @@ async function padSettled(page: Page): Promise<void> {
 
 /**
  * Rebuilds the glyph mask in the page from the pad's `data-*` layout (the pad
- * carries no answer geometry) and returns page-coordinate runs of ink, one
- * scan every 6px row, each trimmed 2px at both ends.
+ * carries no answer geometry) and returns page-coordinate runs of ink: a scan
+ * of the logical pad every 6 logical rows, each run trimmed 2 logical px at
+ * both ends, mapped to page coordinates by the pad's `data-scale`.
  */
 export async function glyphRuns(page: Page, char: string): Promise<Run[]> {
   await padSettled(page);
@@ -46,8 +47,9 @@ export async function glyphRuns(page: Page, char: string): Promise<Run[]> {
     const fontSize = Number(pad.dataset["fontSize"]);
     const originX = Number(pad.dataset["originX"]);
     const originY = Number(pad.dataset["originY"]);
-    const width = pad.clientWidth;
-    const height = pad.clientHeight;
+    const scale = Number(pad.dataset["scale"]);
+    const width = Math.round(pad.clientWidth / scale);
+    const height = Math.round(pad.clientHeight / scale);
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
@@ -69,13 +71,30 @@ export async function glyphRuns(page: Page, char: string): Promise<Run[]> {
         if (!on && start >= 0) {
           const x0 = start + 2;
           const x1 = x - 1 - 2;
-          if (x1 >= x0) runs.push({ y: top + y, x0: left + x0, x1: left + x1 });
+          if (x1 >= x0) {
+            runs.push({
+              y: top + y * scale,
+              x0: left + x0 * scale,
+              x1: left + x1 * scale,
+            });
+          }
           start = -1;
         }
       }
     }
     return runs;
   }, char);
+}
+
+/** The visible pad's magnification over the phone pad (1 on phones). */
+export async function padScale(page: Page): Promise<number> {
+  await padSettled(page);
+  return page.evaluate(() => {
+    const pad = [...document.querySelectorAll<HTMLElement>(".trace-pad")].find(
+      (el) => el.checkVisibility(),
+    )!;
+    return Number(pad.dataset["scale"]);
+  });
 }
 
 /** The pad's page rectangle (inside its border). */

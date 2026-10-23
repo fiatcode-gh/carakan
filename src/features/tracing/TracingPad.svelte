@@ -7,6 +7,7 @@
 
 <script lang="ts">
   import { onMount } from "svelte";
+  import { padSize } from "./pad-size.ts";
   import { maskFromAlpha, scoreTrace, type TraceScore } from "./trace-score.ts";
 
   interface Props {
@@ -38,7 +39,11 @@
   let root = $state<HTMLDivElement>();
   let ghostCanvas = $state<HTMLCanvasElement>();
   let inkCanvas = $state<HTMLCanvasElement>();
+  /** The pad's size in CSS pixels, for change detection. */
+  let client = $state({ width: 0, height: 0 });
+  /** The logical size: the phone pad's pixels, whatever the pad is magnified to. */
   let size = $state({ width: 0, height: 0 });
+  let scale = $state(1);
   let layout = $state<Layout | null>(null);
 
   let fontLoaded = false;
@@ -53,17 +58,25 @@
   function context(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
     const ctx = canvas.getContext("2d");
     if (ctx === null) throw new Error("2d canvas is not available");
-    const scale = window.devicePixelRatio || 1;
-    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    const pixels = (window.devicePixelRatio || 1) * scale;
+    ctx.setTransform(pixels, 0, 0, pixels, 0, 0);
     return ctx;
   }
 
   function sizeCanvases(): void {
-    const scale = window.devicePixelRatio || 1;
+    const dpr = window.devicePixelRatio || 1;
     for (const canvas of [ghostCanvas!, inkCanvas!]) {
-      canvas.width = Math.round(size.width * scale);
-      canvas.height = Math.round(size.height * scale);
+      canvas.width = Math.round(client.width * dpr);
+      canvas.height = Math.round(client.height * dpr);
     }
+  }
+
+  /** A logical rect can miss a sub-pixel strip when the pad is magnified. */
+  function wipe(ctx: CanvasRenderingContext2D): void {
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.restore();
   }
 
   function setGlyphText(ctx: CanvasRenderingContext2D, fontSize: number): void {
@@ -83,22 +96,22 @@
     if (inkWidth === 0 || inkHeight === 0) {
       throw new Error("the glyph did not render: is Jejeg loaded?");
     }
-    const scale = Math.min(
+    const fit = Math.min(
       (FIT_WIDTH * size.width) / inkWidth,
       (FIT_HEIGHT * size.height) / inkHeight,
     );
     const originY =
-      (size.height - inkHeight * scale) / 2 + m.actualBoundingBoxAscent * scale;
+      (size.height - inkHeight * fit) / 2 + m.actualBoundingBoxAscent * fit;
     layout = {
-      fontSize: MEASURE_PX * scale,
+      fontSize: MEASURE_PX * fit,
       originX:
-        (size.width - inkWidth * scale) / 2 + m.actualBoundingBoxLeft * scale,
+        (size.width - inkWidth * fit) / 2 + m.actualBoundingBoxLeft * fit,
       originY,
-      guideTop: originY - m.actualBoundingBoxAscent * scale,
-      guideBottom: originY + m.actualBoundingBoxDescent * scale,
+      guideTop: originY - m.actualBoundingBoxAscent * fit,
+      guideBottom: originY + m.actualBoundingBoxDescent * fit,
     };
 
-    ctx.clearRect(0, 0, size.width, size.height);
+    wipe(ctx);
     setGlyphText(ctx, layout.fontSize);
     ctx.lineWidth = GHOST_PX;
     ctx.lineJoin = "round";
@@ -142,7 +155,10 @@
 
   function pointOf(event: PointerEvent): Point {
     const rect = inkCanvas!.getBoundingClientRect();
-    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    return {
+      x: (event.clientX - rect.left) / scale,
+      y: (event.clientY - rect.top) / scale,
+    };
   }
 
   function begin(event: PointerEvent): void {
@@ -198,7 +214,7 @@
     activePointer = null;
     current = null;
     const ctx = context(inkCanvas!);
-    ctx.clearRect(0, 0, size.width, size.height);
+    wipe(ctx);
   }
 
   function raster(
@@ -239,9 +255,12 @@
     const observer = new ResizeObserver(() => {
       const width = root!.clientWidth;
       const height = root!.clientHeight;
-      if (width === size.width && height === size.height) return;
-      const first = size.width === 0;
-      size = { width, height };
+      if (width === client.width && height === client.height) return;
+      const first = client.width === 0;
+      client = { width, height };
+      const logical = padSize(width, height);
+      size = { width: logical.width, height: logical.height };
+      scale = logical.scale;
       sizeCanvases();
       // Resizing wipes the canvases; ink would not line up with the new glyph.
       if (!first) {
@@ -264,10 +283,13 @@
   data-font-size={layout?.fontSize}
   data-origin-x={layout?.originX}
   data-origin-y={layout?.originY}
+  data-scale={scale}
 >
   {#if layout}
-    <span class="trace-pad__guide" style:top="{layout.guideTop}px"></span>
-    <span class="trace-pad__guide" style:top="{layout.guideBottom}px"></span>
+    <span class="trace-pad__guide" style:top="{layout.guideTop * scale}px"
+    ></span>
+    <span class="trace-pad__guide" style:top="{layout.guideBottom * scale}px"
+    ></span>
   {/if}
   <canvas class="trace-pad__canvas" bind:this={ghostCanvas}></canvas>
   <canvas
@@ -292,6 +314,16 @@
     box-shadow: var(--shadow-hero);
     touch-action: none;
     user-select: none;
+  }
+
+  /* Fills the size container its parent gives it (TracePractice), keeping the phone pad's shape: the inner box (inside the two 2px borders) is 320:336. */
+  @media (min-width: 48rem) {
+    .trace-pad {
+      box-sizing: content-box;
+      width: min(100cqw - 4px, (100cqh - 4px) * 320 / 336);
+      height: auto;
+      aspect-ratio: 320 / 336;
+    }
   }
 
   .trace-pad__guide {

@@ -29,6 +29,7 @@
     "lighthouse": "node tools/lighthouse.ts",
     "parity:coverage": "node tools/parity-coverage.ts",
     "design:compare": "node tools/design-compare.ts",
+    "design:diff": "node tools/design-diff.ts",
     "test:e2e:served": "E2E_BASE_URL=${E2E_BASE_URL:-http://localhost:8090/} playwright test tests/e2e/shell.spec.ts tests/e2e/offline.spec.ts tests/e2e/a11y.spec.ts --project=mobile"
   },
   "devDependencies": {

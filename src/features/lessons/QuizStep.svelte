@@ -161,7 +161,7 @@
     flex: 1;
     flex-direction: column;
     gap: var(--space-5);
-    min-height: 100dvh;
+    min-height: var(--screen-min-height);
     margin: calc(-1 * var(--space-4)) calc(-1 * var(--gutter))
       calc(-1 * var(--space-9));
   }
@@ -183,6 +183,13 @@
     min-height: 15rem;
     margin-inline: var(--gutter);
     padding: var(--space-4);
+  }
+
+  @media (min-width: 48rem) {
+    /* The worksheet fills the page: the card grows down to the answers. */
+    .quiz > :global(.quiz__card) {
+      flex-grow: 1;
+    }
   }
 
   .quiz__tape {

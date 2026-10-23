@@ -70,7 +70,7 @@
 
 <svelte:document onvisibilitychange={onVisibility} />
 
-<Page title={$t("reviewTitle")}>
+<Page title={$t("reviewTitle")} width="wide">
   {#snippet note()}
     <HandNote tilt>{$t("reviewNote")}</HandNote>
   {/snippet}
@@ -81,7 +81,7 @@
       {...routeLink({ kind: "reviewHelp" })}
     />
   {/snippet}
-  <div class="stack stack--loose">
+  <div class="stack stack--loose review">
     {#if $reviewState.kind === "error"}
       <StateView
         kind="error"
@@ -152,7 +152,10 @@
       />
     {/if}
     {#if $strengths.length > 0}
-      <section class="stack" aria-labelledby="review-strength-title">
+      <section
+        class="stack review__strengths"
+        aria-labelledby="review-strength-title"
+      >
         <HandNote tag="h2" id="review-strength-title">
           {$t("strengthHeading")}
         </HandNote>
@@ -194,6 +197,23 @@
 
   .stack--loose > :global(.review-today) {
     padding: var(--space-4);
+  }
+
+  @media (min-width: 64rem) {
+    .review:has(> .review__strengths) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: auto 1fr;
+      align-items: start;
+    }
+
+    .review:has(> .review__strengths) > :global(*) {
+      grid-column: 1;
+    }
+
+    .review:has(> .review__strengths) > .review__strengths {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+    }
   }
 
   .today__head {

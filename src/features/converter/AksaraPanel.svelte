@@ -71,52 +71,56 @@
 </script>
 
 <div class="panel">
-  <TextField
-    label={$t("inputHintAksara")}
-    labelStyle="hand"
-    multiline
-    aksara
-    bind:value
-    bind:element
-    oninput={() => update(value)}
-    invalid={$result.kind === "error"}
-  >
-    {#snippet trailing()}
-      <IconButton
-        icon="keyboard"
-        label={$t("glyphPickerTitle")}
-        onclick={() => (pickerOpen = true)}
-      />
-    {/snippet}
-  </TextField>
-
-  <SegmentedControl
-    label={$t("schemeLabel")}
-    options={schemes}
-    value={$scheme}
-    onchange={(next) => {
-      if (next !== $scheme) converter.toggleScheme();
-    }}
-  />
-
-  {#if $result.kind === "error"}
-    <ErrorNotice message={$result.message} />
-  {:else if $result.kind === "idle"}
-    <ResultCard label={$t("outputLabel")} tone="coral" tape>
-      <p class="output latin">{$result.output}</p>
-      {#snippet actions()}
-        <button type="button" onclick={copy}>
-          <Icon name="copy" />{$t("copyButton")}
-        </button>
-        <SoundButton
-          player={clips}
-          clipKey={$result.output}
-          label={$t("playSound", { reading: $result.output })}
-          text={$t("listenButton")}
+  <div class="panel__source">
+    <TextField
+      label={$t("inputHintAksara")}
+      labelStyle="hand"
+      multiline
+      aksara
+      bind:value
+      bind:element
+      oninput={() => update(value)}
+      invalid={$result.kind === "error"}
+    >
+      {#snippet trailing()}
+        <IconButton
+          icon="keyboard"
+          label={$t("glyphPickerTitle")}
+          onclick={() => (pickerOpen = true)}
         />
       {/snippet}
-    </ResultCard>
-  {/if}
+    </TextField>
+
+    <SegmentedControl
+      label={$t("schemeLabel")}
+      options={schemes}
+      value={$scheme}
+      onchange={(next) => {
+        if (next !== $scheme) converter.toggleScheme();
+      }}
+    />
+  </div>
+
+  <div class="panel__result">
+    {#if $result.kind === "error"}
+      <ErrorNotice message={$result.message} />
+    {:else if $result.kind === "idle"}
+      <ResultCard label={$t("outputLabel")} tone="coral" tape>
+        <p class="output latin">{$result.output}</p>
+        {#snippet actions()}
+          <button type="button" onclick={copy}>
+            <Icon name="copy" />{$t("copyButton")}
+          </button>
+          <SoundButton
+            player={clips}
+            clipKey={$result.output}
+            label={$t("playSound", { reading: $result.output })}
+            text={$t("listenButton")}
+          />
+        {/snippet}
+      </ResultCard>
+    {/if}
+  </div>
 </div>
 
 {#if pickerOpen}
@@ -131,6 +135,24 @@
   .panel {
     display: grid;
     gap: var(--space-4);
+  }
+
+  .panel__source,
+  .panel__result {
+    display: contents;
+  }
+
+  @media (min-width: 64rem) {
+    .panel {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .panel__source,
+    .panel__result {
+      display: grid;
+      gap: var(--space-4);
+    }
   }
 
   .output {

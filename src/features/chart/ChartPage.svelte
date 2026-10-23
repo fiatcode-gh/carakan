@@ -75,7 +75,7 @@
   }
 </script>
 
-<Page title={$t("chartTitle")}>
+<Page title={$t("chartTitle")} width="wide">
   {#snippet note()}
     <HandNote tilt>{$t("chartNote")}</HandNote>
   {/snippet}
@@ -153,6 +153,18 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(4.75rem, 1fr));
     gap: 10px;
+  }
+
+  @media (min-width: 48rem) {
+    .grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 75rem) {
+    .grid {
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+    }
   }
 
   .legend {

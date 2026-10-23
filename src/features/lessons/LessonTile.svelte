@@ -4,6 +4,7 @@
   import AksaraText from "../../ui/AksaraText.svelte";
   import Icon from "../../ui/Icon.svelte";
   import Reading from "../../ui/Reading.svelte";
+  import Tape from "../../ui/Tape.svelte";
   import type { UnitStatus } from "./ladder.ts";
   import { accentVar, type UnitAccent } from "../../ui/accent.ts";
   import { splitUnitName } from "./unit-display.ts";
@@ -35,6 +36,9 @@
     ready: "play",
     completed: "circle-check",
   } as const;
+  /** Tilt per tape layout: 0 centre, 1 right, 2 left, 3 wide left of centre. */
+  const tapeRotations = [3, -5, 4, -2] as const;
+  const tapeVariant = $derived(((number - 2) % 4) as 0 | 1 | 2 | 3);
 </script>
 
 <button
@@ -46,8 +50,14 @@
   aria-disabled={status === "locked" ? "true" : undefined}
   onclick={status === "locked" ? undefined : onopen}
 >
+  <span class="tile__tape" data-variant={tapeVariant}
+    ><Tape rotate={tapeRotations[tapeVariant]} on={accent} /></span
+  >
   {#if watermark !== ""}
-    <AksaraText text={watermark} class="tile__mark" aria-hidden="true" />
+    <!-- Crops the watermark at the tile edge; the tile itself does not clip, so the tape can stick out above it. -->
+    <span class="tile__crop" aria-hidden="true">
+      <AksaraText text={watermark} class="tile__mark" aria-hidden="true" />
+    </span>
   {/if}
   <span class="eyebrow tile__number" aria-hidden="true"
     >{String(number).padStart(2, "0")}</span
@@ -71,21 +81,76 @@
     width: 100%;
     height: 130px;
     padding: 0;
-    overflow: hidden;
     border: var(--border);
     background: var(--accent);
     color: var(--color-ink);
     text-align: start;
   }
 
+  /*
+   * Four tape layouts along the top edge, cycled by tile number so a grid
+   * looks stuck on by hand. The tape sits above the row with the number and
+   * the status icon, so it covers neither. The grid's row gap leaves room for
+   * the part that sticks out above the tile.
+   */
+  .tile__tape {
+    position: absolute;
+    top: -12px;
+    z-index: 1;
+  }
+
+  .tile__tape :global(.tape) {
+    height: 18px;
+  }
+
+  .tile__tape[data-variant="0"] {
+    left: calc(50% - 28px);
+  }
+
+  .tile__tape[data-variant="0"] :global(.tape) {
+    width: 56px;
+  }
+
+  .tile__tape[data-variant="1"] {
+    right: 14px;
+  }
+
+  .tile__tape[data-variant="1"] :global(.tape) {
+    width: 48px;
+  }
+
+  .tile__tape[data-variant="2"] {
+    left: 14px;
+  }
+
+  .tile__tape[data-variant="2"] :global(.tape) {
+    width: 52px;
+  }
+
+  .tile__tape[data-variant="3"] {
+    left: 30%;
+  }
+
+  .tile__tape[data-variant="3"] :global(.tape) {
+    width: 64px;
+  }
+
+  .tile__crop {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  /* Big and cropped as decoration, but most of the glyph stays readable. */
   .tile :global(.tile__mark) {
     position: absolute;
-    right: -12px;
-    bottom: -40px;
-    font-size: 120px;
+    right: -24px;
+    bottom: -26px;
+    font-size: 140px;
     line-height: 1;
     white-space: nowrap;
-    opacity: 0.28;
+    opacity: 0.25;
     pointer-events: none;
   }
 

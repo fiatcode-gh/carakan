@@ -32,7 +32,6 @@ export default defineConfig({
     },
     {
       name: "tablet",
-      testMatch: "layout.spec.ts",
       use: {
         browserName: "chromium",
         viewport: { width: 800, height: 1280 },
@@ -41,7 +40,6 @@ export default defineConfig({
     },
     {
       name: "desktop",
-      testMatch: "layout.spec.ts",
       use: {
         browserName: "chromium",
         viewport: { width: 1280, height: 800 },

@@ -115,5 +115,11 @@
   --focus-ring: 3px solid var(--color-ink);
   --focus-offset: 2px;
   --content-max: 40rem;
-  --rail-width: 7rem;
+  --content-wide: 64rem;
+  --worksheet-max: 46rem;
+  --book-max: 70rem;
+  /* Right desk room beside the book: current tab 6.75rem + 3px shadow + air. */
+  --desk-tabs: 7.5rem;
+  --desk-wordmark: 6rem;
+  --book-margin-line: 44px;
 }

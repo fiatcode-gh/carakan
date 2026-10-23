@@ -132,7 +132,7 @@
   .quiz-end {
     display: flex;
     flex-direction: column;
-    min-height: 100dvh;
+    min-height: var(--screen-min-height);
     margin: calc(-1 * var(--space-4)) calc(-1 * var(--gutter))
       calc(-1 * var(--space-9));
   }

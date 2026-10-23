@@ -8,6 +8,9 @@
     icon: IconName;
     current: boolean;
     onclick?: (event: MouseEvent) => void;
+    accent: "coral" | "periwinkle" | "sage" | "butter";
+    /** Decorative aksara drawn on the index tab (wide screens only). */
+    mark: string;
   }
 
   interface Props {
@@ -26,7 +29,11 @@
       href={item.href}
       aria-current={item.current ? "page" : undefined}
       onclick={item.onclick}
+      style:--tab-accent="var(--color-{item.accent})"
     >
+      <span class="tab-bar__mark aksara" lang="jv-Java" aria-hidden="true"
+        >{item.mark}</span
+      >
       <span class="tab-bar__pill"><Icon name={item.icon} /></span>
       {item.label}
     </a>
@@ -81,22 +88,59 @@
     font-weight: var(--weight-black);
   }
 
-  /* Wide screens: the tab bar becomes a side rail and content stays centred. */
-  @media (min-width: 60rem) {
+  /* The mark is wide-only decoration. */
+  .tab-bar__mark {
+    display: none;
+  }
+
+  /* From 48rem the bar becomes index tabs on the book's right edge: coloured
+     dividers, the current one sticks out further and carries the shadow. */
+  @media (min-width: 48rem) {
     .tab-bar {
-      inset: 0 auto 0 0;
-      width: var(--rail-width);
-      grid-template-columns: 1fr;
-      grid-auto-rows: max-content;
-      align-content: start;
+      inset: auto;
+      top: calc(var(--desk-block) + var(--space-8));
+      left: calc(100% - var(--book-right));
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      min-height: 0;
       padding: 0;
-      border-top: 0;
-      border-inline-end: var(--border);
+      border: 0;
+      background: none;
     }
 
+    .tab-bar__item,
     .tab-bar__item + .tab-bar__item {
+      position: relative;
+      width: 6rem;
+      min-height: 0;
+      height: 76px;
+      border: var(--border);
       border-inline-start: 0;
-      border-top: var(--border);
+      background: var(--tab-accent);
+      color: var(--color-ink);
+      font-size: var(--text-sm);
+      font-weight: var(--weight-black);
+    }
+
+    .tab-bar__item[aria-current="page"] {
+      width: 6.75rem;
+      margin-inline-start: calc(-1 * var(--border-width));
+      background: var(--tab-accent);
+      color: var(--color-ink);
+      box-shadow: var(--shadow-tile);
+    }
+
+    .tab-bar__mark {
+      display: block;
+      position: absolute;
+      top: 2px;
+      inset-inline-end: 6px;
+      font-size: 22px;
+      line-height: 1;
+      opacity: 0.45;
+      pointer-events: none;
     }
   }
 </style>

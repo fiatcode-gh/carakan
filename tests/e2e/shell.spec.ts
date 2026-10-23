@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { auditRoutes, href } from "../../src/app/router.ts";
-import { gotoRoute, seedLocale } from "./support/app.ts";
+import { gotoRoute, seedLocale, tokenColor } from "./support/app.ts";
+import { isWide, SECTION_TOKENS } from "./support/book.ts";
 import { expect, test } from "./support/fixtures.ts";
 
 const messages = (locale: "id" | "en") =>
@@ -24,22 +25,30 @@ test("[P-S01] four tabs in order, labelled, with icons and a selected state", as
 }) => {
   await gotoRoute(page, "");
   const links = tabs(page);
-  await expect(links).toHaveText([
+  const names = [
     id["navLadder"]!,
     id["navChart"]!,
     id["navReview"]!,
     id["navConverter"]!,
-  ]);
-  for (const link of await links.all()) {
-    await expect(link.locator('svg[aria-hidden="true"]')).toHaveCount(1);
-  }
+  ];
   await expect(links).toHaveCount(4);
+  for (const [i, name] of names.entries()) {
+    await expect(links.nth(i)).toHaveAccessibleName(name);
+    await expect(links.nth(i).locator('svg[aria-hidden="true"]')).toHaveCount(
+      1,
+    );
+  }
   await expect(links.nth(0)).toHaveAttribute("aria-current", "page");
   const fills = await links.evaluateAll((nodes) =>
     nodes.map((node) => getComputedStyle(node).backgroundColor),
   );
-  expect(fills[0]).not.toBe(fills[1]);
-  expect(new Set(fills.slice(1)).size).toBe(1);
+  if (isWide(page)) {
+    for (const [i, token] of SECTION_TOKENS.entries())
+      expect(fills[i]).toBe(await tokenColor(page, token));
+  } else {
+    expect(fills[0]).not.toBe(fills[1]);
+    expect(new Set(fills.slice(1)).size).toBe(1);
+  }
   await links.nth(1).click();
   await expect(links.nth(1)).toHaveAttribute("aria-current", "page");
   await expect(links.nth(0)).not.toHaveAttribute("aria-current", "page");
@@ -241,12 +250,14 @@ test("[P-T03] a seeded English choice renders English on first render", async ({
 }) => {
   await seedLocale(page, "en");
   await gotoRoute(page, "");
-  await expect(tabs(page, en)).toHaveText([
+  const names = [
     en["navLadder"]!,
     en["navChart"]!,
     en["navReview"]!,
     en["navConverter"]!,
-  ]);
+  ];
+  for (const [i, name] of names.entries())
+    await expect(tabs(page, en).nth(i)).toHaveAccessibleName(name);
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page).toHaveTitle(en["appTitle"]!);
 });
@@ -256,7 +267,9 @@ test.describe("[P-T04] system language", () => {
     test.use({ locale: "en-US" });
     test("follows the browser into English", async ({ page }) => {
       await gotoRoute(page, "");
-      await expect(tabs(page, en).first()).toHaveText(en["navLadder"]!);
+      await expect(tabs(page, en).first()).toHaveAccessibleName(
+        en["navLadder"]!,
+      );
       await expect(page.locator("html")).toHaveAttribute("lang", "en");
     });
   });
@@ -265,7 +278,7 @@ test.describe("[P-T04] system language", () => {
     test.use({ locale: "fr-FR" });
     test("falls back to Indonesian", async ({ page }) => {
       await gotoRoute(page, "");
-      await expect(tabs(page).first()).toHaveText(id["navLadder"]!);
+      await expect(tabs(page).first()).toHaveAccessibleName(id["navLadder"]!);
       await expect(page.locator("html")).toHaveAttribute("lang", "id");
     });
   });

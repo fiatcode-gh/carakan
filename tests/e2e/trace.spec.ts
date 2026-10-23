@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { kajRulesetId } from "../../src/engine/index.ts";
 import { gotoRoute } from "./support/app.ts";
+import { isWide } from "./support/book.ts";
 import { expect, test } from "./support/fixtures.ts";
 import { createSolver } from "./support/solver.ts";
 import {
@@ -10,6 +11,7 @@ import {
   line,
   offsetBy,
   padBox,
+  padScale,
   scribble,
   strokesOf,
   zigzagOver,
@@ -130,8 +132,9 @@ test("[P-B20] a short stroke in a corner away from the glyph fails", async ({
 }) => {
   await openTrace(page);
   const box = await padBox(page);
-  const from: Pt = [box.x + 20, box.y + 20];
-  await draw(page, "mouse", [line(from, [from[0] + 60, from[1] + 20])]);
+  const s = await padScale(page);
+  const from: Pt = [box.x + 20 * s, box.y + 20 * s];
+  await draw(page, "mouse", [line(from, [from[0] + 60 * s, from[1] + 20 * s])]);
   await button(page, "traceCheck").click();
   await expect(status(page)).toHaveText(id["traceFail"]!);
   await expect(doneSlots(page)).toHaveCount(0);
@@ -142,7 +145,8 @@ test("[P-B20] a sloppy trace, off by half the stroke width, still passes", async
 }) => {
   await openTrace(page);
   const strokes = strokesOf(await glyphRuns(page, glyph("pa").char));
-  await draw(page, "mouse", offsetBy(strokes, 6, 6));
+  const s = await padScale(page);
+  await draw(page, "mouse", offsetBy(strokes, 6 * s, 6 * s));
   await button(page, "traceCheck").click();
   await expect(status(page)).toHaveText(id["tracePass"]!);
   await expect(doneSlots(page)).toHaveCount(1);
@@ -155,13 +159,43 @@ for (const glyphId of ["pa", "ha", "nga"]) {
     }) => {
       await openTrace(page, glyphId);
       const runs = await glyphRuns(page, glyph(glyphId).char);
-      await draw(page, "mouse", zigzagOver(runs, spacing));
+      const s = await padScale(page);
+      await draw(page, "mouse", zigzagOver(runs, spacing * s));
       await button(page, "traceCheck").click();
       await expect(status(page)).toHaveText(id["traceFail"]!);
       await expect(doneSlots(page)).toHaveCount(0);
     });
   }
 }
+
+test("[P-B20] on wide screens the pad is the phone pad magnified: a genuine trace passes and a blind zigzag fails at its size", async ({
+  page,
+}, testInfo) => {
+  test.skip(!isWide(page), "phones keep the 340px pad");
+  await openTrace(page, "pa");
+  const s = await padScale(page);
+  testInfo.annotations.push({ type: "pad-scale", description: String(s) });
+  expect(s).toBeGreaterThan(1);
+  const box = await padBox(page);
+  expect(Math.round(box.width / s)).toBe(320);
+  const slots = (await page.locator(".trace__slots").boundingBox())!;
+  expect(slots.x).toBeGreaterThanOrEqual(box.x + box.width);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollHeight - window.innerHeight,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+
+  const runs = await glyphRuns(page, glyph("pa").char);
+  await draw(page, "mouse", strokesOf(runs));
+  await button(page, "traceCheck").click();
+  await expect(status(page)).toHaveText(id["tracePass"]!);
+  await expect(doneSlots(page)).toHaveCount(1);
+
+  await draw(page, "mouse", zigzagOver(runs, 12 * s));
+  await button(page, "traceCheck").click();
+  await expect(status(page)).toHaveText(id["traceFail"]!);
+  await expect(doneSlots(page)).toHaveCount(1);
+});
 
 /** Summed alpha of the ink within 10 CSS px of a viewport point. */
 function inkNear(page: Page, [x, y]: Pt): Promise<number> {

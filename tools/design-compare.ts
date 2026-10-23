@@ -5,11 +5,14 @@
 //   npm run build && npx vite preview --port 4173 --strictPort   # in another shell
 //   npm run design:compare
 //
-// DESIGN_BASE_URL points at another preview. Writes
-// .flow/evidence/<HEAD>/design/{app-<stem>.png, ref-<id>.png, index.html}: the
-// eight reference screens (docs/design/buku-poster/screenshots) each paired
-// with the app in the same state at 390×844, then app-only captures of the
-// screens the reference does not draw.
+// DESIGN_BASE_URL points at another preview; DESIGN_OUT overrides the output
+// directory. Writes <OUT>/{app-<stem>.png, ref-<id>.png, index.html} (OUT
+// defaults to .flow/evidence/<HEAD>/design): the eight reference screens
+// (docs/design/buku-poster/screenshots) each paired with the app in the same
+// state at 390×844, then app-only captures of the screens the reference does
+// not draw. The nine named screens are also shot at 360×740
+// (app-360-<stem>.png) and at four wide sizes (wide-<w>x<h>-<stem>.png).
+// Math.random is seeded, so two runs of one build give identical pixels.
 import {
   chromium,
   type BrowserContext,
@@ -37,7 +40,7 @@ const SCREENS_DIR = "docs/design/buku-poster/screenshots";
 const head = execFileSync("git", ["rev-parse", "HEAD"], {
   encoding: "utf8",
 }).trim();
-const OUT = `.flow/evidence/${head}/design`;
+const OUT = process.env["DESIGN_OUT"] ?? `.flow/evidence/${head}/design`;
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -45,8 +48,16 @@ const DAY = 24 * HOUR;
 
 type Viewport = { width: number; height: number; scale: number };
 const PHONE: Viewport = { width: 390, height: 844, scale: 2 };
-const TABLET: Viewport = { width: 800, height: 1280, scale: 1 };
-const DESKTOP: Viewport = { width: 1280, height: 800, scale: 1 };
+const PHONE_SMALL: Viewport = { width: 360, height: 740, scale: 2 };
+const WIDE: readonly Viewport[] = [
+  { width: 768, height: 1024, scale: 1 },
+  { width: 1024, height: 768, scale: 1 },
+  { width: 1280, height: 800, scale: 1 },
+  { width: 1440, height: 900, scale: 1 },
+];
+const WIDE_FIGURE_WIDTH = 640;
+const wideFile = (size: Viewport, stem: string): string =>
+  `wide-${size.width}x${size.height}-${stem}.png`;
 
 interface Seed {
   completedUnits?: string[];
@@ -61,6 +72,8 @@ interface Capture {
   ref?: string;
   note?: string;
   viewport: Viewport;
+  /** Also shot at 360×740 and at every wide size (the contract's named screens). */
+  named?: true;
   seed?: Seed;
   /** Opened before `prepare`; defaults to `#/`. */
   route?: string;
@@ -73,6 +86,24 @@ interface Capture {
 
 const ready = (page: Page) =>
   page.locator('#app[data-boot="ready"]').waitFor({ timeout: 30_000 });
+
+/**
+ * The page height keeps changing for a moment after boot (late content, font
+ * swaps), and so does where a click scrolls to. Wait until it holds still.
+ */
+async function heightSettled(page: Page): Promise<void> {
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  let last = -1;
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    const height = await page.evaluate(
+      () => document.documentElement.scrollHeight,
+    );
+    if (height === last) return;
+    last = height;
+    await page.waitForTimeout(200);
+  }
+  throw new Error("the page height never settled");
+}
 
 async function open(
   page: Page,
@@ -93,6 +124,7 @@ async function open(
   await page.goto(`${BASE}${route}`);
   await page.reload();
   await ready(page);
+  await heightSettled(page);
 }
 
 async function settle(page: Page): Promise<void> {
@@ -103,9 +135,13 @@ async function settle(page: Page): Promise<void> {
   await page.waitForTimeout(250);
 }
 
-async function shoot(page: Page, capture: Capture): Promise<void> {
-  const { viewport } = capture;
-  if (capture.fit === "page") {
+async function shoot(
+  page: Page,
+  viewport: Viewport,
+  fit: Capture["fit"],
+  file: string,
+): Promise<void> {
+  if (fit === "page") {
     const height = await page.evaluate(
       () => document.documentElement.scrollHeight,
     );
@@ -116,7 +152,7 @@ async function shoot(page: Page, capture: Capture): Promise<void> {
     await page.evaluate(() => window.scrollTo(0, 0));
   }
   await settle(page);
-  await page.screenshot({ path: `${OUT}/app-${capture.stem}.png` });
+  await page.screenshot({ path: `${OUT}/${file}` });
 }
 
 const button = (page: Page, key: string) =>
@@ -232,6 +268,7 @@ const quizSeed: Seed = {
 const captures: Capture[] = [
   {
     stem: "01-learn-path",
+    named: true,
     ref: "01-learn-path",
     label: "app, fresh profile",
     viewport: PHONE,
@@ -239,6 +276,7 @@ const captures: Capture[] = [
   },
   {
     stem: "02-meet-aksara",
+    named: true,
     ref: "02-meet-aksara",
     label: "app, lesson g1, first meet (pa)",
     viewport: PHONE,
@@ -247,6 +285,7 @@ const captures: Capture[] = [
   },
   {
     stem: "03-trace",
+    named: true,
     ref: "03-trace",
     label: "app, pa traced once (1/3), first third drawn unchecked",
     viewport: PHONE,
@@ -256,6 +295,7 @@ const captures: Capture[] = [
   },
   {
     stem: "04-quiz",
+    named: true,
     ref: "04-quiz",
     label: "app, first question (glyph → sound) answered right",
     viewport: PHONE,
@@ -265,6 +305,7 @@ const captures: Capture[] = [
   },
   {
     stem: "05-chart",
+    named: true,
     ref: "05-chart",
     label: "app, Carakan tab",
     viewport: PHONE,
@@ -273,6 +314,7 @@ const captures: Capture[] = [
   },
   {
     stem: "06-chart-detail",
+    named: true,
     ref: "06-chart-detail",
     label: "app, ha sheet open",
     viewport: PHONE,
@@ -282,6 +324,7 @@ const captures: Capture[] = [
   },
   {
     stem: "07-converter",
+    named: true,
     ref: "07-converter",
     label: "app, aku with the ku cluster selected",
     viewport: PHONE,
@@ -299,6 +342,7 @@ const captures: Capture[] = [
   },
   {
     stem: "08-review",
+    named: true,
     ref: "08-review",
     label: "app, three cards due (pa, ha, ya)",
     viewport: PHONE,
@@ -419,6 +463,7 @@ const captures: Capture[] = [
   },
   {
     stem: "settings",
+    named: true,
     label: "Settings",
     viewport: PHONE,
     route: "#/settings",
@@ -451,29 +496,6 @@ const captures: Capture[] = [
     route: "#/review-help",
     fit: "page",
   },
-  {
-    stem: "desktop-ladder",
-    label: "Learn path, 1280×800",
-    viewport: DESKTOP,
-    seed: { completedUnits: ["g1"] },
-    fit: "viewport",
-  },
-  {
-    stem: "desktop-chart-detail",
-    label: "Chart detail (ha), 1280×800",
-    viewport: DESKTOP,
-    route: "#/chart",
-    fit: "viewport",
-    prepare: (page) => openChartSheet(page, "ha"),
-  },
-  {
-    stem: "tablet-converter",
-    label: "Converter, 800×1280",
-    viewport: TABLET,
-    route: "#/converter",
-    fit: "viewport",
-    prepare: (page) => typeLatin(page, "hanacaraka"),
-  },
 ];
 
 /** Views this script does not capture, and why. */
@@ -502,13 +524,28 @@ async function withContext<T>(
     baseURL: BASE,
     viewport: { width: viewport.width, height: viewport.height },
     deviceScaleFactor: viewport.scale,
-    isMobile: viewport === PHONE,
-    hasTouch: viewport === PHONE,
+    isMobile: viewport.width < 768,
+    hasTouch: viewport.width < 768,
     locale: "id-ID",
     reducedMotion: "reduce",
     permissions: ["clipboard-read", "clipboard-write"],
   };
   const context = await browser.newContext(options);
+  // Screenshots must be repeatable: the lessons draw from Math.random, so seed
+  // it from a per-tab load counter. The same navigation sequence draws the
+  // same lessons; a reload still advances the seed.
+  await context.addInitScript(() => {
+    const loads = Number(sessionStorage.getItem("carakan.design.loads") ?? 0);
+    sessionStorage.setItem("carakan.design.loads", String(loads + 1));
+    let state = (0x5eed + loads) >>> 0;
+    Math.random = () => {
+      state = (state + 0x6d2b79f5) >>> 0;
+      let t = state;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  });
   // The e2e default fixture: KAJ I, so the reference states hold.
   await context.addInitScript(
     ([key, value]) => {
@@ -529,14 +566,36 @@ async function withContext<T>(
 }
 
 for (const capture of captures) {
-  // A fresh context per capture: every capture starts from its own seed.
-  await withContext(capture.viewport, async (context) => {
-    const page = await context.newPage();
-    await open(page, capture.route ?? "#/", capture.seed);
-    await capture.prepare?.(page, solver);
-    await shoot(page, capture);
-  });
-  console.log(`app-${capture.stem}.png`);
+  // A fresh context per shot: every shot starts from its own seed.
+  const shots: { viewport: Viewport; file: string; fit: Capture["fit"] }[] = [
+    {
+      viewport: capture.viewport,
+      file: `app-${capture.stem}.png`,
+      fit: capture.fit,
+    },
+  ];
+  if (capture.named === true) {
+    shots.push({
+      viewport: PHONE_SMALL,
+      file: `app-360-${capture.stem}.png`,
+      fit: capture.fit,
+    });
+    for (const size of WIDE)
+      shots.push({
+        viewport: size,
+        file: wideFile(size, capture.stem),
+        fit: "viewport",
+      });
+  }
+  for (const shot of shots) {
+    await withContext(shot.viewport, async (context) => {
+      const page = await context.newPage();
+      await open(page, capture.route ?? "#/", capture.seed);
+      await capture.prepare?.(page, solver);
+      await shoot(page, shot.viewport, shot.fit, shot.file);
+    });
+    console.log(shot.file);
+  }
 }
 await browser.close();
 
@@ -560,20 +619,27 @@ const escape = (text: string): string =>
 const figure = (file: string, caption: string, width: number): string =>
   `<figure><figcaption>${escape(caption)}</figcaption><img src="${file}" width="${width}" alt="${escape(caption)}"></figure>`;
 
-const widthOf = (viewport: Viewport): number =>
-  viewport === PHONE ? 390 : viewport === TABLET ? 400 : 640;
+const PHONE_WIDTH = 390;
 
 const pairs = captures
   .filter((c) => c.ref !== undefined)
   .map((c) => {
     const refId = c.ref!;
     const note = c.note === undefined ? "" : `<p>${escape(c.note)}</p>`;
-    return `<section><h2>${escape(refId)}: ${escape(titles.get(refId)!)}</h2>${note}<div class="row">${figure(`ref-${refId}.png`, "reference", 390)}${figure(`app-${c.stem}.png`, c.label, widthOf(c.viewport))}</div></section>`;
+    return `<section><h2>${escape(refId)}: ${escape(titles.get(refId)!)}</h2>${note}<div class="row">${figure(`ref-${refId}.png`, "reference", PHONE_WIDTH)}${figure(`app-${c.stem}.png`, c.label, PHONE_WIDTH)}</div></section>`;
   });
 
 const appOnly = captures
   .filter((c) => c.ref === undefined)
-  .map((c) => figure(`app-${c.stem}.png`, c.label, widthOf(c.viewport)));
+  .map((c) => figure(`app-${c.stem}.png`, c.label, PHONE_WIDTH));
+
+const wideSections = WIDE.map(
+  (size) =>
+    `<section><h2>Wide ${size.width}×${size.height}</h2><div class="row">${captures
+      .filter((c) => c.named === true)
+      .map((c) => figure(wideFile(size, c.stem), c.label, WIDE_FIGURE_WIDTH))
+      .join("")}</div></section>`,
+);
 
 const skipped = notCaptured
   .map(([name, why]) => `<li><code>${escape(name)}</code>: ${escape(why)}</li>`)
@@ -594,6 +660,7 @@ section{margin-bottom:48px}
 <p>Head <code>${head}</code>, app at ${escape(BASE)}, 390×844 at device scale 2 unless the caption says otherwise. Same state, not a pixel match.</p>
 ${pairs.join("\n")}
 <section><h2>Not in the reference</h2><div class="row">${appOnly.join("")}</div></section>
+${wideSections.join("\n")}
 <h2>Not captured</h2><ul>${skipped}</ul>
 </body></html>
 `,

@@ -27,7 +27,7 @@
   }
 </script>
 
-<Page title={$t("converterTitle")}>
+<Page title={$t("converterTitle")} width="wide">
   {#snippet actions()}
     <IconButton
       icon="circle-help"

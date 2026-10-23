@@ -23,6 +23,7 @@ import {
   expectAccessible,
   expectNoHorizontalOverflow,
   expectTouchTargets,
+  settle,
 } from "./support/a11y.ts";
 import { gotoRoute } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
@@ -160,6 +161,80 @@ test("[P-B01] the note counts the base letters learned: 0 / 20 fresh, 3 / 20 aft
   await page.reload();
   await page.locator('#app[data-boot="ready"]').waitFor();
   await expect(note).toHaveText("3 / 20 aksara");
+});
+
+test("[P-B01] every Learn card's tape sticks out above its top edge, clear of other cards and of the number, status or title, and its watermark stays cropped", async ({
+  page,
+}) => {
+  await gotoRoute(page, "");
+  await settle(page);
+  const cards = page.locator(".hero, .tile");
+  expect(await cards.count()).toBe(solver.content.units.length);
+  const variants = new Set<string>();
+  for (const card of await cards.all()) {
+    await card.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    const tape = card.locator(".tape");
+    const box = (await card.boundingBox())!;
+    const strip = (await tape.boundingBox())!;
+    variants.add(
+      `${Math.round(strip.width)}:${Math.round(strip.x - box.x)}:${Math.round(strip.y - box.y)}`,
+    );
+    // On the top edge only: it starts above the card, inside its sides.
+    expect(strip.y).toBeLessThan(box.y);
+    expect(strip.y + strip.height).toBeGreaterThan(box.y);
+    expect(strip.x).toBeGreaterThanOrEqual(box.x);
+    expect(strip.x + strip.width).toBeLessThanOrEqual(box.x + box.width);
+    // The part above the card's top edge is painted, not clipped away.
+    const painted = await page.evaluate(
+      ([x, y]) => document.elementFromPoint(x!, y!)?.classList.contains("tape"),
+      [strip.x + strip.width / 2, (strip.y + box.y) / 2],
+    );
+    expect(painted, (await card.getAttribute("class")) ?? "").toBe(true);
+    // It reaches no other card.
+    for (const other of await cards.all()) {
+      const o = (await other.boundingBox())!;
+      if (o.x === box.x && o.y === box.y) continue;
+      const overlaps =
+        strip.x < o.x + o.width &&
+        o.x < strip.x + strip.width &&
+        strip.y < o.y + o.height &&
+        o.y < strip.y + strip.height;
+      expect(overlaps, "tape over another card").toBe(false);
+    }
+    // The tape covers none of the card's text or icons.
+    for (const part of await card
+      .locator(
+        ".tile__number, .tile__status, .tile__title, .eyebrow, h2, button",
+      )
+      .all()) {
+      const p = (await part.boundingBox())!;
+      const overlaps =
+        strip.x < p.x + p.width &&
+        p.x < strip.x + strip.width &&
+        strip.y < p.y + p.height &&
+        p.y < strip.y + strip.height;
+      expect(overlaps, (await part.getAttribute("class")) ?? "").toBe(false);
+    }
+    // The watermark is cropped by the card: nothing of it paints outside.
+    const visible = await card.locator(".aksara").evaluate((el) => {
+      let { left, top, right, bottom } = el.getBoundingClientRect();
+      for (let p = el.parentElement; p !== null; p = p.parentElement) {
+        if (getComputedStyle(p).overflow !== "visible") {
+          const c = p.getBoundingClientRect();
+          left = Math.max(left, c.left);
+          top = Math.max(top, c.top);
+          right = Math.min(right, c.right);
+          bottom = Math.min(bottom, c.bottom);
+        }
+      }
+      return { left, top, right, bottom };
+    });
+    expect(visible.left).toBeGreaterThanOrEqual(box.x);
+    expect(visible.right).toBeLessThanOrEqual(box.x + box.width);
+    expect(visible.bottom).toBeLessThanOrEqual(box.y + box.height);
+  }
+  // The tiles do not all wear the same tape.
+  expect(variants.size).toBeGreaterThanOrEqual(4);
 });
 
 test("[P-B02][P-S07] each tile and the hero show their first glyph as an aria-hidden Jejeg watermark", async ({

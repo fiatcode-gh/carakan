@@ -117,12 +117,14 @@
       <Button variant="quiet" onclick={onfinish}>{$t("traceSkip")}</Button>
     </div>
 
-    <TracingPad
-      bind:this={pad}
-      bind:strokes
-      char={glyph.char}
-      label={$t("tracePadLabel", { name: glyph.name })}
-    />
+    <div class="trace__pad">
+      <TracingPad
+        bind:this={pad}
+        bind:strokes
+        char={glyph.char}
+        label={$t("tracePadLabel", { name: glyph.name })}
+      />
+    </div>
 
     <ul
       class="trace__slots"
@@ -159,7 +161,7 @@
   .trace {
     display: flex;
     flex-direction: column;
-    min-height: 100dvh;
+    min-height: var(--screen-min-height);
     margin: calc(-1 * var(--space-4)) calc(-1 * var(--gutter))
       calc(-1 * var(--space-9));
   }
@@ -281,5 +283,37 @@
   .trace__status {
     margin: 0;
     font-weight: var(--weight-bold);
+  }
+
+  .trace__pad {
+    display: contents;
+  }
+
+  @media (min-width: 48rem) {
+    .trace__body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 6rem;
+      grid-template-rows: auto minmax(340px, 1fr);
+      grid-template-areas:
+        "hint hint"
+        "pad slots";
+    }
+
+    .trace__hint {
+      grid-area: hint;
+    }
+
+    .trace__pad {
+      grid-area: pad;
+      display: grid;
+      place-items: center;
+      container-type: size;
+    }
+
+    .trace__slots {
+      grid-area: slots;
+      grid-template-columns: 1fr;
+      align-content: start;
+    }
   }
 </style>

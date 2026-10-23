@@ -96,6 +96,12 @@
     bottom: calc(var(--bar-height) + var(--space-5));
   }
 
+  @media (min-width: 48rem) {
+    :global(body[data-chrome="none"]) .notice :global(.toast) {
+      bottom: calc(var(--desk-block) + var(--bar-height) + var(--space-5));
+    }
+  }
+
   .sound--lg {
     width: var(--sound-button-lg);
     height: var(--sound-button-lg);

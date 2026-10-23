@@ -98,79 +98,82 @@
 </script>
 
 <div class="panel">
-  <TextField
-    label={$t("inputHintLatin")}
-    labelStyle="hand"
-    multiline
-    rows={2}
-    bind:value
-    oninput={onInput}
-    invalid={$result.kind === "error"}
-  />
-
-  {#if detail}
-    <p class="source-echo latin">
-      <span class="source-echo__label">{$t("sourceEchoLabel")}</span>
-      {#each detail.echoParts as part, index (index)}
-        {#if part.marked}<mark>{part.text}</mark>{:else}{part.text}{/if}
-      {/each}
-    </p>
-  {/if}
-
-  {#if $result.kind === "error"}
-    {@const parts = splitAtIndex(value.trim(), $result.index)}
-    <ErrorNotice message={$result.message}>
-      {#snippet echo()}
-        {parts.before}{#if parts.marked !== ""}<mark>{parts.marked}</mark
-          >{/if}{parts.after}
-      {/snippet}
-    </ErrorNotice>
-  {:else if $result.kind === "ambiguous"}
-    <ResultCard label={$t(ambiguityTitleKey($result.reason))}>
-      <div class="chips">
-        {#each $result.candidates as candidate, index (index)}
-          <Chip onclick={() => converter.choose(index)}>
-            <AksaraText text={candidate.output} size="md" />
-          </Chip>
+  <div class="panel__source">
+    <TextField
+      label={$t("inputHintLatin")}
+      labelStyle="hand"
+      multiline
+      rows={2}
+      bind:value
+      oninput={onInput}
+      invalid={$result.kind === "error"}
+    />
+    {#if detail}
+      <p class="source-echo latin">
+        <span class="source-echo__label">{$t("sourceEchoLabel")}</span>
+        {#each detail.echoParts as part, index (index)}
+          {#if part.marked}<mark>{part.text}</mark>{:else}{part.text}{/if}
         {/each}
-      </div>
-    </ResultCard>
-  {:else if $result.kind === "idle" && detail}
-    <ResultCard label={$t("outputLabel")} tone="coral" tape>
-      <ClusterResult
-        output={$result.output}
-        clusters={$result.clusters}
-        labels={detail.labels}
-        selected={$result.selected}
-        onselect={(i) => converter.select(i)}
-      />
-      {#snippet actions()}
-        <button type="button" onclick={copy}>
-          <Icon name="copy" />{$t("copyButton")}
-        </button>
-        <SoundButton
-          player={clips}
-          clipKey={$result.input.trim()}
-          label={$t("playSound", { reading: $result.input.trim() })}
-          text={$t("listenButton")}
-        />
-      {/snippet}
-    </ResultCard>
-    {#if detail.selection}
-      <ClusterBreakdown
-        parts={detail.parts}
-        names={detail.names}
-        reading={detail.reading}
-        onopen={openChart}
-      />
+      </p>
     {/if}
-  {/if}
+  </div>
 
-  {#if detail}
-    <p class="visually-hidden cluster-status" role="status">
-      {detail.announcement}
-    </p>
-  {/if}
+  <div class="panel__result">
+    {#if $result.kind === "error"}
+      {@const parts = splitAtIndex(value.trim(), $result.index)}
+      <ErrorNotice message={$result.message}>
+        {#snippet echo()}
+          {parts.before}{#if parts.marked !== ""}<mark>{parts.marked}</mark
+            >{/if}{parts.after}
+        {/snippet}
+      </ErrorNotice>
+    {:else if $result.kind === "ambiguous"}
+      <ResultCard label={$t(ambiguityTitleKey($result.reason))}>
+        <div class="chips">
+          {#each $result.candidates as candidate, index (index)}
+            <Chip onclick={() => converter.choose(index)}>
+              <AksaraText text={candidate.output} size="md" />
+            </Chip>
+          {/each}
+        </div>
+      </ResultCard>
+    {:else if $result.kind === "idle" && detail}
+      <ResultCard label={$t("outputLabel")} tone="coral" tape>
+        <ClusterResult
+          output={$result.output}
+          clusters={$result.clusters}
+          labels={detail.labels}
+          selected={$result.selected}
+          onselect={(i) => converter.select(i)}
+        />
+        {#snippet actions()}
+          <button type="button" onclick={copy}>
+            <Icon name="copy" />{$t("copyButton")}
+          </button>
+          <SoundButton
+            player={clips}
+            clipKey={$result.input.trim()}
+            label={$t("playSound", { reading: $result.input.trim() })}
+            text={$t("listenButton")}
+          />
+        {/snippet}
+      </ResultCard>
+      {#if detail.selection}
+        <ClusterBreakdown
+          parts={detail.parts}
+          names={detail.names}
+          reading={detail.reading}
+          onopen={openChart}
+        />
+      {/if}
+    {/if}
+
+    {#if detail}
+      <p class="visually-hidden cluster-status" role="status">
+        {detail.announcement}
+      </p>
+    {/if}
+  </div>
 </div>
 
 {#if chartLocation}
@@ -186,6 +189,24 @@
   .panel {
     display: grid;
     gap: var(--space-4);
+  }
+
+  .panel__source,
+  .panel__result {
+    display: contents;
+  }
+
+  @media (min-width: 64rem) {
+    .panel {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .panel__source,
+    .panel__result {
+      display: grid;
+      gap: var(--space-4);
+    }
   }
 
   .chips {

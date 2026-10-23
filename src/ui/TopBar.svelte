@@ -56,7 +56,7 @@
 
 <style>
   .top-bar {
-    max-width: var(--content-max);
+    max-width: var(--page-max, var(--content-max));
     margin-inline: auto;
   }
 
