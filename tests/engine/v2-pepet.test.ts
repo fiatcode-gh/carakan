@@ -37,4 +37,39 @@ describe("[P-D01] v2-pepet", () => {
   test("bare e stays ambiguous; the mandiri form resolves it", () => {
     expect(toAksara("endhog").kind).toBe("ambiguous");
   });
+
+  test("typed pepet after consonant + r is keret (C1c)", () => {
+    expect(ok(toAksara("prêlu"), "prêlu")).toBe(ak("PA KERET LA SUKU"));
+    expect(ok(toAksara("prělu"), "prělu")).toBe(ak("PA KERET LA SUKU"));
+    expect(ok(toAksara("krêtêg"), "krêtêg")).toBe(
+      ak("KA KERET TA PEPET GA PANGKON"),
+    );
+    expect(ok(toAksara("pŕělu"), "pŕělu")).toBe(ak("PA CAKRA PEPET LA SUKU"));
+    expect(ok(toAksara("RlÈjRêL"), "RlÈjRêL")).toBe(
+      ak("RA PANGKON LA TALING JA PANGKON PA_CEREK LA PANGKON"),
+    );
+  });
+
+  test("a typed pepet converts exactly like the bare-e pepet candidate", () => {
+    for (const x of [
+      "prelu",
+      "kreteg",
+      "Prelu",
+      "seneng",
+      "lesehan",
+      "RlÈjReL",
+      "kre",
+      "liwat kreteg",
+    ]) {
+      const bare = toAksara(x);
+      expect(bare.kind, x).toBe("ambiguous");
+      const typed = toAksara(x.replace(/e/g, "ê").replace(/E/g, "Ê"));
+      expect(typed.kind, x).toBe("success");
+      if (bare.kind !== "ambiguous" || typed.kind !== "success") continue;
+      expect({ output: typed.output, clusters: typed.clusters }, x).toEqual({
+        output: bare.candidates[0]!.output,
+        clusters: bare.candidates[0]!.clusters,
+      });
+    }
+  });
 });

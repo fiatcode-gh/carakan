@@ -30,6 +30,16 @@ export type ChartSectionId =
   | "vowelKiller"
   | "pasangan";
 
+/** Sections whose entries are read as a syllable: their detail sheet has a Dengar button. */
+const soundSections: ReadonlySet<ChartSectionId> = new Set([
+  "carakan",
+  "rekan",
+  "pasangan",
+]);
+export function sectionHasSound(id: ChartSectionId): boolean {
+  return soundSections.has(id);
+}
+
 export interface ChartEntry {
   readonly id: string;
   readonly name: string;
@@ -144,6 +154,19 @@ export function rekanChar(rekanId: string): string {
     return javaneseChar(r.baseUnicodeName) + cecakTelu.char;
   }
   return (r.composition ?? []).map(javaneseChar).join("");
+}
+
+/** Sandhangan by function, in first-appearance order: the Sandhangan tab's sections. */
+export function sandhanganGroups(
+  sandhangan: readonly SandhanganItem[],
+): ReadonlyMap<string, readonly SandhanganItem[]> {
+  const byFunction = new Map<string, SandhanganItem[]>();
+  for (const s of sandhangan) {
+    const group = byFunction.get(s.function);
+    if (group === undefined) byFunction.set(s.function, [s]);
+    else group.push(s);
+  }
+  return byFunction;
 }
 
 export function angkaFlanked(digit: number): string {
@@ -299,14 +322,8 @@ export function buildChartTabs({
     },
     vowelKiller: { id: "vowelKiller", title: strings.sandhanganKiller },
   };
-  const byFunction = new Map<string, SandhanganItem[]>();
-  for (const s of sandhangan) {
-    const group = byFunction.get(s.function);
-    if (group === undefined) byFunction.set(s.function, [s]);
-    else group.push(s);
-  }
   const sandhanganSections: ChartSection[] = [];
-  for (const [fn, group] of byFunction) {
+  for (const [fn, group] of sandhanganGroups(sandhangan)) {
     const meta = functionSections[fn];
     if (meta === undefined) throw new RangeError(`unknown function: ${fn}`);
     sandhanganSections.push({

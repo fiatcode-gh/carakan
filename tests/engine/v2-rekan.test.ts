@@ -1,9 +1,11 @@
 import { describe, expect, test } from "vitest";
 import {
+  javaneseChar,
   toAksara,
   toLatin,
   type ConvertResult,
 } from "../../src/engine/index.ts";
+import { cecakTelu, rekan, rekanCatalogue } from "../../src/engine/rekan.ts";
 import { ak } from "./support/aksara-builder.ts";
 
 describe("[P-D01] v2-rekan", () => {
@@ -61,6 +63,28 @@ describe("[P-D01] v2-rekan", () => {
   });
 
   test("cecak telu on an unsupported base is an explicit error", () => {
-    expect(toLatin(ak("KA CECAK_TELU"), { scheme: "jgst" }).kind).toBe("error");
+    expect(toLatin(ak("TA CECAK_TELU"), { scheme: "jgst" }).kind).toBe("error");
+  });
+
+  test("[P-C08] every rekan written with cecak telu reads back to its Latin", () => {
+    for (const r of [...rekan, ...rekanCatalogue]) {
+      if (r.baseUnicodeName === null) continue;
+      const written = javaneseChar(r.baseUnicodeName) + cecakTelu.char;
+      expect(toLatin(written, { scheme: "pujl" }), r.id).toEqual({
+        kind: "success",
+        output: r.latinPujl,
+      });
+      expect(toLatin(written, { scheme: "jgst" }), r.id).toEqual({
+        kind: "success",
+        output: r.latinJgst,
+      });
+    }
+  });
+
+  test("[P-C08] a rekan base keeps its vowel: KA + cecak telu + wulu reads khi", () => {
+    expect(toLatin(ak("KA CECAK_TELU WULU"), { scheme: "pujl" })).toEqual({
+      kind: "success",
+      output: "khi",
+    });
   });
 });

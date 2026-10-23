@@ -1,6 +1,13 @@
 import type { Locator, Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
-import { javaneseChar, toAksara, toLatin } from "../../src/engine/index.ts";
+import {
+  javaneseChar,
+  pedomanRulesetId,
+  sandhanganPangkon,
+  sandhanganWulu,
+  toAksara,
+  toLatin,
+} from "../../src/engine/index.ts";
 import { localizeEngineMessage } from "../../src/features/converter/engine-messages.ts";
 import {
   expectAccessible,
@@ -59,6 +66,20 @@ async function pickGlyph(page: Page, label: string): Promise<void> {
 
 const outputOf = (page: Page): Locator =>
   page.getByRole("region", { name: id["outputLabel"]! });
+
+const eChoice = (
+  page: Page,
+  reading: "pepet" | "taling",
+  word: string,
+  position: number,
+): Locator =>
+  page.getByRole("button", {
+    name: fmt(id[reading === "pepet" ? "eChoicePepet" : "eChoiceTaling"]!, {
+      word,
+      position: String(position),
+    }),
+    exact: true,
+  });
 
 test("[P-U01] the info button opens settings", async ({ page }) => {
   await gotoRoute(page, "#/converter");
@@ -122,24 +143,73 @@ test("[P-U02] switching direction clears input and output", async ({
   await expect(outputOf(page)).toHaveCount(0);
 });
 
-test("[P-U04] an ambiguous word shows two chips; choosing one shows it", async ({
+test("[P-U04] each plain e gets its own pepet/taling choice", async ({
   page,
 }) => {
   await gotoRoute(page, "#/converter");
-  await latinInput(page).fill("prelu");
-  const result = toAksara("prelu");
-  if (result.kind !== "ambiguous") throw new Error("prelu must be ambiguous");
+  await latinInput(page).fill("seneng kowe");
   const card = page.getByRole("region", { name: id["ambiguousTitle"]! });
-  const chips = card.getByRole("button");
-  await expect(chips).toHaveCount(2);
-  await expect(card.getByRole("button", { pressed: true })).toHaveCount(0);
+  await expect(card.getByRole("listitem")).toHaveCount(3);
+  await expect(card.getByRole("button")).toHaveCount(6);
+  await expect(outputOf(page)).toHaveCount(0);
   await settle(page);
   await shoot(page, "ambiguous");
-  await chips.nth(1).click();
+  await expectAccessible(page);
+  await expectTouchTargets(page);
+
+  await eChoice(page, "pepet", "seneng", 2).click();
+  await expect(latinInput(page)).toHaveValue("sêneng kowe");
+  await expect(eChoice(page, "pepet", "sêneng", 4)).toBeFocused();
+
+  await eChoice(page, "taling", "sêneng", 4).click();
+  await eChoice(page, "taling", "kowe", 4).click();
+  await expect(latinInput(page)).toHaveValue("sênéng kowé");
   await expect(outputOf(page).locator(".aksara")).toHaveText(
-    result.candidates[1]!.output,
+    successOutput("sênéng kowé"),
   );
-  await expect(card).toHaveCount(0);
+});
+
+test("[P-U04] choosing pepet in a cluster writes keret", async ({ page }) => {
+  await gotoRoute(page, "#/converter");
+  await latinInput(page).fill("prelu");
+  await eChoice(page, "pepet", "prelu", 3).click();
+  await expect(latinInput(page)).toHaveValue("prêlu");
+  const old = toAksara("prelu");
+  if (old.kind !== "ambiguous") throw new Error("prelu must be ambiguous");
+  expect(successOutput("prêlu")).toBe(old.candidates[0]!.output);
+  await expect(outputOf(page).locator(".aksara")).toHaveText(
+    successOutput("prêlu"),
+  );
+});
+
+test("[P-U04] a typed mix converts at once", async ({ page }) => {
+  await gotoRoute(page, "#/converter");
+  await latinInput(page).fill("émpêk");
+  await expect(outputOf(page).locator(".aksara")).toHaveText(
+    successOutput("émpêk"),
+  );
+  await expect(
+    page.getByRole("region", { name: id["ambiguousTitle"]! }),
+  ).toHaveCount(0);
+});
+
+test("[P-U04] edits elsewhere keep a choice", async ({ page }) => {
+  await gotoRoute(page, "#/converter");
+  await latinInput(page).fill("seneng");
+  await eChoice(page, "taling", "seneng", 2).click();
+  await expect(latinInput(page)).toHaveValue("séneng");
+  await latinInput(page).press("End");
+  await latinInput(page).pressSequentially(" kowe");
+  await expect(eChoice(page, "pepet", "séneng", 4)).toBeVisible();
+  await expect(eChoice(page, "pepet", "kowe", 4)).toBeVisible();
+  await expect(latinInput(page)).toHaveValue(/^sé/);
+});
+
+test("[P-U04] leading spaces do not shift the choice", async ({ page }) => {
+  await gotoRoute(page, "#/converter");
+  await latinInput(page).fill("  prelu");
+  await eChoice(page, "taling", "prelu", 3).click();
+  await expect(latinInput(page)).toHaveValue("  prélu");
 });
 
 test("[P-U05] [P-U09] an unknown character shows the localized message, never the engine text, and marks it", async ({
@@ -155,6 +225,44 @@ test("[P-U05] [P-U09] an unknown character shows the localized message, never th
   await expectAccessible(page);
   await expectTouchTargets(page);
   await shoot(page, "error-id");
+});
+
+test("[P-U04] the é and ê keys insert at the caret and re-convert", async ({
+  page,
+}) => {
+  await gotoRoute(page, "#/converter");
+  const field = latinInput(page);
+  await field.fill("sng");
+  await field.click();
+  await page.keyboard.press("Home");
+  await page.keyboard.press("ArrowRight");
+  await page
+    .getByRole("button", { name: id["latinKeyPepet"]!, exact: true })
+    .click();
+  await expect(field).toHaveValue("sêng");
+  await expect(outputOf(page).locator(".aksara")).toHaveText(
+    successOutput("sêng"),
+  );
+  await expect(field).toBeFocused();
+  await page.keyboard.press("End");
+  await page.keyboard.type("k");
+  await page
+    .getByRole("button", { name: id["latinKeyTaling"]!, exact: true })
+    .click();
+  await expect(field).toHaveValue("sêngké");
+  await expect(outputOf(page).locator(".aksara")).toHaveText(
+    successOutput("sêngké"),
+  );
+  await expectAccessible(page);
+  await expectTouchTargets(page);
+});
+
+test("[P-U04] a key with no caret yet appends", async ({ page }) => {
+  await gotoRoute(page, "#/converter");
+  await page
+    .getByRole("button", { name: id["latinKeyTaling"]!, exact: true })
+    .click();
+  await expect(latinInput(page)).toHaveValue("é");
 });
 
 test.describe("English UI", () => {
@@ -181,6 +289,15 @@ test.describe("English UI", () => {
     await expect(
       page.getByRole("region", { name: en["ambiguousTitle"]! }),
     ).toBeVisible();
+  });
+
+  test("[P-L04] the accent keys have English names", async ({ page }) => {
+    await gotoRoute(page, "#/converter");
+    for (const name of [en["latinKeyTaling"]!, en["latinKeyPepet"]!]) {
+      await expect(
+        page.getByRole("button", { name, exact: true }),
+      ).toBeVisible();
+    }
   });
 });
 
@@ -299,8 +416,13 @@ test("[P-U08] [W11] [W12] [W13] the picker is a modal sheet with stacked section
   await expect(headings).toHaveText([
     id["glyphPickerTitle"]!,
     id["sectionCarakan"]!,
+    id["sectionSandhanganVowel"]!,
+    id["sectionSandhanganClosing"]!,
+    id["sectionSandhanganKiller"]!,
+    id["sectionSandhanganConsonant"]!,
     id["sectionSwara"]!,
     id["sectionMurda"]!,
+    id["sectionRekan"]!,
     id["sectionAngka"]!,
     id["sectionPada"]!,
   ]);
@@ -311,8 +433,13 @@ test("[P-U08] [W11] [W12] [W13] the picker is a modal sheet with stacked section
   await expectTouchTargets(page);
   await shoot(page, "picker");
   for (const name of [
+    id["sectionSandhanganVowel"]!,
+    id["sectionSandhanganClosing"]!,
+    id["sectionSandhanganKiller"]!,
+    id["sectionSandhanganConsonant"]!,
     id["sectionSwara"]!,
     id["sectionMurda"]!,
+    id["sectionRekan"]!,
     id["sectionAngka"]!,
     id["sectionPada"]!,
   ]) {
@@ -329,6 +456,99 @@ test("[P-U08] [W11] [W12] [W13] the picker is a modal sheet with stacked section
   await shoot(page, "picker-pada");
   await sheet.getByRole("button", { name: id["closeButton"]! }).click();
   await expect(sheet).toBeHidden();
+});
+
+test("[P-U08] a sandhangan inserts only its mark: ka then wulu reads ki", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await pickGlyph(page, "ka");
+  await pickGlyph(page, "wulu (i)");
+  await expect(aksaraInput(page)).toHaveValue(successOutput("ki"));
+  await expect(outputOf(page).locator(".latin")).toHaveText("ki");
+});
+
+test("[P-U08] ka, pangkon, ra gives the pasangan reading", async ({ page }) => {
+  await openAksara(page);
+  await pickGlyph(page, "ka");
+  await pickGlyph(page, "pangkon (pemati)");
+  await pickGlyph(page, "ra");
+  const value =
+    javaneseChar("JAVANESE LETTER KA") +
+    sandhanganPangkon.char +
+    javaneseChar("JAVANESE LETTER RA");
+  await expect(aksaraInput(page)).toHaveValue(value);
+  await expect(outputOf(page).locator(".latin")).toHaveText("kra");
+  expect(toLatin(value)).toEqual({ kind: "success", output: "kra" });
+});
+
+test("[P-U08] sandhangan tiles show the mark on a ha carrier", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+  const wulu = picker(page).getByRole("button", {
+    name: "wulu (i)",
+    exact: true,
+  });
+  await expect(wulu.locator(".aksara")).toHaveText(
+    javaneseChar("JAVANESE LETTER HA") + sandhanganWulu.char,
+  );
+});
+
+const rekanSection = (sheet: Locator): Locator =>
+  sheet.locator("section").filter({
+    has: sheet.page().getByRole("heading", {
+      level: 2,
+      name: id["sectionRekan"]!,
+      exact: true,
+    }),
+  });
+
+test("[P-C08] the rekan section lists the ruleset's rekan; fa reads fa", async ({
+  page,
+}) => {
+  await openAksara(page);
+  await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+  await expect(rekanSection(picker(page)).getByRole("button")).toHaveCount(7);
+  await picker(page).getByRole("button", { name: "fa", exact: true }).click();
+  await expect(outputOf(page).locator(".latin")).toHaveText("fa");
+});
+
+test.describe("Pedoman picker", () => {
+  test.use({ ruleset: pedomanRulesetId });
+
+  test("[P-C08] the rekan section lists the five Pedoman rekan; fa reads fa", async ({
+    page,
+  }) => {
+    await openAksara(page);
+    await page.getByRole("button", { name: id["glyphPickerTitle"]! }).click();
+    const buttons = rekanSection(picker(page)).getByRole("button");
+    await expect(buttons).toHaveCount(5);
+    await expect(buttons.locator(".entry__label")).toHaveText([
+      "kha",
+      "dza",
+      "fa",
+      "za",
+      "gha",
+    ]);
+    await picker(page).getByRole("button", { name: "fa", exact: true }).click();
+    await expect(outputOf(page).locator(".latin")).toHaveText("fa");
+  });
+
+  for (const name of ["kha", "dza", "fa", "za", "gha"]) {
+    test(`[P-C08] the Pedoman rekan ${name} from the picker reads back`, async ({
+      page,
+    }) => {
+      await openAksara(page);
+      await aksaraInput(page).fill("");
+      await pickGlyph(page, name);
+      const value = await aksaraInput(page).inputValue();
+      expect(toLatin(value)).toEqual({ kind: "success", output: name });
+      await expect(outputOf(page).locator(".latin")).toHaveText(name);
+      await expect(page.getByRole("alert")).toHaveCount(0);
+    });
+  }
 });
 
 test("[P-U08] a Pada entry inserts into the aksara input", async ({ page }) => {
@@ -640,20 +860,20 @@ test.describe("[P-U10] tap an aksara to see where it came from", () => {
     );
   });
 
-  test("an ambiguous word has no hit buttons until a chip is chosen", async ({
+  test("an ambiguous word has no hit buttons until every e is chosen", async ({
     page,
   }) => {
     await gotoRoute(page, "#/converter");
     await latinInput(page).fill("prelu");
-    const result = toAksara("prelu");
-    if (result.kind !== "ambiguous") throw new Error("prelu must be ambiguous");
+    const result = toAksara("prélu");
+    if (result.kind !== "success") throw new Error("prélu must convert");
     const card = page.getByRole("region", { name: id["ambiguousTitle"]! });
     await expect(card.locator(".cluster-result__hit")).toHaveCount(0);
-    await card.getByRole("button").nth(1).click();
+    await eChoice(page, "taling", "prelu", 3).click();
     await expect(page.locator(".cluster-result__hit")).toHaveCount(
-      result.candidates[1]!.clusters.length,
+      result.clusters.length,
     );
-    const { start, end } = result.candidates[1]!.clusters[0]!.output;
+    const { start, end } = result.clusters[0]!.output;
     await tapRange(page, start, end);
     await expect(breakdown(page)).toBeVisible();
   });

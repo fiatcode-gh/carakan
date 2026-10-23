@@ -30,9 +30,9 @@ test("[P-L01] every value is non-empty", () => {
   }
 });
 
-test("[P-L01] message files hold 188 keys (90 ARB + 15 W10 + 1 W14 + 20 W15 + 1 copy failure + 8 converter breakdown + 8 progress reset + 2 ai/au titles + 5 ruleset choice + 3 Buku Poster shell + 6 Buku Poster learn path + 7 Buku Poster chart + 2 Buku Poster converter + 13 Buku Poster tracing + 1 Buku Poster lesson flow + 6 Buku Poster lesson screens - 2 retired lesson keys + 3 Buku Poster sound + 12 Buku Poster review - 13 retired review keys)", () => {
-  expect(Object.keys(id)).toHaveLength(188);
-  expect(Object.keys(en)).toHaveLength(188);
+test("[P-L01] message files hold 194 keys (90 ARB + 15 W10 + 1 W14 + 20 W15 + 1 copy failure + 8 converter breakdown + 8 progress reset + 1 ai/au title + 5 ruleset choice + 3 Buku Poster shell + 6 Buku Poster learn path + 7 Buku Poster chart + 2 Buku Poster converter + 13 Buku Poster tracing + 1 Buku Poster lesson flow + 6 Buku Poster lesson screens - 2 retired lesson keys + 3 Buku Poster sound + 12 Buku Poster review - 13 retired review keys + 7 converter e keys: latinKeysLabel, latinKeyTaling, latinKeyPepet, eTalingName, ePepetName, eChoicePepet, eChoiceTaling; the retired ambiguousTitleMixed is already left out of the ai/au count)", () => {
+  expect(Object.keys(id)).toHaveLength(194);
+  expect(Object.keys(en)).toHaveLength(194);
 });
 
 test("[P-L01] no ICU syntax beyond simple {name} placeholders", () => {

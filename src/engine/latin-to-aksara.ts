@@ -2,6 +2,7 @@ import { ClusterWriter } from "./aksara-clusters.ts";
 import { angkaDigitToChar, angkaFlanker } from "./angka.ts";
 import { javaneseChar } from "./codepoints.ts";
 import type {
+  BareE,
   TextSpan,
   ToAksaraAmbiguous,
   ToAksaraResult,
@@ -91,7 +92,7 @@ export function latinToAksara(
     // Phase 1: tokenize every word so lexical errors surface before any
     // ambiguity handling.
     const tokenized: Item[] = [];
-    let bareE = false;
+    const bareE: BareE[] = [];
     let vowelPair = false;
     for (const chunk of chunks) {
       if (chunk.kind === "word") {
@@ -101,7 +102,17 @@ export function latinToAksara(
               ? checkPedomanTokens(tokenize(chunk.text))
               : tokenize(chunk.text);
           tokenized.push({ tokens, start: chunk.start });
-          if (tokens.some((t) => t.vowel === "eBare")) bareE = true;
+          for (const t of tokens) {
+            if (t.vowel === "eBare") {
+              bareE.push({
+                index: chunk.start + t.sourceIndex,
+                word: {
+                  start: chunk.start,
+                  end: chunk.start + chunk.text.length,
+                },
+              });
+            }
+          }
           if (
             ruleset === pedomanRulesetId &&
             tokens.some((t) => t.vowel === "ai" || t.vowel === "au")
@@ -124,7 +135,7 @@ export function latinToAksara(
       }
     }
 
-    if (bareE || vowelPair) {
+    if (bareE.length > 0 || vowelPair) {
       return ambiguous(input, tokenized, useMurda, bareE, vowelPair, ruleset);
     }
 
@@ -165,10 +176,11 @@ function renderSentence(
 
   for (const item of items) {
     if ("tokens" in item) {
-      let tokens =
+      let tokens = fuseKeret(
         eSubstitution === null
           ? item.tokens
-          : substituteE(item.tokens, eSubstitution);
+          : substituteE(item.tokens, eSubstitution),
+      );
       if (vowelPair !== null) tokens = splitVowelPairs(tokens, vowelPair);
       if (breakPending) {
         w.write(zwnj, []);
@@ -377,18 +389,21 @@ function applyMurda(tokens: readonly LatinToken[]): readonly LatinToken[] {
 
 /**
  * Spec 6.2: bare "e" is unresolvable by rule — PUJL writes pepet and
- * taling alike. Return both readings; the UI (converter toggle) chooses.
+ * taling alike. The two whole-input readings stay for API callers and the
+ * differential; `bareE` lists each plain e (index and word) so a caller can
+ * settle them one by one, as the converter does.
  */
 function ambiguous(
   input: string,
   tokenized: readonly Item[],
   useMurda: boolean,
-  bareE: boolean,
+  bareE: readonly BareE[],
   vowelPair: boolean,
   ruleset: RulesetId,
 ): ToAksaraAmbiguous {
   const candidates: ToAksaraSuccess[] = [];
-  const eReadings: (Vowel | null)[] = bareE ? ["ePepet", "eTaling"] : [null];
+  const hasBareE = bareE.length > 0;
+  const eReadings: (Vowel | null)[] = hasBareE ? ["ePepet", "eTaling"] : [null];
   const pairReadings: (VowelPairReading | null)[] = vowelPair
     ? ["ha", "swara"]
     : [null];
@@ -402,17 +417,19 @@ function ambiguous(
       kind: "ambiguous",
       input,
       candidates,
+      bareE,
       reason:
         'Bare "e" is pepet (ě) or taling (é) — PUJL does not mark ' +
         "the difference (KAJ I Daftar Transliterasi). Choose a reading, " +
         "or type ě/ê/é/è.",
     };
   }
-  if (!bareE) {
+  if (!hasBareE) {
     return {
       kind: "ambiguous",
       input,
       candidates,
+      bareE,
       reason:
         '"ai"/"au" is two aksara in Pedoman 2002: ha between the vowels or a swara letter. Choose a reading, or type the h (sinahu).',
     };
@@ -421,32 +438,43 @@ function ambiguous(
     kind: "ambiguous",
     input,
     candidates,
+    bareE,
     reason:
       'Bare "e" is pepet (ě) or taling (é), and "ai"/"au" is two aksara in Pedoman 2002 (ha or a swara letter). Choose a reading.',
   };
 }
 
-/**
- * Replace every bare-e token with `substitution`.
- *
- * For pepet after a consonant cluster ending in r (C+r+ě), restructure
- * the token list so the syllabifier takes the keret path: mark r as
- * isCerekR and drop the vowel token (keret carries an implicit pepet).
- * KAJ I Bab I A.5.b: "clusters use keret".
- */
+/** Replace every bare-e token with a `substitution` vowel token. */
 function substituteE(
   tokens: readonly LatinToken[],
   substitution: Vowel,
 ): LatinToken[] {
+  return tokens.map((t) =>
+    t.vowel !== "eBare"
+      ? t
+      : latinToken({
+          kind: "vowel",
+          text: substitution === "ePepet" ? "ě" : "é",
+          vowel: substitution,
+          capitalized: t.capitalized,
+          sourceIndex: t.sourceIndex,
+          sourceEnd: t.sourceEnd,
+        }),
+  );
+}
+
+/**
+ * For a pepet after a consonant cluster ending in r (C+r+ě), restructure
+ * the token list so the syllabifier takes the keret path: mark r as
+ * isCerekR and drop the vowel token (keret carries an implicit pepet).
+ * KAJ I Bab I A.5.b: "clusters use keret". Applies to a typed pepet and
+ * to a substituted one alike; JGST ŕ keeps its explicit cakra.
+ */
+function fuseKeret(tokens: readonly LatinToken[]): LatinToken[] {
   const result: LatinToken[] = [];
   for (const t of tokens) {
-    if (t.vowel !== "eBare") {
-      result.push(t);
-      continue;
-    }
-    // C+r+ě → keret: cluster ending in RA + pepet substitution.
     if (
-      substitution === "ePepet" &&
+      t.vowel === "ePepet" &&
       result.length >= 2 &&
       result[result.length - 1]!.kind === "consonant" &&
       result[result.length - 1]!.aksaraUnicodeName === "JAVANESE LETTER RA" &&
@@ -458,25 +486,15 @@ function substituteE(
           kind: r.kind,
           text: r.text,
           sourceIndex: r.sourceIndex,
-          // The dropped e stays attributed to the keret cluster.
+          // The dropped vowel stays attributed to the keret cluster.
           sourceEnd: t.sourceEnd,
           aksaraUnicodeName: r.aksaraUnicodeName,
           isCerekR: true,
           capitalized: r.capitalized,
         }),
       );
-      // Vowel token is dropped — keret carries implicit pepet.
     } else {
-      result.push(
-        latinToken({
-          kind: "vowel",
-          text: substitution === "ePepet" ? "ě" : "é",
-          vowel: substitution,
-          capitalized: t.capitalized,
-          sourceIndex: t.sourceIndex,
-          sourceEnd: t.sourceEnd,
-        }),
-      );
+      result.push(t);
     }
   }
   return result;

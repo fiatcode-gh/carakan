@@ -403,6 +403,42 @@ test("[P-C05] a murda, swara or angka entry has no boxes", async ({ page }) => {
   }
 });
 
+test("[P-S11] the detail sheet has Dengar for letters, rekan and pasangan only", async ({
+  page,
+}) => {
+  const firstOf = (sectionId: string) =>
+    tabs.flatMap((t) => t.sections).find((s) => s.id === sectionId)!.entries[0]!
+      .id;
+  const cases: [string, number][] = [
+    ...["ha", "fa", "pasangan-ha"].map((e): [string, number] => [e, 1]),
+    ...[
+      firstOf("murda"),
+      "a",
+      "long-a",
+      "iKawi",
+      "paCerek",
+      "ngaLelet",
+      "angka-0",
+      firstOf("pada"),
+      "wulu",
+      "layar",
+      "pangkon",
+      "cakra",
+    ].map((e): [string, number] => [e, 0]),
+  ];
+  for (const [entryId, count] of cases) {
+    await (await tile(page, entryId)).click();
+    const s = sheet(page, entryId);
+    await expect(s).toBeVisible();
+    await expect(
+      s.getByRole("button", { name: id["listenButton"], exact: true }),
+      entryId,
+    ).toHaveCount(count);
+    await s.getByRole("button", { name: id["closeButton"] }).click();
+    await expect(s).toBeHidden();
+  }
+});
+
 test("[P-C06] example words show the reading and aksara, never the gloss", async ({
   page,
 }) => {

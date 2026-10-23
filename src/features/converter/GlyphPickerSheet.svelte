@@ -29,7 +29,7 @@
             aria-label={entry.label}
             onclick={() => onpick(entry.char)}
           >
-            <AksaraText text={entry.char} size="md" />
+            <AksaraText text={entry.glyph} size="md" />
             <span class="entry__label" aria-hidden="true"
               ><Reading text={entry.label} /></span
             >

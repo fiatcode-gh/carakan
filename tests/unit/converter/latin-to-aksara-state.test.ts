@@ -42,14 +42,16 @@ describe("LatinToAksaraConverter", () => {
     expect(get(c.state)).toEqual({ kind: "initial" });
   });
 
-  test("[P-U04] surfaces ambiguity with both candidates (bare e)", () => {
+  test("[P-U04] plain e's surface as the bareE state", () => {
     const c = new LatinToAksaraConverter(kajRulesetId);
     c.input("prelu");
-    const state = get(c.state);
-    expect(state.kind).toBe("ambiguous");
-    if (state.kind !== "ambiguous") return;
-    expect(state.candidates).toHaveLength(2);
-    expect(state.reason).not.toBe("");
+    const result = toAksara("prelu");
+    if (result.kind !== "ambiguous") throw new Error("not ambiguous");
+    expect(get(c.state)).toEqual({
+      kind: "bareE",
+      input: "prelu",
+      bareE: result.bareE,
+    });
   });
 
   test("[P-U05] reports an explicit error with an index (unsupported cluster)", () => {
@@ -72,14 +74,14 @@ describe("LatinToAksaraConverter", () => {
   });
 
   test("[P-U04] picking a candidate locks the output", () => {
-    const c = new LatinToAksaraConverter(kajRulesetId);
-    c.input("prelu");
+    const c = new LatinToAksaraConverter(pedomanRulesetId);
+    c.input("sinau");
     const ambiguous = get(c.state);
     if (ambiguous.kind !== "ambiguous") throw new Error("not ambiguous");
     c.choose(1);
     expect(get(c.state)).toEqual({
       kind: "idle",
-      input: "prelu",
+      input: "sinau",
       output: ambiguous.candidates[1]!.output,
       clusters: ambiguous.candidates[1]!.clusters,
       selected: null,
@@ -87,13 +89,21 @@ describe("LatinToAksaraConverter", () => {
   });
 
   test("[P-U04] an out-of-range or stray choice changes nothing", () => {
-    const c = new LatinToAksaraConverter(kajRulesetId);
+    const c = new LatinToAksaraConverter(pedomanRulesetId);
     c.choose(0);
     expect(get(c.state)).toEqual({ kind: "initial" });
-    c.input("prelu");
+    c.input("sinau");
     const before = get(c.state);
     c.choose(2);
     c.choose(-1);
+    expect(get(c.state)).toBe(before);
+  });
+
+  test("[P-U04] choose does nothing in the bareE state", () => {
+    const c = new LatinToAksaraConverter(kajRulesetId);
+    c.input("prelu");
+    const before = get(c.state);
+    c.choose(0);
     expect(get(c.state)).toBe(before);
   });
 
@@ -170,7 +180,7 @@ describe("LatinToAksaraConverter", () => {
 
   test.each([
     ["initial", ""],
-    ["ambiguous", "prelu"],
+    ["bareE", "prelu"],
     ["error", "qa"],
   ])("[P-U10] select is a no-op in the %s state", (_kind, text) => {
     const c = new LatinToAksaraConverter(kajRulesetId);
@@ -208,6 +218,16 @@ describe("LatinToAksaraConverter", () => {
     const kaj = new LatinToAksaraConverter(kajRulesetId);
     kaj.input("sinau");
     expect(get(kaj.state).kind).toBe("idle");
+  });
+
+  test("[P-U11] ai/au after the e choices", () => {
+    const c = new LatinToAksaraConverter(pedomanRulesetId);
+    c.input("rame sinau");
+    expect(get(c.state).kind).toBe("bareE");
+    c.input("ramé sinau");
+    const state = get(c.state);
+    expect(state.kind).toBe("ambiguous");
+    if (state.kind === "ambiguous") expect(state.candidates).toHaveLength(2);
   });
 
   test("[P-U11] each converter writes with its own ruleset (vila)", () => {

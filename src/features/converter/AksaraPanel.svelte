@@ -10,7 +10,7 @@
   import ErrorNotice from "./ErrorNotice.svelte";
   import GlyphPickerSheet from "./GlyphPickerSheet.svelte";
   import { pickerSections } from "./glyph-picker.ts";
-  import { insertAtCursor } from "./insert-at-cursor.ts";
+  import { insertAtCursor, trackCaret } from "./insert-at-cursor.ts";
   import SoundButton from "../../ui/SoundButton.svelte";
   import ResultCard from "./ResultCard.svelte";
 
@@ -38,12 +38,7 @@
   $effect(() => {
     const field = element;
     if (field === undefined) return;
-    const track = () => (caret = field.selectionStart);
-    const events = ["select", "input", "click", "keyup"] as const;
-    for (const name of events) field.addEventListener(name, track);
-    return () => {
-      for (const name of events) field.removeEventListener(name, track);
-    };
+    return trackCaret(field, (c) => (caret = c));
   });
 
   function update(next: string): void {
@@ -125,7 +120,12 @@
 
 {#if pickerOpen}
   <GlyphPickerSheet
-    sections={pickerSections(content.aksara, content.ruleset, $t)}
+    sections={pickerSections(
+      content.aksara,
+      content.sandhangan,
+      content.ruleset,
+      $t,
+    )}
     onpick={pick}
     onclose={() => (pickerOpen = false)}
   />

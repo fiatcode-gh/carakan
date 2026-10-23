@@ -98,6 +98,27 @@ test("[P-T08] a fresh install opens on Pedoman 2002", async ({ page }) => {
   expect(await ambiguousChips(page)).toEqual(candidatesOf(pedomanRulesetId));
 });
 
+test("[P-U11] ai/au candidates come after the e choices", async ({ page }) => {
+  await gotoRoute(page, "#/converter");
+  await page.getByLabel(id["inputHintLatin"]!).fill("rame sinau");
+  const card = page.getByRole("region", { name: id["ambiguousTitle"]! });
+  await expect(card.getByRole("listitem")).toHaveCount(1);
+  await card
+    .getByRole("button", {
+      name: id["eChoiceTaling"]!.replace("{position}", "4").replace(
+        "{word}",
+        "rame",
+      ),
+      exact: true,
+    })
+    .click();
+  const expected = toAksara("ramé sinau", { ruleset: pedomanRulesetId });
+  if (expected.kind !== "ambiguous") throw new Error("must be ambiguous");
+  expect(await ambiguousChips(page)).toEqual(
+    expected.candidates.map((c) => c.output),
+  );
+});
+
 test("[P-T08] [P-U11] [P-C08] [P-B18] switching applies at once and survives a reload", async ({
   page,
 }) => {

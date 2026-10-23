@@ -23,6 +23,8 @@ import {
   murdaVariant,
   pasanganString,
   rekanChar,
+  sandhanganGroups,
+  sectionHasSound,
   subjoinedForm,
   type ChartSection,
   type ChartSectionId,
@@ -298,6 +300,18 @@ describe("buildChartTabs entries", () => {
     ]);
   });
 
+  test("[P-C01] sandhanganGroups keeps first-appearance order", async () => {
+    const content = await loadView(kajRulesetId);
+    const groups = sandhanganGroups(content.sandhangan);
+    expect([...groups.keys()]).toEqual([
+      "vowelChanging",
+      "syllableClosing",
+      "vowelKiller",
+      "consonantModifying",
+    ]);
+    expect([...groups.values()].map((g) => g.length)).toEqual([5, 3, 1, 3]);
+  });
+
   test("[P-C03] swara long forms are the swara letter plus tarung", () => {
     const entries = section("swara").entries;
     const long = entries.filter((e) => e.id.startsWith("long-"));
@@ -360,6 +374,33 @@ describe("buildChartTabs per ruleset", () => {
   };
   const ids = (list: readonly ChartSection[], id: ChartSectionId) =>
     list.find((s) => s.id === id)?.entries.map((e) => e.id);
+
+  test("[P-S11] only carakan, rekan and pasangan sections have a sound button", async () => {
+    const seen = new Set<ChartSectionId>();
+    for (const rulesetId of [pedomanRulesetId, kajRulesetId]) {
+      for (const s of await sectionsOf(rulesetId)) {
+        seen.add(s.id);
+        expect(sectionHasSound(s.id), `${rulesetId} ${s.id}`).toBe(
+          ["carakan", "rekan", "pasangan"].includes(s.id),
+        );
+      }
+    }
+    expect([...seen].sort()).toEqual(
+      [
+        "carakan",
+        "murda",
+        "swara",
+        "rekan",
+        "angka",
+        "pada",
+        "vowelChanging",
+        "syllableClosing",
+        "consonantModifying",
+        "vowelKiller",
+        "pasangan",
+      ].sort(),
+    );
+  });
 
   test("[P-C08] a Pedoman view lists 7 murda, 7 swara and 5 rekan", async () => {
     const real = await sectionsOf(pedomanRulesetId);

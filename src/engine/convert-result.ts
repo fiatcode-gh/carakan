@@ -53,9 +53,19 @@ export interface ToAksaraSuccess extends ConvertSuccess {
   readonly clusters: readonly AksaraCluster[];
 }
 
+/** A plain `e` the caller must resolve (spec 6.2). */
+export interface BareE {
+  /** UTF-16 offset of the `e` in the input. */
+  readonly index: number;
+  /** The word that holds it. */
+  readonly word: TextSpan;
+}
+
 /** Ambiguous Latin -> aksara input; every candidate carries its clusters. */
 export interface ToAksaraAmbiguous extends ConvertAmbiguous {
   readonly candidates: readonly ToAksaraSuccess[];
+  /** Every plain e of the input, ascending; empty when only ai/au is ambiguous. */
+  readonly bareE: readonly BareE[];
 }
 
 export type ToAksaraResult = ToAksaraSuccess | ToAksaraAmbiguous | ConvertError;
