@@ -4,7 +4,7 @@
 - Status: approved by the user (contract `buku-poster-redesign`)
 - Work: branch `feat/buku-poster`
 - Reference: `docs/design/buku-poster/` (DESIGN.md, tokens.json, screenshots, screens)
-- Supersedes: decision 0001 item 1 (tokens) and item 2 (correct and wrong states); item W14 of the rework table. Decision 0001 item 4 (app icon) stays in force: this work does not replace the icon.
+- Supersedes: decision 0001 item 1 (tokens), item 2 (correct and wrong states) and item 4 (app icon); item W14 of the rework table.
 
 ## Context
 
@@ -29,6 +29,7 @@ D1 to D9 were settled with the user in the contract.
 1. **Tokens (item 1).** `src/styles/tokens.css` now mirrors the Buku Poster set in `docs/design/buku-poster/tokens.json`. Only `:root` holds literals; components use `var(--…)`. Colour names are the reference names (`--color-paper`, `--color-card`, `--color-ink`, `--color-coral`, `--color-periwinkle`, `--color-butter`, `--color-sage` and so on). Text on any accent is `--color-ink`, never a muted ink. `--color-placeholder` is never a text colour. There are no radius tokens: corners are square, stamps use `border-radius: 50%`. The contrast test keeps forbidding colour literals in component CSS.
 2. **Correct and wrong (item 2).** Correct = sage fill + check icon. Wrong = coral fill + cross icon. State is never shown by hue alone. Error and danger state = stamp-colour text, dashed border and a triangle-alert icon.
 3. **W14.** Review no longer hides the answer and grades with four buttons. It is a quiz (D8).
+4. **App icon (item 4).** A coral note with the Jejeg `ha`, taped on and tilted, over a butter and a periwinkle card (`docs/design/favicon/`, user-supplied 2026-10-23). The letter is the Jejeg outline converted to paths, so no font is needed. The tab uses `favicon.svg` with `favicon.ico` (16, 32, 48 px) as fallback; iOS uses `apple-touch-icon.png`; the manifest keeps `icons/icon-192.png`, `icon-512.png` and `icon-maskable-512.png`. The PNGs are committed as delivered; the SVG sources are in `docs/design/favicon/src/`, and the old `npm run icons` renderer is gone. Jejeg is "All Rights Reserved", so logo use needs the author's consent like the font itself.
 
 ### How
 

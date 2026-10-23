@@ -19,7 +19,6 @@
     "parity:dump": "sh tools/parity/dump-dart.sh",
     "shaping": "sh tools/shaping/run.sh",
     "fonts": "sh tools/fonts/subset.sh",
-    "icons": "node tools/icons/render.ts",
     "gen:content": "node tools/gen-content.ts",
     "served:up": "sh tools/served/up.sh",
     "served:down": "sh tools/served/down.sh",

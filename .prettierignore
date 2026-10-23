@@ -10,4 +10,5 @@ test-results/
 playwright-report/
 .flow/
 docs/design/buku-poster/
+docs/design/favicon/
 src/ui/display-coverage.ts
