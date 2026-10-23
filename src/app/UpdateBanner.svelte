@@ -2,7 +2,7 @@
   import { useRegisterSW } from "virtual:pwa-register/svelte";
   import { getI18n } from "../l10n/context.ts";
   import Button from "../ui/Button.svelte";
-  import { route } from "./router.ts";
+  import { isActivityRoute, route } from "./router.ts";
 
   const { t } = getI18n();
 
@@ -36,15 +36,15 @@
   // "Later" lasts for this page lifetime; the next launch asks again.
   let later = $state(false);
 
-  // A lesson is never interrupted.
-  const visible = $derived($needRefresh && !later && $route.kind !== "lesson");
+  // A lesson or a tracing practice is never interrupted.
+  const visible = $derived($needRefresh && !later && !isActivityRoute($route));
 </script>
 
 {#if visible}
   <div class="update" role="status">
     <p class="update__text">{$t("updateAvailable")}</p>
     <div class="update__actions">
-      <Button variant="primary" onclick={reload}>
+      <Button variant="secondary" onclick={reload}>
         {$t("updateReloadButton")}
       </Button>
       <Button variant="quiet" onclick={() => (later = true)}>
@@ -58,7 +58,7 @@
   .update {
     position: fixed;
     left: 50%;
-    bottom: calc(var(--tab-height) + var(--space-4));
+    bottom: calc(var(--nav-height) + var(--space-4));
     z-index: 70;
     display: flex;
     flex-wrap: wrap;
@@ -67,11 +67,9 @@
     gap: var(--space-2) var(--space-4);
     width: min(calc(100% - var(--space-8)), 26rem);
     padding: var(--space-3) var(--space-4);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface-raised);
-    color: var(--color-text);
-    box-shadow: var(--shadow-sheet);
+    border: var(--border);
+    background: var(--color-ink);
+    color: var(--color-on-ink);
     translate: -50% 0;
     animation: rise var(--dur-base) var(--ease-out) both;
   }
@@ -86,6 +84,10 @@
   .update__actions {
     display: flex;
     gap: var(--space-2);
+  }
+
+  .update__actions :global(.btn--quiet) {
+    color: var(--color-on-ink);
   }
 
   :global(body[data-chrome="none"]) .update {

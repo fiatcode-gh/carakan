@@ -134,7 +134,7 @@
       style:height="{mark.height}px"
     ></span>
   {/if}
-  <AksaraText text={output} size="lg" />
+  <AksaraText text={output} size="xl" />
   <div class="cluster-result__hits" role="group" aria-labelledby={hintId}>
     {#each clusters as _, index (index)}
       {@const box = boxes[index]?.hit}
@@ -155,20 +155,23 @@
 <p class="cluster-result__hint" id={hintId}>{$t("clusterHint")}</p>
 
 <style>
+  /* The room below keeps a suku or pasangan inside the card (DESIGN.md 4);
+     the em is the aksara size, so it follows --aksara-xl. */
   .cluster-result {
     display: grid;
     position: relative;
     isolation: isolate;
     cursor: pointer;
+    font-size: var(--aksara-xl);
+    padding-block-end: var(--aksara-room);
   }
 
   .cluster-result__mark {
     position: absolute;
     z-index: -1;
     pointer-events: none;
-    border-radius: var(--radius-sm);
-    background: var(--color-reward-soft);
-    box-shadow: inset 0 -3px 0 var(--color-text);
+    background: var(--color-butter);
+    box-shadow: inset 0 -3px 0 var(--color-ink);
   }
 
   .cluster-result__hits {
@@ -188,6 +191,6 @@
 
   .cluster-result__hint {
     font-size: var(--text-sm);
-    color: var(--color-text-muted);
+    color: var(--color-ink);
   }
 </style>

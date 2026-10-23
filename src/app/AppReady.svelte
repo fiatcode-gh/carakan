@@ -3,8 +3,10 @@
   import { getI18n } from "../l10n/context.ts";
   import LessonPage from "../features/lessons/LessonPage.svelte";
   import TeacherPage from "../features/lessons/TeacherPage.svelte";
+  import ReviewQuizPage from "../features/review/ReviewQuizPage.svelte";
   import ReviewHelpPage from "../features/review/ReviewHelpPage.svelte";
   import SettingsPage from "../features/settings/SettingsPage.svelte";
+  import TracePage from "../features/tracing/TracePage.svelte";
   import AppShell from "./AppShell.svelte";
   import RulesetScope from "./RulesetScope.svelte";
   import { route, tabOf } from "./router.ts";
@@ -55,6 +57,12 @@
       {#key $route.unitId}
         <LessonPage unitId={$route.unitId} />
       {/key}
+    {:else if $route.kind === "reviewQuiz"}
+      <ReviewQuizPage />
+    {:else if $route.kind === "trace"}
+      {#key $route.glyphId}
+        <TracePage glyphId={$route.glyphId} />
+      {/key}
     {/if}
   </RulesetScope>
 {/key}
@@ -69,9 +77,8 @@
     left: var(--space-2);
     z-index: 100;
     padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
-    background: var(--color-text);
-    color: var(--color-bg);
+    background: var(--color-ink);
+    color: var(--color-on-ink);
     font-weight: var(--weight-bold);
     transform: translateY(-200%);
   }

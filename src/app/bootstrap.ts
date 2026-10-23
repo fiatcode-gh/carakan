@@ -1,5 +1,6 @@
 import { derived, get, readable, writable } from "svelte/store";
 import { contentFor, readContent } from "../content/content-repository.ts";
+import { ClipPlayer } from "../core/audio/clip-player.ts";
 import { openCarakanDb, type CarakanDb } from "../core/db/database.ts";
 import { LearnerProgress } from "../core/db/learner-progress.ts";
 import { MistakeLogRepository } from "../core/db/mistake-log-repository.ts";
@@ -109,9 +110,14 @@ export function createBootstrap(
     } catch {
       return { kind: "content-error" };
     }
+    const clips = new ClipPlayer({
+      loadManifest: () => fetchText("audio/clips.json"),
+      createAudio: (path) => new Audio(new URL(path, document.baseURI).href),
+    });
     const activeTab = writable<TabId>("ladder");
     const forRuleset = createRulesetScopes(
       {
+        clips,
         completions: new UnitCompletionRepository(db),
         mistakes: new MistakeLogRepository(db),
         progress: new LearnerProgress(db),

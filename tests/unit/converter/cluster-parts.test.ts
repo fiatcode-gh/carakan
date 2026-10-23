@@ -8,7 +8,7 @@ import {
   type ToAksaraSuccess,
 } from "../../../src/engine/index.ts";
 import {
-  buildChartSections,
+  buildChartTabs,
   findChartEntry,
   type ChartStrings,
 } from "../../../src/features/chart/chart-catalog.ts";
@@ -30,9 +30,11 @@ const strings: ChartStrings = {
   rekan: "rekan",
   angka: "angka",
   pada: "pada",
+  pasangan: "pasangan",
   murdaHint: "hint",
   writtenAs: (form) => form,
   longFormName: (name) => name,
+  pasanganName: (name) => name,
 };
 
 let content: ContentData;
@@ -227,7 +229,7 @@ describe("clusterReading", () => {
 
 describe("fixture sweep", () => {
   test("[P-U10] every cluster of every Dart fixture result has resolvable parts", () => {
-    const sections = buildChartSections({
+    const tabs = buildChartTabs({
       aksara: content.aksara,
       sandhangan: content.sandhangan,
       strings,
@@ -254,10 +256,7 @@ describe("fixture sweep", () => {
             expect(p.name, input).not.toBe("");
             expect(p.char, input).not.toBe("");
             if (p.chartId !== null) {
-              expect(
-                findChartEntry(sections, p.chartId),
-                p.chartId,
-              ).not.toBeNull();
+              expect(findChartEntry(tabs, p.chartId), p.chartId).not.toBeNull();
             }
           }
           clusters++;

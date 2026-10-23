@@ -28,9 +28,69 @@ test("[P-L01] decision 3: reviewEmpty carries no party emoji", () => {
   expect(en.reviewEmpty).toBe("Nothing to review");
 });
 
-test("[P-L01] W14 reveal button copy", () => {
-  expect(id.revealAnswerButton).toBe("Lihat jawaban");
-  expect(en.revealAnswerButton).toBe("Show answer");
+test("[P-L01] Buku Poster review copy in both locales", () => {
+  expect(id.reviewTodayLabel).toBe("Hari ini");
+  expect(en.reviewTodayLabel).toBe("Today");
+  expect(id.reviewDueCount).toBe("{count} aksara siap diulang");
+  expect(en.reviewDueCount).toBe("{count} aksara ready to review");
+  expect(id.reviewStartButton).toBe("Mulai mengulang");
+  expect(en.reviewStartButton).toBe("Start reviewing");
+  expect(id.strengthHeading).toBe("Seberapa ingat?");
+  expect(en.strengthHeading).toBe("How well do you remember?");
+  expect([id.strengthStrong, id.strengthFair, id.strengthNew]).toEqual([
+    "kuat",
+    "lumayan",
+    "baru",
+  ]);
+  expect([en.strengthStrong, en.strengthFair, en.strengthNew]).toEqual([
+    "strong",
+    "okay",
+    "new",
+  ]);
+  expect(id.strengthSegments).toBe("{filled} dari 4");
+  expect(en.strengthSegments).toBe("{filled} of 4");
+  expect(id.reviewHelpHowHeading).toBe("Cara kerjanya");
+  expect(en.reviewHelpHowHeading).toBe("How it works");
+  expect(id.reviewHelpRight).toBe(
+    "Jawaban benar: kartu kembali besok, lalu makin jarang.",
+  );
+  expect(en.reviewHelpRight).toBe(
+    "Right answer: the card comes back tomorrow, then less and less often.",
+  );
+  expect(id.reviewHelpWrong).toBe(
+    "Jawaban salah: kartu diulang lagi sekarang, lalu 10 menit lagi.",
+  );
+  expect(en.reviewHelpWrong).toBe(
+    "Wrong answer: the card comes back right away, then again in 10 minutes.",
+  );
+  expect(id.reviewHelpStrength).toBe(
+    "Batang kekuatan: baru, lumayan, lalu kuat. Makin lama kamu ingat, makin penuh.",
+  );
+  expect(en.reviewHelpStrength).toBe(
+    "Strength bars: new, okay, then strong. The longer you remember, the fuller they get.",
+  );
+});
+
+test("[P-L01] the W14 grade and review-group keys are gone", () => {
+  for (const messages of Object.values(catalogs)) {
+    for (const key of [
+      "gradeAgain",
+      "gradeHard",
+      "gradeGood",
+      "gradeEasy",
+      "revealAnswerButton",
+      "reviewGroupRetry",
+      "reviewGroupFresh",
+      "reviewGroupDue",
+      "reviewHelpGradeHeading",
+      "reviewHelpGradeAgain",
+      "reviewHelpGradeHard",
+      "reviewHelpGradeGood",
+      "reviewHelpGradeEasy",
+    ]) {
+      expect(messages).not.toHaveProperty(key);
+    }
+  }
 });
 
 test("[P-U09] W15 engine message keys are present with the planned copy", () => {

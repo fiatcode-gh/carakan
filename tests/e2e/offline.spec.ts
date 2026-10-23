@@ -15,10 +15,11 @@ import { expect, test, trackForeignRequests } from "./support/fixtures.ts";
 import {
   completeLesson,
   id,
-  ladderRow,
   readStore,
+  unitButton,
   writeRows,
 } from "./support/lesson.ts";
+import { answerReviewQuestion } from "./support/review-quiz.ts";
 import { createSolver, type Solver } from "./support/solver.ts";
 
 let solver: Solver;
@@ -79,14 +80,41 @@ test("[P-S05][P-S09] cold start offline boots to the ladder; every route loads b
   }
 });
 
+test("[P-S11] the clip manifest is precached and answered offline", async ({
+  page,
+  context,
+}) => {
+  await installAndControl(page);
+  const cached = await page.evaluate(async () => {
+    const urls: string[] = [];
+    for (const name of await caches.keys()) {
+      for (const request of await (await caches.open(name)).keys()) {
+        urls.push(new URL(request.url).pathname);
+      }
+    }
+    return urls;
+  });
+  expect(cached.some((path) => path.endsWith("/audio/clips.json"))).toBe(true);
+  await context.setOffline(true);
+  const status = await page.evaluate(
+    async () => (await fetch("audio/clips.json")).status,
+  );
+  expect(status).toBe(200);
+});
+
 test("[P-S05] unit 1 can be completed offline", async ({ page, context }) => {
   await installAndControl(page);
   await context.setOffline(true);
   await page.reload();
   await completeLesson(page, solver, solver.content.units[0]!.id);
-  await page.locator(".lesson__foot").getByRole("button").click();
-  await expect(ladderRow(page, 1)).toContainText(id["unitStatusCompleted"]!);
-  await expect(ladderRow(page, 2)).toContainText(id["unitStatusReady"]!);
+  await page.locator(".lesson-done .bar").getByRole("button").click();
+  await expect(unitButton(page, solver.content.units[0]!.id)).toContainText(
+    id["unitStatusCompleted"]!,
+  );
+  await expect(unitButton(page, solver.content.units[1]!.id)).toHaveAttribute(
+    "data-status",
+    "ready",
+  );
 });
 
 test("[P-S09] progress and a graded review card survive closing the browser, offline", async ({
@@ -107,11 +135,11 @@ test("[P-S09] progress and a graded review card survive closing the browser, off
     await installAndControl(firstPage);
     await completeLesson(firstPage, solver, solver.content.units[0]!.id);
     await gotoRoute(firstPage, "#/review");
-    const card = firstPage.locator("#tab-review .card").first();
-    await card.getByRole("button", { name: id["revealAnswerButton"]! }).click();
-    await card
-      .getByRole("button", { name: id["gradeGood"]!, exact: true })
+    await firstPage
+      .locator("#tab-review .review-today")
+      .getByRole("button", { name: id["reviewStartButton"]! })
       .click();
+    await answerReviewQuestion(firstPage, solver, "right");
     await expect
       .poll(
         async () =>
@@ -130,12 +158,12 @@ test("[P-S09] progress and a graded review card survive closing the browser, off
     const secondPage = second.pages()[0] ?? (await second.newPage());
     foreign.push(...trackForeignRequests(secondPage, origin));
     await gotoRoute(secondPage, "");
-    await expect(ladderRow(secondPage, 1)).toContainText(
-      id["unitStatusCompleted"]!,
-    );
-    await expect(ladderRow(secondPage, 2)).toContainText(
-      id["unitStatusReady"]!,
-    );
+    await expect(
+      unitButton(secondPage, solver.content.units[0]!.id),
+    ).toContainText(id["unitStatusCompleted"]!);
+    await expect(
+      unitButton(secondPage, solver.content.units[1]!.id),
+    ).toHaveAttribute("data-status", "ready");
     expect(
       await readStore<UnitCompletionRow>(secondPage, UNIT_COMPLETIONS),
     ).toHaveLength(1);
@@ -189,10 +217,17 @@ test("[P-B17][P-S09] mapped progress shows offline", async ({
   await page.reload();
   await page.locator('#app[data-boot="ready"]').waitFor();
   for (let n = 1; n <= 6; n++) {
-    await expect(ladderRow(page, n)).toContainText(id["unitStatusCompleted"]!);
+    await expect(
+      unitButton(page, solver.content.units[n - 1]!.id),
+    ).toContainText(id["unitStatusCompleted"]!);
   }
-  await expect(ladderRow(page, 7)).toContainText(id["unitStatusReady"]!);
+  await expect(unitButton(page, solver.content.units[6]!.id)).toHaveAttribute(
+    "data-status",
+    "ready",
+  );
   for (const n of [8, 9]) {
-    await expect(ladderRow(page, n)).toContainText(id["unitStatusLocked"]!);
+    await expect(
+      unitButton(page, solver.content.units[n - 1]!.id),
+    ).toContainText(id["unitStatusLocked"]!);
   }
 });

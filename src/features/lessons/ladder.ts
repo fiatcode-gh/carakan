@@ -1,6 +1,5 @@
 import { readonly, writable, type Readable } from "svelte/store";
 import type { Services } from "../../app/services.ts";
-import type { GlyphInfoTable } from "../../content/glyph-info-table.ts";
 import type { RetiredUnit, Unit } from "../../content/unit.ts";
 import type { UnitCompletionRepository } from "../../core/db/unit-completion-repository.ts";
 import type { Emitter } from "../../core/emitter.ts";
@@ -42,15 +41,6 @@ export function computeLadder(
     return { unit, status };
   });
   return { statuses, taughtGlyphIds };
-}
-
-/** First five non-empty glyph chars of the unit, joined by a space. */
-export function ladderPreview(unit: Unit, glyphInfo: GlyphInfoTable): string {
-  return unit.glyphs
-    .map((g) => glyphInfo.byId.get(g)?.char ?? "")
-    .filter((c) => c !== "")
-    .slice(0, 5)
-    .join(" ");
 }
 
 /**

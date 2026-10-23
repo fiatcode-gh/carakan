@@ -25,6 +25,7 @@ async function scopes() {
     Services,
     "content" | "glyphInfo" | "singleton" | "forRuleset"
   > = {
+    clips: stub(),
     completions: stub(),
     mistakes: stub(),
     progress: stub(),

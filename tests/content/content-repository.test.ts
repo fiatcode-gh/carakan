@@ -34,6 +34,25 @@ describe("[P-D04] content repository", () => {
     );
   });
 
+  describe("[P-B21] shape notes", () => {
+    test.each([kajRulesetId, pedomanRulesetId])(
+      "%s exposes the 20 base-letter notes",
+      async (rulesetId) => {
+        const data = await loadView(rulesetId);
+        expect(data.shapeNotes.size).toBe(20);
+        expect(data.shapeNotes.get("pa")!.id).toBe("Kait dan kaki.");
+      },
+    );
+
+    test("a malformed shape_notes.json is a ContentFormatError", async () => {
+      const load = async (path: string): Promise<string> =>
+        path.endsWith("shape_notes.json")
+          ? JSON.stringify({ version: 1, status: "draft", notes: { wulu: {} } })
+          : loadFromPublic(path);
+      await expect(readContent(load)).rejects.toThrow(ContentFormatError);
+    });
+  });
+
   describe("chart examples", () => {
     function patched(patch: (examples: Record<string, unknown>) => void) {
       return async (path: string): Promise<string> => {

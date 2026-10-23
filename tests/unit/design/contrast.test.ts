@@ -75,67 +75,64 @@ const color = (name: string) => resolve(tokens, `--color-${name}`);
 
 type Pair = readonly [fg: string, bg: string, min: number, kind: string];
 
+const surfaces = [
+  "paper",
+  "card",
+  "coral",
+  "periwinkle",
+  "butter",
+  "sage",
+  "neutral",
+] as const;
+
 /** WCAG 2.2 AA: 4.5 body text, 3 for non-text indicators and focus. */
 const pairs: readonly Pair[] = [
-  ["text", "bg", 4.5, "text"],
-  ["text", "surface", 4.5, "text"],
-  ["text", "surface-raised", 4.5, "text"],
-  ["text", "surface-sunken", 4.5, "text"],
-  ["text-muted", "bg", 4.5, "muted text"],
-  ["text-muted", "surface", 4.5, "muted text"],
-  ["text-muted", "surface-raised", 4.5, "muted text"],
-  ["text-muted", "surface-sunken", 4.5, "muted text"],
-  ["on-accent", "accent", 4.5, "on-accent"],
-  ["link", "bg", 4.5, "link"],
-  ["link", "surface", 4.5, "link"],
-  ["link", "surface-raised", 4.5, "link"],
-  ["text", "accent-soft", 4.5, "text on tint"],
-  ["text", "reward-soft", 4.5, "text on tint"],
-  ["text", "reward-fill", 4.5, "text on tint"],
-  ["danger", "danger-soft", 4.5, "state text"],
-  ["success", "success-soft", 4.5, "state text"],
-  ["danger", "bg", 4.5, "state text"],
-  ["danger", "surface", 4.5, "state text"],
-  ["danger", "surface-raised", 4.5, "state text"],
-  ["success", "bg", 4.5, "state text"],
-  ["success", "surface", 4.5, "state text"],
-  ["success", "surface-raised", 4.5, "state text"],
-  ["border-strong", "bg", 3, "control border"],
-  ["border-strong", "surface", 3, "control border"],
-  ["border-strong", "surface-sunken", 3, "control border"],
-  ["focus", "bg", 3, "focus ring"],
-  ["focus", "surface", 3, "focus ring"],
-  ["focus", "surface-raised", 3, "focus ring"],
-  ["focus", "surface-sunken", 3, "focus ring"],
-  ["reward", "bg", 3, "indicator"],
-  ["reward", "surface", 3, "indicator"],
-  ["accent", "bg", 3, "indicator"],
-  ["accent", "surface", 3, "indicator"],
+  ...surfaces.map((s): Pair => ["ink", s, 4.5, "text"]),
+  ["on-ink", "ink", 4.5, "on-ink text"],
+  ...["paper", "card", "neutral"].map((s): Pair => [
+    "ink-muted",
+    s,
+    4.5,
+    "muted text",
+  ]),
+  ...["paper", "card"].map((s): Pair => ["ink-subtle", s, 4.5, "subtle text"]),
+  ...["paper", "card"].map((s): Pair => ["hand", s, 4.5, "hand note"]),
+  ...["paper", "card"].map((s): Pair => ["stamp", s, 4.5, "state text"]),
+  ...surfaces.map((s): Pair => ["ink", s, 3, "border and focus"]),
+  ["trace-ink", "card", 3, "trace stroke"],
 ];
 
-const requiredSemantic = [
-  "bg",
-  "surface",
-  "surface-raised",
-  "surface-sunken",
-  "text",
-  "text-muted",
-  "accent",
-  "on-accent",
-  "link",
-  "reward",
-  "border",
-  "border-strong",
-  "focus",
-  "success",
-  "danger",
+const requiredTokens = [
+  "paper",
+  "card",
+  "rule",
+  "margin",
+  "ink",
+  "ink-muted",
+  "ink-subtle",
+  "hand",
+  "stamp",
+  "stamp-decor",
+  "placeholder",
+  "on-ink",
+  "coral",
+  "periwinkle",
+  "butter",
+  "sage",
+  "neutral",
+  "tape",
   "scrim",
+  "trace-ink",
 ];
+
+/** Heritage token names, removed by the Buku Poster cutover. */
+const removedNames =
+  /var\(--(?:paper-\d+|soga-\d+|indigo-\d+|terracotta-\d+|gold-\d+|color-(?:bg|surface|surface-raised|surface-sunken|text|text-muted|accent|accent-pressed|accent-soft|on-accent|link|reward|reward-fill|reward-soft|border|border-strong|focus|success|success-soft|danger|danger-soft|shadow)|radius-[\w-]+|shadow-slip|shadow-sheet|tab-height|font-ui)\)/;
 
 describe("design tokens", () => {
-  test("every semantic role is defined", () => {
-    for (const role of requiredSemantic) {
-      expect(tokens.has(`--color-${role}`), `--color-${role}`).toBe(true);
+  test("every colour token is defined", () => {
+    for (const name of requiredTokens) {
+      expect(tokens.has(`--color-${name}`), `--color-${name}`).toBe(true);
     }
   });
 
@@ -147,17 +144,36 @@ describe("design tokens", () => {
     ).toBeGreaterThanOrEqual(min);
   });
 
-  test("touch target token is at least 48px and heritage radius is 16px", () => {
-    expect(tokens.get("--touch-min")).toBe("48px");
-    expect(tokens.get("--radius-lg")).toBe("16px");
+  test("touch target token is 44px and no radius token exists", () => {
+    expect(tokens.get("--touch-min")).toBe("44px");
+    expect([...tokens.keys()].filter((k) => k.startsWith("--radius-"))).toEqual(
+      [],
+    );
   });
 
-  test("components use semantic and scale tokens only, no colour literals", () => {
+  test("components use tokens only, no colour literals or removed names", () => {
     const css = componentCss().replace(/\/\*[\s\S]*?\*\//g, "");
-    const primitive =
-      /var\(--(?:paper|soga|indigo|terracotta|gold)-\d+\)|var\(--(?:paper|soga|indigo|terracotta|gold)\)/;
-    expect(primitive.exec(css)?.[0]).toBeUndefined();
+    expect(removedNames.exec(css)?.[0]).toBeUndefined();
     expect(/#[0-9a-f]{3,8}\b/i.exec(css)?.[0]).toBeUndefined();
     expect(/\brgba?\(/.exec(css)?.[0]).toBeUndefined();
+  });
+
+  test("the placeholder colour is never a text colour", () => {
+    const css = componentCss().replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(
+      /color:\s*var\(--color-placeholder\)/.exec(css)?.[0],
+    ).toBeUndefined();
+  });
+
+  test("the decorative stamp colour is only used by Stamp.svelte", () => {
+    const users = (readdirSync("src", { recursive: true }) as string[])
+      .filter((p) => p.endsWith(".svelte") && !p.endsWith("Stamp.svelte"))
+      .filter((p) => {
+        const source = readFileSync(`src/${p}`, "utf8");
+        return [...source.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].some(
+          (m) => (m[1] ?? "").includes("--color-stamp-decor"),
+        );
+      });
+    expect(users).toEqual([]);
   });
 });

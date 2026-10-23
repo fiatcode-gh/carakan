@@ -4,9 +4,15 @@
   import { nglegenaById, sandhanganById } from "../../engine/index.ts";
   import type { Word } from "../../content/word.ts";
   import AksaraText from "../../ui/AksaraText.svelte";
-  import OrnamentDivider from "../../ui/OrnamentDivider.svelte";
+  import Icon from "../../ui/Icon.svelte";
+  import HandNote from "../../ui/HandNote.svelte";
+  import Reading from "../../ui/Reading.svelte";
   import Sheet from "../../ui/Sheet.svelte";
-  import type { ChartEntry } from "./chart-catalog.ts";
+  import SoundButton from "../../ui/SoundButton.svelte";
+  import { accentVar } from "../../ui/accent.ts";
+  import { glyphUnits } from "../lessons/unit-display.ts";
+  import { isTraceable } from "../tracing/traceable.ts";
+  import { pasanganBaseId, type ChartLocation } from "./chart-catalog.ts";
   import {
     detailForNglegena,
     detailForSandhangan,
@@ -14,16 +20,22 @@
   } from "./detail-data.ts";
 
   interface Props {
-    entry: ChartEntry;
+    location: ChartLocation;
     examples: readonly Word[];
     onclose: () => void;
+    /** Opens the tracing practice of a base letter; the caller closes the sheet first. */
+    ontrace?: (glyphId: string) => void;
   }
 
-  let { entry, examples, onclose }: Props = $props();
+  let { location, examples, onclose, ontrace }: Props = $props();
 
-  const { t } = getI18n();
-  const { content } = getServices();
+  const { t, locale } = getI18n();
+  const { content, clips } = getServices();
+  const units = glyphUnits(content.units);
 
+  const entry = $derived(location.entry);
+  const reading = $derived(entry.reading ?? entry.name);
+  const accent = $derived(units.get(entry.id)?.accent ?? null);
   const nglegena = $derived(
     nglegenaById(entry.id) === null
       ? null
@@ -32,42 +44,112 @@
   const sandhangan = $derived(
     sandhanganById(entry.id) === null ? null : detailForSandhangan(entry.id),
   );
+  const baseLetter = $derived.by(() => {
+    const baseId = pasanganBaseId(entry.id);
+    return baseId === null ? null : nglegenaById(baseId)!.char;
+  });
+  const shapeNote = $derived(
+    content.shapeNotes.get(entry.id)?.[$locale] ?? null,
+  );
 </script>
 
-<Sheet title={entry.name} {onclose}>
+<Sheet
+  title={$t("chartDetailTitle", {
+    name: entry.name,
+    section: location.section.title,
+    number: String(location.position).padStart(2, "0"),
+    total: location.section.entries.length,
+  })}
+  titleStyle="eyebrow"
+  {onclose}
+>
   <div class="head">
-    <span class="frame"><AksaraText text={entry.char} size="xl" /></span>
-    <p class="subtitle">{entry.subtitle}</p>
+    <span
+      class="glyph-box"
+      style:--accent={accentVar(accent)}
+      role="img"
+      aria-label={$t("aksaraName", { reading })}
+    >
+      <AksaraText text={entry.char} size="xl" />
+    </span>
+    <div class="head__text">
+      <p class="eyebrow head__label">{$t("readingLabel")}</p>
+      <p class="head__reading" style:--chars={reading.length}>
+        <Reading text={reading} />
+      </p>
+      <p class="subtitle"><Reading text={entry.subtitle} /></p>
+      {#if shapeNote !== null}
+        <HandNote tilt>
+          <span class="shape-note"
+            ><Icon name="lightbulb" small />{shapeNote}</span
+          >
+        </HandNote>
+      {/if}
+      <div class="listen">
+        <SoundButton
+          player={clips}
+          clipKey={reading}
+          label={$t("playSound", { reading })}
+          text={$t("listenButton")}
+        />
+      </div>
+    </div>
   </div>
 
-  {#if nglegena || sandhangan}
-    <OrnamentDivider />
-    <dl class="rows">
+  {#if nglegena || sandhangan || baseLetter}
+    <div class="boxes">
       {#if nglegena}
-        <dt>{$t("soundLabel")}</dt>
-        <dd>{nglegena.pujl} (JGST {nglegena.jgst})</dd>
-        <dt>{$t("pasanganLabel")}</dt>
-        <dd><AksaraText text={nglegena.pasanganDemo} size="lg" /></dd>
+        <div class="box">
+          <p class="eyebrow box__label">{$t("pasanganLabel")}</p>
+          <AksaraText
+            class="box__aksara"
+            text={nglegena.pasanganDemo}
+            size="lg"
+          />
+        </div>
         {#if nglegena.murda !== null}
-          <dt>{$t("murdaLabel")}</dt>
-          <dd><AksaraText text={nglegena.murda} size="lg" /></dd>
+          <div class="box">
+            <p class="eyebrow box__label">{$t("murdaLabel")}</p>
+            <AksaraText class="box__aksara" text={nglegena.murda} size="lg" />
+          </div>
+        {/if}
+        {#if ontrace && isTraceable(entry.id)}
+          <button
+            type="button"
+            class="box box--practice press"
+            onclick={() => ontrace(entry.id)}
+          >
+            <span class="eyebrow box__label">{$t("practiceLabel")}</span>
+            <span class="practice__action">
+              {$t("writeLetterButton", { name: entry.name })}
+              <Icon name="arrow-right" small />
+            </span>
+          </button>
         {/if}
       {:else if sandhangan}
-        <dt>{$t("functionLabel")}</dt>
-        <dd>{$t(sandhanganFunctionMessageKey(sandhangan.function))}</dd>
+        <div class="box">
+          <p class="eyebrow box__label">{$t("functionLabel")}</p>
+          <p class="box__value">
+            {$t(sandhanganFunctionMessageKey(sandhangan.function))}
+          </p>
+        </div>
+      {:else if baseLetter}
+        <div class="box">
+          <p class="eyebrow box__label">{$t("baseLetterLabel")}</p>
+          <AksaraText class="box__aksara" text={baseLetter} size="lg" />
+        </div>
       {/if}
-    </dl>
+    </div>
   {/if}
 
   {#if examples.length > 0}
-    <OrnamentDivider />
     <section class="examples">
-      <h3>{$t("exampleWordsHeading")}</h3>
+      <HandNote tag="h3">{$t("exampleWordsHeading")}</HandNote>
       <ul class="words">
         {#each examples as word (word.id)}
           <li>
-            <span class="reading">{word.display}</span>
-            <AksaraText text={word.aksara} size="lg" />
+            <Reading class="word-reading" text={word.display} />
+            <AksaraText class="word-aksara" text={word.aksara} size="lg" />
           </li>
         {/each}
       </ul>
@@ -78,66 +160,151 @@
 <style>
   .head {
     display: flex;
-    align-items: center;
     gap: var(--space-4);
+    align-items: stretch;
   }
 
-  .frame {
+  .glyph-box {
     display: grid;
     place-items: center;
-    min-width: 5rem;
-    min-height: 5rem;
-    padding: 0 var(--space-2);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface-sunken);
+    flex: none;
+    width: 9.375rem;
+    min-height: 10rem;
+    border: var(--border);
+    background: var(--accent);
+    box-shadow: var(--shadow-hero);
+  }
+
+  .head__text {
+    flex: 1;
+    display: grid;
+    align-content: start;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+
+  .head__label {
+    margin: 0;
+    color: var(--color-ink-muted);
+  }
+
+  /* Long names (pa cerek (rě)) shrink to fit the column rather than clip. */
+  .head__reading {
+    margin: 0;
+    font-size: min(var(--text-syllable-xl), calc(20rem / var(--chars, 1)));
+    font-weight: var(--weight-black);
+    line-height: 1;
+    letter-spacing: var(--tracking-title);
+    overflow-wrap: anywhere;
+  }
+
+  .head__reading :global(.reading) {
+    font-weight: var(--weight-black);
+  }
+
+  .shape-note {
+    display: flex;
+    gap: var(--space-2);
+    align-items: flex-start;
+    font-size: var(--text-hand);
+    line-height: 1.2;
+  }
+
+  .shape-note :global(.icon) {
+    margin-block-start: 0.15em;
+  }
+
+  .listen {
+    display: flex;
+    margin-block-start: var(--space-2);
   }
 
   .subtitle {
-    color: var(--color-text-muted);
-  }
-
-  .rows {
-    display: grid;
-    grid-template-columns: 6.25rem 1fr;
-    gap: var(--space-3) var(--space-3);
-    align-items: center;
-  }
-
-  .rows dt {
-    color: var(--color-text-muted);
-  }
-
-  .rows dd {
     margin: 0;
+    color: var(--color-ink-muted);
+  }
+
+  .boxes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .box {
+    padding: var(--space-2) var(--space-3);
+    border: var(--border);
+    background: var(--color-card);
+  }
+
+  .box__label {
+    margin: 0;
+    color: var(--color-ink-muted);
+  }
+
+  .box__value {
+    margin: var(--space-1) 0 0;
+  }
+
+  .box :global(.box__aksara) {
+    display: block;
+    line-height: 1.5;
+    padding-block-end: 0.3em;
+  }
+
+  .box--practice {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: var(--touch-min);
+    border: var(--border);
+    background: var(--color-periwinkle);
+    color: var(--color-ink);
+    font: inherit;
+    text-align: start;
+  }
+
+  .box--practice .box__label {
+    color: var(--color-ink);
+  }
+
+  .practice__action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-black);
   }
 
   .examples {
     display: grid;
-    gap: var(--space-2);
-  }
-
-  .examples h3 {
-    font-size: var(--text-md);
+    gap: var(--space-1);
   }
 
   .words {
     display: grid;
-    gap: var(--space-2);
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  /* Same label column as the rows above, so readings and aksara align. */
   .words li {
-    display: grid;
-    grid-template-columns: 6.25rem 1fr;
-    gap: var(--space-3);
+    display: flex;
     align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-height: 4.5rem;
+    border-bottom: var(--border-dashed);
   }
 
-  .reading {
-    font-weight: var(--weight-bold);
+  .words :global(.word-reading) {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-black);
+  }
+
+  .words :global(.word-aksara) {
+    padding-block-end: var(--aksara-room);
+    line-height: 1.25;
+    text-align: end;
   }
 </style>

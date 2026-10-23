@@ -33,7 +33,13 @@ test("[P-S01] four tabs in order, labelled, with icons and a selected state", as
   for (const link of await links.all()) {
     await expect(link.locator('svg[aria-hidden="true"]')).toHaveCount(1);
   }
+  await expect(links).toHaveCount(4);
   await expect(links.nth(0)).toHaveAttribute("aria-current", "page");
+  const fills = await links.evaluateAll((nodes) =>
+    nodes.map((node) => getComputedStyle(node).backgroundColor),
+  );
+  expect(fills[0]).not.toBe(fills[1]);
+  expect(new Set(fills.slice(1)).size).toBe(1);
   await links.nth(1).click();
   await expect(links.nth(1)).toHaveAttribute("aria-current", "page");
   await expect(links.nth(0)).not.toHaveAttribute("aria-current", "page");
@@ -44,7 +50,7 @@ test("[P-S02] first launch shows Belajar at #/", async ({ page }) => {
   await page.locator('#app[data-boot="ready"]').waitFor();
   expect(new URL(page.url()).hash).toBe("#/");
   await expect(
-    page.getByRole("heading", { level: 1, name: id["navLadder"]! }),
+    page.getByRole("heading", { level: 1, name: id["ladderTitle"]! }),
   ).toBeVisible();
 });
 
@@ -126,7 +132,7 @@ test("[P-S05] an unknown hash lands on #/", async ({ page }) => {
   await gotoRoute(page, "#/does-not-exist");
   await expect.poll(() => new URL(page.url()).hash).toBe("#/");
   await expect(
-    page.getByRole("heading", { level: 1, name: id["navLadder"]! }),
+    page.getByRole("heading", { level: 1, name: id["ladderTitle"]! }),
   ).toBeVisible();
 });
 
@@ -183,17 +189,46 @@ test("[P-S06] unavailable storage shows the storage error", async ({
   ).toBeVisible();
 });
 
-test("[P-S07] the UI font is MPLUS Rounded 1c and loads", async ({ page }) => {
+test("[P-S07] the UI font is Bricolage Grotesque, aksara use MPLUS then Jejeg, and both load", async ({
+  page,
+}) => {
   await gotoRoute(page, "");
   const family = await page.evaluate(
     () => getComputedStyle(document.body).fontFamily,
   );
-  expect(family.replaceAll('"', "").startsWith("MPLUS Rounded 1c")).toBe(true);
+  expect(family.replaceAll('"', "").startsWith("Bricolage Grotesque")).toBe(
+    true,
+  );
   const loaded = await page.evaluate(async () => {
     await document.fonts.ready;
-    return document.fonts.check('16px "MPLUS Rounded 1c"');
+    return document.fonts.check('700 16px "Bricolage Grotesque"');
   });
   expect(loaded).toBe(true);
+
+  await gotoRoute(page, "#/chart");
+  const strip = await page
+    .locator('#tab-chart [data-entry="pa"] .reading')
+    .evaluate((el) => getComputedStyle(el).fontFamily);
+  expect(strip.replaceAll('"', "").startsWith("Bricolage Grotesque")).toBe(
+    true,
+  );
+  const aksara = await page
+    .locator("#tab-chart .aksara")
+    .first()
+    .evaluate((el) => getComputedStyle(el).fontFamily);
+  expect(aksara.replaceAll('"', "")).toMatch(/^MPLUS Rounded 1c, Jejeg\b/);
+
+  // The KAJ murda subtitle carries a code point Bricolage lacks (U+1E33), so the
+  // whole reading falls back to MPLUS.
+  await page.locator('#tab-chart [data-entry="kaMurda"]').click();
+  const subtitle = page.getByRole("dialog").locator(".subtitle .reading");
+  await expect(subtitle).toContainText("\u1e33");
+  const subtitleFamily = await subtitle.evaluate(
+    (el) => getComputedStyle(el).fontFamily,
+  );
+  expect(
+    subtitleFamily.replaceAll('"', "").startsWith("MPLUS Rounded 1c"),
+  ).toBe(true);
 });
 
 test("[P-S08] the document title is appTitle", async ({ page }) => {

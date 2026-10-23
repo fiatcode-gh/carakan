@@ -17,7 +17,7 @@ import { loadView } from "../support/content-files.ts";
 import { expectAccessible } from "./support/a11y.ts";
 import { gotoRoute } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
-import { readStore, writeRows } from "./support/lesson.ts";
+import { readStore, unitButton, writeRows } from "./support/lesson.ts";
 
 const messages = (locale: "id" | "en") =>
   JSON.parse(readFileSync(`src/l10n/${locale}.json`, "utf8")) as Record<
@@ -32,7 +32,9 @@ const { version } = JSON.parse(readFileSync("package.json", "utf8")) as {
 
 const kajContent = await loadView(kajRulesetId);
 const kajGlyphs = GlyphInfoTable.build(kajContent);
+const pedomanContent = await loadView(pedomanRulesetId);
 const kajUnitIds = kajContent.units.map((u) => u.id);
+const pedomanUnitIds = pedomanContent.units.map((u) => u.id);
 const eighthUnitIds = kajUnitIds.slice(0, 8);
 
 test.use({ ruleset: null, permissions: ["clipboard-read", "clipboard-write"] });
@@ -125,7 +127,7 @@ test("[P-T08] [P-U11] [P-C08] [P-B18] switching applies at once and survives a r
   await expect(sectionTiles(page, id["sectionMurda"]!)).toHaveCount(kajMurda);
 
   await tab(page, "navLadder").click();
-  await page.locator(".ladder > li button.unit").nth(8).click();
+  await unitButton(page, kajUnitIds[8]!).click();
   await expect.poll(() => new URL(page.url()).hash).toBe("#/lesson/u8");
 
   await page.reload();
@@ -146,7 +148,7 @@ test("[P-T08] [P-U11] [P-C08] [P-B18] switching applies at once and survives a r
   await expect(page.locator('#tab-chart [data-entry="long-a"]')).toHaveCount(0);
 
   await tab(page, "navLadder").click();
-  await page.locator(".ladder > li button.unit").nth(8).click();
+  await unitButton(page, pedomanUnitIds[8]!).click();
   await expect.poll(() => new URL(page.url()).hash).toBe("#/lesson/u8p");
 });
 
@@ -175,20 +177,30 @@ test.describe("progress carries across rulesets", () => {
     await page.reload();
     await page.locator('#app[data-boot="ready"]').waitFor();
 
-    const cards = page.locator("#tab-review .card .aksara");
+    const rows = page.locator("#tab-review .strength-row");
+    // Cards the active ruleset lacks stay out of the due count and the rows.
+    const expectReview = async (count: number) => {
+      await expect(
+        page.locator("#tab-review .review-today").getByRole("heading", {
+          level: 2,
+          name: id["reviewDueCount"]!.replace("{count}", String(count)),
+        }),
+      ).toBeVisible();
+      await expect(rows).toHaveCount(count);
+    };
     const caMurda = kajGlyphs.byId.get("caMurda")!.char;
     const ka = kajGlyphs.byId.get("ka")!.char;
 
     await tab(page, "navReview").click();
-    await expect(cards).toHaveCount(2);
-    await expect(cards.filter({ hasText: caMurda })).toHaveCount(1);
+    await expectReview(2);
+    await expect(rows.filter({ hasText: caMurda })).toHaveCount(1);
 
     await openSettings(page);
     await radio(page, id["rulesetNamePedoman"]!).check();
     await goBack(page);
 
     await tab(page, "navLadder").click();
-    await expect(page.locator(".ladder > li button.unit").nth(8)).toContainText(
+    await expect(unitButton(page, pedomanUnitIds[8]!)).toContainText(
       id["unitStatusCompleted"]!,
     );
     await expect
@@ -200,16 +212,16 @@ test.describe("progress carries across rulesets", () => {
       .toContain("u8p");
 
     await tab(page, "navReview").click();
-    await expect(cards).toHaveCount(1);
-    await expect(cards.filter({ hasText: ka })).toHaveCount(1);
+    await expectReview(1);
+    await expect(rows.filter({ hasText: ka })).toHaveCount(1);
     expect(await readStore(page, SRS_ITEMS)).toHaveLength(2);
 
     await openSettings(page);
     await radio(page, id["rulesetNameKaj"]!).check();
     await goBack(page);
     await tab(page, "navReview").click();
-    await expect(cards).toHaveCount(2);
-    await expect(cards.filter({ hasText: caMurda })).toHaveCount(1);
+    await expectReview(2);
+    await expect(rows.filter({ hasText: caMurda })).toHaveCount(1);
   });
 });
 
@@ -251,7 +263,7 @@ test("[P-T05] [P-T06] About and the report name the active ruleset", async ({
   );
 
   await gotoRoute(page, "#/teacher");
-  await expect(page.locator("main .slip").nth(0)).toContainText(
+  await expect(page.locator("main .surface:visible").nth(0)).toContainText(
     id["deviationBody"]!.replace("{ruleset}", id["rulesetNamePedoman"]!),
   );
 });

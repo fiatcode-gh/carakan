@@ -8,6 +8,7 @@ import { SandhanganItem } from "../../../src/content/sandhangan-item.ts";
 import {
   kajRulesetId,
   murdaLinks,
+  nglegena,
   pedomanRulesetId,
   rekan,
   rulesetById,
@@ -17,12 +18,14 @@ import {
 } from "../../../src/engine/index.ts";
 import {
   angkaFlanked,
-  buildChartSections,
+  buildChartTabs,
   findChartEntry,
   murdaVariant,
   pasanganString,
   rekanChar,
   subjoinedForm,
+  type ChartSection,
+  type ChartSectionId,
   type ChartStrings,
 } from "../../../src/features/chart/chart-catalog.ts";
 import { ak } from "../../engine/support/aksara-builder.ts";
@@ -73,22 +76,20 @@ const strings: ChartStrings = {
   rekan: "rekan",
   angka: "angka",
   pada: "pada",
+  pasangan: "pasangan",
   murdaHint: "has murda",
   writtenAs: (form) => `written ${form}`,
   longFormName: (name) => `long ${name}`,
+  pasanganName: (name) => `pasangan ${name}`,
 };
 
 const kaj = rulesetById(kajRulesetId);
 const pedoman = rulesetById(pedomanRulesetId);
-const sections = buildChartSections({
-  aksara,
-  sandhangan,
-  strings,
-  ruleset: kaj,
-});
-const section = (title: string) => {
-  const found = sections.find((s) => s.title === title);
-  if (found === undefined) throw new Error(`no section ${title}`);
+const tabs = buildChartTabs({ aksara, sandhangan, strings, ruleset: kaj });
+const sections = tabs.flatMap((t) => t.sections);
+const section = (id: ChartSectionId) => {
+  const found = sections.find((s) => s.id === id);
+  if (found === undefined) throw new Error(`no section ${id}`);
   return found;
 };
 
@@ -122,26 +123,104 @@ describe("chart lookups for the converter", () => {
     expect(subjoinedForm(ak("LA"))).toBe(ak("KA PANGKON LA"));
   });
 
-  test("[P-U10] findChartEntry resolves real content ids in section order", async () => {
+  test("[P-U10] findChartEntry resolves real content ids in tab order", async () => {
     const content = await loadView(kajRulesetId);
-    const real = buildChartSections({
+    const real = buildChartTabs({
       aksara: content.aksara,
       sandhangan: content.sandhangan,
       strings,
       ruleset: kaj,
     });
-    expect(findChartEntry(real, "wulu")?.id).toBe("wulu");
-    expect(findChartEntry(real, "angka-1")?.id).toBe("angka-1");
-    expect(findChartEntry(real, "paCerek")?.id).toBe("paCerek");
+    expect(findChartEntry(real, "wulu")?.entry.id).toBe("wulu");
+    expect(findChartEntry(real, "angka-1")?.entry.id).toBe("angka-1");
+    expect(findChartEntry(real, "paCerek")?.entry.id).toBe("paCerek");
     const firstAi = real
+      .flatMap((t) => t.sections)
       .flatMap((s) => s.entries)
       .find((entry) => entry.id === "ai");
-    expect(findChartEntry(real, "ai")).toBe(firstAi);
+    expect(findChartEntry(real, "ai")?.entry).toBe(firstAi);
     expect(findChartEntry(real, "nope")).toBeNull();
+  });
+
+  test("[P-C03] findChartEntry locates the tab, section and 1-based position", () => {
+    const at = (id: string) => {
+      const found = findChartEntry(tabs, id);
+      if (found === null) throw new Error(`no location for ${id}`);
+      return [found.tab.id, found.section.id, found.position];
+    };
+    expect(at("ha")).toEqual(["carakan", "carakan", 1]);
+    expect(at("wulu")).toEqual(["sandhangan", "vowelChanging", 1]);
+    expect(at("pasangan-ha")).toEqual(["pasangan", "pasangan", 1]);
+    expect(at("angka-3")).toEqual(["carakan", "angka", 4]);
+    expect(findChartEntry(tabs, "ha")?.entry).toBe(
+      section("carakan").entries[0],
+    );
+    expect(findChartEntry(tabs, "nope")).toBeNull();
   });
 });
 
-describe("buildChartSections", () => {
+describe("buildChartTabs", () => {
+  test("[P-C01] three tabs: Carakan, Sandhangan, Pasangan", () => {
+    expect(tabs.map((t) => t.id)).toEqual([
+      "carakan",
+      "sandhangan",
+      "pasangan",
+    ]);
+    expect(tabs.map((t) => t.sections.map((s) => s.id))).toEqual([
+      ["carakan", "murda", "swara", "rekan", "angka", "pada"],
+      ["vowelChanging"],
+      ["pasangan"],
+    ]);
+  });
+
+  test("[P-C09] the Pasangan tab has one entry per nglegena letter, in order", () => {
+    const entries = section("pasangan").entries;
+    expect(entries).toHaveLength(20);
+    expect(entries.map((e) => e.id)).toEqual(
+      nglegena.map((a) => `pasangan-${a.id}`),
+    );
+    expect(entries[0]).toEqual({
+      id: "pasangan-ha",
+      name: "pasangan ha",
+      tileLabel: "ha",
+      char: pasanganString("ha"),
+      subtitle: "ha / ha",
+      reading: "ha",
+    });
+    for (const e of entries)
+      expect(e.name, e.id).toBe(`pasangan ${e.tileLabel}`);
+    // Only the Pasangan tab shortens its label; every other entry keeps its name.
+    expect(
+      sections
+        .filter((s) => s.id !== "pasangan")
+        .flatMap((s) => s.entries)
+        .filter((e) => e.tileLabel !== undefined),
+    ).toEqual([]);
+    for (const [i, a] of nglegena.entries()) {
+      expect(entries[i]?.char).toBe(pasanganString(a.id));
+      expect(entries[i]?.reading).toBe(a.latinPujl);
+      expect(entries[i]?.subtitle).toBe(`${a.latinPujl} / ${a.latinJgst}`);
+    }
+  });
+
+  test("[P-C01] reading is the PUJL reading, null for angka and pada", () => {
+    expect(section("carakan").entries[0]?.reading).toBe("ha");
+    expect(section("angka").entries.every((e) => e.reading === null)).toBe(
+      true,
+    );
+    expect(section("pada").entries.every((e) => e.reading === null)).toBe(true);
+    expect(section("vowelChanging").entries[0]?.reading).toBe("i");
+    expect(
+      section("swara").entries.find((e) => e.id === "long-a")?.reading,
+    ).toBe("aa");
+    for (const id of ["murda", "swara", "rekan", "vowelChanging"] as const) {
+      for (const e of section(id).entries)
+        expect(e.reading, e.id).not.toBeNull();
+    }
+  });
+});
+
+describe("buildChartTabs entries", () => {
   test("[P-C01] every chart item has a display char", () => {
     for (const s of sections) {
       for (const entry of s.entries) expect(entry.char, entry.id).not.toBe("");
@@ -151,12 +230,13 @@ describe("buildChartSections", () => {
   test("[P-C01] sections follow the source order", () => {
     expect(sections.map((s) => s.title)).toEqual([
       "carakan",
-      "vowel",
       "murda",
       "swara",
       "rekan",
       "angka",
       "pada",
+      "vowel",
+      "pasangan",
     ]);
   });
 
@@ -168,6 +248,7 @@ describe("buildChartSections", () => {
       name: "ha",
       char: ak("HA"),
       subtitle: "ha / ha",
+      reading: "ha",
     });
   });
 
@@ -179,7 +260,7 @@ describe("buildChartSections", () => {
   });
 
   test("[P-C02] sandhangan sit on a ha carrier, never alone", () => {
-    const wulu = section("vowel").entries[0];
+    const wulu = section("vowelChanging").entries[0];
     expect(wulu?.char).toBe(ak("HA WULU"));
     expect(wulu?.subtitle).toBe("i / i");
   });
@@ -191,7 +272,7 @@ describe("buildChartSections", () => {
       ["c", "closing", "syllableClosing"],
       ["d", "killer", "vowelKiller"],
     ] as const;
-    const grouped = buildChartSections({
+    const grouped = buildChartTabs({
       aksara,
       strings,
       sandhangan: fixture.map(
@@ -208,13 +289,13 @@ describe("buildChartSections", () => {
       ),
       ruleset: kaj,
     });
-    expect(grouped.slice(1, 4).map((s) => [s.title, s.entries.length])).toEqual(
-      [
-        ["closing", 2],
-        ["vowel", 1],
-        ["killer", 1],
-      ],
-    );
+    expect(
+      grouped[1]!.sections.map((s) => [s.id, s.title, s.entries.length]),
+    ).toEqual([
+      ["syllableClosing", "closing", 2],
+      ["vowelChanging", "vowel", 1],
+      ["vowelKiller", "killer", 1],
+    ]);
   });
 
   test("[P-C03] swara long forms are the swara letter plus tarung", () => {
@@ -248,14 +329,14 @@ describe("buildChartSections", () => {
 
   test("[P-C01] the real content yields no empty name, char or subtitle", async () => {
     const content = await loadView(kajRulesetId);
-    const real = buildChartSections({
+    const real = buildChartTabs({
       aksara: content.aksara,
       sandhangan: content.sandhangan,
       strings,
       ruleset: kaj,
     });
-    expect(real[0]?.entries).toHaveLength(20);
-    for (const s of real) {
+    expect(real[0]?.sections[0]?.entries).toHaveLength(20);
+    for (const s of real.flatMap((t) => t.sections)) {
       for (const e of s.entries) {
         expect(e.name, e.id).not.toBe("");
         expect(e.char, e.id).not.toBe("");
@@ -265,20 +346,20 @@ describe("buildChartSections", () => {
   });
 });
 
-describe("buildChartSections per ruleset", () => {
+describe("buildChartTabs per ruleset", () => {
   const sectionsOf = async (
     rulesetId: typeof kajRulesetId | typeof pedomanRulesetId,
   ) => {
     const content = contentFor(await readContent(loadFromPublic), rulesetId);
-    return buildChartSections({
+    return buildChartTabs({
       aksara: content.aksara,
       sandhangan: content.sandhangan,
       strings,
       ruleset: content.ruleset,
-    });
+    }).flatMap((t) => t.sections);
   };
-  const ids = (list: ReturnType<typeof buildChartSections>, title: string) =>
-    list.find((s) => s.title === title)?.entries.map((e) => e.id);
+  const ids = (list: readonly ChartSection[], id: ChartSectionId) =>
+    list.find((s) => s.id === id)?.entries.map((e) => e.id);
 
   test("[P-C08] a Pedoman view lists 7 murda, 7 swara and 5 rekan", async () => {
     const real = await sectionsOf(pedomanRulesetId);
@@ -300,7 +381,7 @@ describe("buildChartSections per ruleset", () => {
       "paCerek",
       "ngaLelet",
     ]);
-    const rekanSection = real.find((s) => s.title === "rekan")!;
+    const rekanSection = real.find((s) => s.id === "rekan")!;
     expect(rekanSection.entries.map((e) => e.id)).toEqual([
       "kha",
       "dza",

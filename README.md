@@ -2,7 +2,7 @@
 
 Carakan is a web app for learning Javanese script (aksara Jawa): gated lessons, a glyph chart, spaced-repetition review and a Latin/aksara converter. It runs entirely in the browser as an installable, offline-capable app. There is no backend, no account and no analytics; learner progress stays on the device.
 
-It lives at <https://carakan.fiatcode.dev/> (built as a container image by CI, served from the domain root). The design, engine, architecture and gates are described in [`docs/spec.md`](docs/spec.md); the parity checklist against the original app is [`docs/parity.md`](docs/parity.md).
+It lives at <https://carakan.fiatcode.dev/> (built as a container image by CI, served from the domain root). The look is the "Buku Poster" style: ruled notebook paper, ink outlines and three accent colours ([`docs/decisions/0003-buku-poster.md`](docs/decisions/0003-buku-poster.md)). The design, engine, architecture and gates are described in [`docs/spec.md`](docs/spec.md); the parity checklist against the original app is [`docs/parity.md`](docs/parity.md).
 
 ## Requirements
 
@@ -30,7 +30,7 @@ npm run dev
 | `npm run shaping`                   | Checks the TypeScript engine's shaping cases against the Dart dump and HarfBuzz.                           |
 | `npm run parity:dump`               | Regenerates the Dart engine fixture used by the differential test.                                         |
 | `npm run parity:coverage`           | Fails unless every automated parity item appears in a test title.                                          |
-| `npm run fonts`                     | Regenerates the glyph set and the MPLUS Rounded 1c subsets.                                                |
+| `npm run fonts`                     | Regenerates the glyph set, the MPLUS Rounded 1c subsets and the Bricolage coverage table.                  |
 | `npm run measure`                   | Estimates the first-load transfer from `dist/`.                                                            |
 | `npm run served:up` / `served:down` | Builds the production image and runs it behind a local Traefik (`http://localhost:8090/`) / stops it.      |
 | `npm run served:headers`            | Checks content types, cache headers, compression and routing on the served image.                          |
@@ -38,7 +38,7 @@ npm run dev
 | `npm run lighthouse`                | Lighthouse mobile audit of the served image (median of three runs).                                        |
 | `npm run format` / `format:check`   | Prettier.                                                                                                  |
 
-The other scripts (`gen:content`, `gen:codepoints`, `icons`, `design:compare`, `preview`) are listed in [`docs/spec.md`](docs/spec.md#10-testing-and-gates).
+The other scripts (`gen:content`, `gen:codepoints`, `icons`, `design:compare`, `preview`) are listed in [`docs/spec.md`](docs/spec.md#10-testing-and-gates). `design:compare` captures the app next to the Buku Poster reference screenshots.
 
 ## Provenance
 
@@ -47,6 +47,8 @@ Carakan is a port of the Flutter app aksara-app at commit `ebc7cb5`, which stays
 ## Fonts and licensing
 
 - MPLUS Rounded 1c: SIL Open Font License 1.1 (`public/licenses/ofl-mplus.txt`).
+- Bricolage Grotesque: SIL Open Font License 1.1 (`public/licenses/ofl-bricolage-grotesque.txt`).
+- Patrick Hand: SIL Open Font License 1.1 (`public/licenses/ofl-patrick-hand.txt`).
 - nyk Ngayogyan Jejeg is served unmodified for aksara. No license text ships with it, and the rights holder's written permission is still pending; the maintainer accepted deploying it in the meantime. See `public/licenses/NOTICE-fonts.txt`.
 - Icons are Lucide (ISC, `public/licenses/lucide-LICENSE.txt`).
 - Word-list sources and licensing: [`docs/references/wordlist-licensing.md`](docs/references/wordlist-licensing.md).

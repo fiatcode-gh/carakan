@@ -18,9 +18,11 @@ describe("chartStrings", () => {
       rekan: strings.rekan,
       angka: strings.angka,
       pada: strings.pada,
+      pasangan: strings.pasangan,
       murdaHint: strings.murdaHint,
       writtenAs: strings.writtenAs("F"),
       longFormName: strings.longFormName("N"),
+      pasanganName: strings.pasanganName("N"),
     }).toEqual({
       carakan: "sectionCarakan",
       sandhanganVowel: "sectionSandhanganVowel",
@@ -32,9 +34,11 @@ describe("chartStrings", () => {
       rekan: "sectionRekan",
       angka: "sectionAngka",
       pada: "sectionPada",
+      pasangan: "pasanganLabel",
       murdaHint: "murdaHint",
       writtenAs: 'writtenAs:{"form":"F"}',
       longFormName: 'longFormName:{"name":"N"}',
+      pasanganName: 'breakdownPasangan:{"name":"N"}',
     });
   });
 });

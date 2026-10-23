@@ -4,9 +4,9 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { kajRulesetId } from "../../src/engine/index.ts";
-import { gotoRoute } from "./support/app.ts";
+import { gotoRoute, tokenColor } from "./support/app.ts";
 import { expect, test, trackForeignRequests } from "./support/fixtures.ts";
-import { id, walkMeet } from "./support/lesson.ts";
+import { advanceToQuestion, id } from "./support/lesson.ts";
 import { createSolver, type Solver } from "./support/solver.ts";
 import {
   startStaticServer,
@@ -96,11 +96,10 @@ test("an update never interrupts a lesson, is offered on the ladder, can wait, a
 
   // (a) a waiting worker, mid-lesson: no banner, the question stays.
   await gotoRoute(page, `#/lesson/${solver.content.units[0]!.id}`);
-  await walkMeet(page, solver.content.units[0]!.glyphs.length);
-  await page.locator(".options button").first().waitFor();
+  await advanceToQuestion(page, solver);
   await publishV2(page);
   await expect(banner(page)).toHaveCount(0);
-  await expect(page.locator(".options button").first()).toBeVisible();
+  await expect(page.locator(".answers button").first()).toBeVisible();
 
   // (b) back on the ladder the banner shows; Later hides it.
   await page.evaluate(() => {
@@ -108,6 +107,29 @@ test("an update never interrupts a lesson, is offered on the ladder, can wait, a
   });
   await expect(page.locator(".ladder")).toBeVisible();
   await expect(banner(page)).toBeVisible();
+  const bar = page.getByRole("status").filter({ has: banner(page) });
+  const barStyle = await bar.evaluate((el) => {
+    const s = getComputedStyle(el);
+    return { background: s.backgroundColor, color: s.color };
+  });
+  expect(barStyle).toEqual({
+    background: await tokenColor(page, "--color-ink"),
+    color: await tokenColor(page, "--color-on-ink"),
+  });
+  expect(
+    await page
+      .getByRole("button", { name: id["updateReloadButton"]! })
+      .evaluate((el) => getComputedStyle(el).backgroundColor),
+  ).toBe(await tokenColor(page, "--color-card"));
+  expect(
+    await page
+      .getByRole("button", { name: id["updateLaterButton"]! })
+      .evaluate((el) => getComputedStyle(el).color),
+  ).toBe(await tokenColor(page, "--color-on-ink"));
+  const nav = page.locator("nav:visible").first();
+  expect(
+    (await bar.boundingBox())!.y + (await bar.boundingBox())!.height,
+  ).toBeLessThanOrEqual((await nav.boundingBox())!.y);
   await expect(
     page.getByRole("status").filter({ has: banner(page) }),
   ).toBeVisible();
@@ -168,8 +190,7 @@ test("accepting in one window does not reload another window that is mid-lesson"
 
   const lesson = await context.newPage();
   await gotoRoute(lesson, `#/lesson/${solver.content.units[0]!.id}`);
-  await walkMeet(lesson, solver.content.units[0]!.glyphs.length);
-  await lesson.locator(".options button").first().waitFor();
+  await advanceToQuestion(lesson, solver);
   const prompt = await lesson.locator(".lesson").innerHTML();
   await lesson.evaluate(() => {
     const w = window as unknown as Record<string, unknown>;

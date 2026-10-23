@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   auditRoutes,
   href,
+  isActivityRoute,
   isTabRoot,
   parseHash,
   tabOf,
@@ -17,6 +18,8 @@ const roundTrips: [string, Route][] = [
   ["#/teacher", { kind: "teacher" }],
   ["#/review-help", { kind: "reviewHelp" }],
   ["#/lesson/g1", { kind: "lesson", unitId: "g1" }],
+  ["#/trace/pa", { kind: "trace", glyphId: "pa" }],
+  ["#/review/quiz", { kind: "reviewQuiz" }],
 ];
 
 describe("[P-S05] hash routes", () => {
@@ -31,6 +34,9 @@ describe("[P-S05] hash routes", () => {
     "#/nowhere",
     "#/lesson",
     "#/lesson/",
+    "#/trace",
+    "#/trace/",
+    "#/trace/%E0%A4%A",
     "#/chart/x",
     "#settings",
   ])("unknown hash %j lands on the ladder", (hash) => {
@@ -42,8 +48,21 @@ describe("[P-S05] hash routes", () => {
     expect(parseHash(href(route))).toEqual(route);
   });
 
-  test("auditRoutes lists all eight routes with lesson = g1", () => {
+  test("a trace glyph id survives URL encoding", () => {
+    const route: Route = { kind: "trace", glyphId: "a b/c" };
+    expect(parseHash(href(route))).toEqual(route);
+  });
+
+  test("auditRoutes lists every route with lesson = g1 and trace = pa", () => {
     expect(auditRoutes.map(href)).toEqual(roundTrips.map(([hash]) => hash));
+  });
+
+  test("isActivityRoute is true for lesson, trace and the review quiz only", () => {
+    expect(auditRoutes.filter(isActivityRoute).map((r) => r.kind)).toEqual([
+      "lesson",
+      "trace",
+      "reviewQuiz",
+    ]);
   });
 });
 

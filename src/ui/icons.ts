@@ -15,9 +15,17 @@ export const icons = {
     { tag: "path", d: "m16 21 4-4-4-4" },
     { tag: "path", d: "M20 17H4" },
   ],
-  "arrow-left": [
-    { tag: "path", d: "m12 19-7-7 7-7" },
-    { tag: "path", d: "M19 12H5" },
+  "arrow-right": [
+    { tag: "path", d: "M5 12h14" },
+    { tag: "path", d: "m12 5 7 7-7 7" },
+  ],
+  "audio-lines": [
+    { tag: "path", d: "M2 10v3" },
+    { tag: "path", d: "M6 6v11" },
+    { tag: "path", d: "M10 3v18" },
+    { tag: "path", d: "M14 8v7" },
+    { tag: "path", d: "M18 5v13" },
+    { tag: "path", d: "M22 10v3" },
   ],
   "book-open": [
     { tag: "path", d: "M12 5v16" },
@@ -27,6 +35,7 @@ export const icons = {
     },
   ],
   check: [{ tag: "path", d: "M20 6 9 17l-5-5" }],
+  "chevron-left": [{ tag: "path", d: "m15 18-6-6 6-6" }],
   "chevron-right": [{ tag: "path", d: "m9 18 6-6-6-6" }],
   "circle-check": [
     { tag: "circle", cx: 12, cy: 12, r: 10 },
@@ -88,9 +97,29 @@ export const icons = {
     { tag: "rect", width: 7, height: 7, x: 14, y: 14, rx: 1 },
     { tag: "rect", width: 7, height: 7, x: 3, y: 14, rx: 1 },
   ],
+  lightbulb: [
+    {
+      tag: "path",
+      d: "M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5",
+    },
+    { tag: "path", d: "M9 18h6" },
+    { tag: "path", d: "M10 22h4" },
+  ],
   lock: [
     { tag: "rect", width: 18, height: 11, x: 3, y: 11, rx: 2, ry: 2 },
     { tag: "path", d: "M7 11V7a5 5 0 0 1 10 0v4" },
+  ],
+  menu: [
+    { tag: "path", d: "M4 5h16" },
+    { tag: "path", d: "M4 12h16" },
+    { tag: "path", d: "M4 19h16" },
+  ],
+  pencil: [
+    {
+      tag: "path",
+      d: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
+    },
+    { tag: "path", d: "m15 5 4 4" },
   ],
   play: [
     {
@@ -103,12 +132,6 @@ export const icons = {
     { tag: "path", d: "M21 3v5h-5" },
     { tag: "path", d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" },
     { tag: "path", d: "M8 16H3v5" },
-  ],
-  repeat: [
-    { tag: "path", d: "m17 2 4 4-4 4" },
-    { tag: "path", d: "M3 11v-1a4 4 0 0 1 4-4h14" },
-    { tag: "path", d: "m7 22-4-4 4-4" },
-    { tag: "path", d: "M21 13v1a4 4 0 0 1-4 4H3" },
   ],
   settings: [
     {
@@ -125,16 +148,13 @@ export const icons = {
     { tag: "path", d: "M12 9v4" },
     { tag: "path", d: "M12 17h.01" },
   ],
-  trophy: [
-    { tag: "path", d: "M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2" },
-    { tag: "path", d: "M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2" },
+  "volume-2": [
     {
       tag: "path",
-      d: "M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3",
+      d: "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z",
     },
-    { tag: "path", d: "M4 22h16" },
-    { tag: "path", d: "M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" },
-    { tag: "path", d: "M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3" },
+    { tag: "path", d: "M16 9a5 5 0 0 1 0 6" },
+    { tag: "path", d: "M19.364 18.364a9 9 0 0 0 0-12.728" },
   ],
   x: [
     { tag: "path", d: "M18 6 6 18" },

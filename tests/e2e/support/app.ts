@@ -16,3 +16,15 @@ export async function seedLocale(
     localStorage.setItem("carakan.uiLocale", value);
   }, setting);
 }
+
+/** The computed colour a design token resolves to (e.g. `--color-ink`). */
+export function tokenColor(page: Page, token: string): Promise<string> {
+  return page.evaluate((name) => {
+    const probe = document.createElement("span");
+    probe.style.color = `var(${name})`;
+    document.body.append(probe);
+    const colour = getComputedStyle(probe).color;
+    probe.remove();
+    return colour;
+  }, token);
+}

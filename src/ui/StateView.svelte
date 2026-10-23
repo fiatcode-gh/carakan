@@ -69,9 +69,8 @@
     place-items: center;
     width: 4.5rem;
     height: 4.5rem;
-    border: 2px solid var(--color-border-strong);
-    border-radius: var(--radius-full);
-    background: var(--color-surface-raised);
+    border: var(--border);
+    background: var(--color-card);
   }
 
   .state__icon :global(.icon) {
@@ -87,22 +86,18 @@
   }
 
   .state--error .state__icon {
-    border-color: var(--color-danger);
-    border-style: dashed;
-    color: var(--color-danger);
+    border: 2px dashed var(--color-stamp);
+    color: var(--color-stamp);
   }
 
   .state--empty .state__icon {
-    border-color: var(--color-reward);
-    background: var(--color-reward-soft);
+    background: var(--color-butter);
   }
 
   .spinner {
-    width: 3rem;
-    height: 3rem;
-    border: 4px solid var(--color-border);
-    border-top-color: var(--color-accent);
-    border-radius: var(--radius-full);
+    width: 2.5rem;
+    height: 2.5rem;
+    border: var(--border);
     animation: spin 900ms linear infinite;
   }
 

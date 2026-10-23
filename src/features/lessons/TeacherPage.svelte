@@ -4,7 +4,7 @@
   import { getI18n } from "../../l10n/context.ts";
   import { RULESET_MESSAGES } from "../../l10n/ruleset-messages.ts";
   import Page from "../../ui/Page.svelte";
-  import Slip from "../../ui/Slip.svelte";
+  import Surface from "../../ui/Surface.svelte";
 
   const { t } = getI18n();
   const active = getServices().ruleset.setting;
@@ -12,18 +12,18 @@
 
 <Page title={$t("teacherTitle")} onback={back}>
   <div class="stack">
-    <Slip tag="article">
+    <Surface tag="article">
       <h2 class="slip__title">{$t("deviationTitle")}</h2>
       <p class="slip__body">
         {$t("deviationBody", {
           ruleset: $t(RULESET_MESSAGES[$active].name),
         })}
       </p>
-    </Slip>
-    <Slip tag="article">
+    </Surface>
+    <Surface tag="article">
       <h2 class="slip__title">{$t("unitOrderHeading")}</h2>
       <p class="slip__body slip__body--lines">{$t("unitOrderBody")}</p>
-    </Slip>
+    </Surface>
   </div>
 </Page>
 

@@ -26,17 +26,17 @@
   .toast {
     position: fixed;
     left: 50%;
-    bottom: calc(var(--tab-height) + var(--space-4));
+    bottom: calc(var(--nav-height) + var(--space-4));
     z-index: 60;
     display: flex;
     align-items: flex-start;
     gap: var(--space-3);
     width: min(calc(100% - var(--space-8)), 26rem);
     padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
-    background: var(--color-text);
-    color: var(--color-bg);
-    box-shadow: var(--shadow-sheet);
+    border: var(--border);
+    background: var(--color-card);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-tile);
     font-size: var(--text-sm);
     font-weight: var(--weight-bold);
     line-height: var(--leading-snug);

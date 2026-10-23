@@ -15,9 +15,10 @@ import {
   expectNoHorizontalOverflow,
   expectTouchTargets,
 } from "./support/a11y.ts";
-import { gotoRoute, seedLocale } from "./support/app.ts";
+import { gotoRoute, seedLocale, tokenColor } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
-import { ladderRow, readStore, writeRows } from "./support/lesson.ts";
+import { readStore, unitButton, writeRows } from "./support/lesson.ts";
+import { answerReviewQuestion } from "./support/review-quiz.ts";
 import { createSolver, type Solver } from "./support/solver.ts";
 
 const messages = (locale: "id" | "en") =>
@@ -129,6 +130,63 @@ test("[P-T05] about shows version, ruleset, sources, fonts and corpus", async ({
   await expect(main).toContainText(id["ruleSourceBodyKaj"]!);
   await expect(main).toContainText(id["fontBody"]!);
   await expect(main).toContainText(id["corpusBody"]!);
+});
+
+test("[P-T01][P-T05][P-T07] sections are tile surfaces with eyebrow headings; the reset keeps its danger signals", async ({
+  page,
+}) => {
+  await gotoRoute(page, "#/settings");
+  const surfaces = page.locator("main .surface:visible");
+  await expect(surfaces).toHaveCount(4);
+  const [ink, stamp] = [
+    await tokenColor(page, "--color-ink"),
+    await tokenColor(page, "--color-stamp"),
+  ];
+  const tile = await page.evaluate(() => {
+    const probe = document.createElement("span");
+    probe.style.boxShadow = "var(--shadow-tile)";
+    document.body.append(probe);
+    const shadow = getComputedStyle(probe).boxShadow;
+    probe.remove();
+    return shadow;
+  });
+  for (let i = 0; i < 3; i++) {
+    const surface = surfaces.nth(i);
+    expect(await surface.evaluate((el) => getComputedStyle(el).boxShadow)).toBe(
+      tile,
+    );
+    await expect(surface.locator(".eyebrow").first()).toBeVisible();
+  }
+  for (const radio of await page.getByRole("radio").all()) {
+    expect(await radio.evaluate((el) => getComputedStyle(el).accentColor)).toBe(
+      ink,
+    );
+    expect(await radio.evaluate((el) => getComputedStyle(el).opacity)).toBe(
+      "1",
+    );
+    const row = radio.locator("xpath=ancestor::label");
+    expect((await row.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  }
+  const reset = surfaces.nth(3);
+  const style = await reset.evaluate((el) => {
+    const s = getComputedStyle(el);
+    return {
+      borderStyle: s.borderTopStyle,
+      borderWidth: s.borderTopWidth,
+      borderColor: s.borderTopColor,
+    };
+  });
+  expect(style).toEqual({
+    borderStyle: "dashed",
+    borderWidth: "2px",
+    borderColor: stamp,
+  });
+  const heading = reset.getByRole("heading", { name: id["resetHeading"]! });
+  await expect(heading).toHaveClass(/eyebrow/);
+  expect(await heading.evaluate((el) => getComputedStyle(el).color)).toBe(
+    stamp,
+  );
+  await expect(heading.locator("svg")).toHaveCount(1);
 });
 
 test("[W09] the licence and corpus links resolve on the server", async ({
@@ -305,16 +363,17 @@ async function storeCounts(page: Page) {
 const seededCounts = { completions: 3, cards: 2, mistakes: 1 };
 const emptyCounts = { completions: 0, cards: 0, mistakes: 0 };
 
-/** Puts a retry card, reveal state and an active drill in memory, then lands on Settings. */
+/** Puts a quiz retry card and an active drill in memory, then lands on Settings. */
 async function buildSessionMemory(page: Page, catalog = id): Promise<void> {
   await page.getByRole("link", { name: catalog["navReview"]! }).first().click();
   await page
-    .getByRole("button", { name: catalog["revealAnswerButton"]! })
-    .first()
+    .locator("#tab-review .review-today")
+    .getByRole("button", { name: catalog["reviewStartButton"]! })
     .click();
+  await answerReviewQuestion(page, solver, "wrong");
   await page
-    .getByRole("button", { name: catalog["gradeAgain"]!, exact: true })
-    .first()
+    .locator(".quiz")
+    .getByRole("button", { name: catalog["closeButton"]!, exact: true })
     .click();
   await expect(
     page.getByRole("heading", { level: 2, name: catalog["drillHeading"]! }),
@@ -369,7 +428,7 @@ for (const locale of ["id", "en"] as const) {
     expect(await storeCounts(page)).toEqual(seededCounts);
 
     await page.getByRole("button", { name: catalog["backButton"]! }).click();
-    await expect(ladderRow(page, 1)).toContainText(
+    await expect(unitButton(page, solver.content.units[0]!.id)).toContainText(
       catalog["unitStatusCompleted"]!,
     );
   });
@@ -398,13 +457,13 @@ for (const locale of ["id", "en"] as const) {
     ).toBe(locale);
 
     const expectFresh = async () => {
-      await expect(ladderRow(page, 1)).toContainText(
-        catalog["unitStatusReady"]!,
-      );
+      await expect(
+        unitButton(page, solver.content.units[0]!.id),
+      ).toHaveAttribute("data-status", "ready");
       for (let n = 2; n <= solver.content.units.length; n++) {
-        await expect(ladderRow(page, n)).toContainText(
-          catalog["unitStatusLocked"]!,
-        );
+        await expect(
+          unitButton(page, solver.content.units[n - 1]!.id),
+        ).toContainText(catalog["unitStatusLocked"]!);
       }
       await page
         .getByRole("link", { name: catalog["navReview"]! })
@@ -414,7 +473,10 @@ for (const locale of ["id", "en"] as const) {
       await expect(
         page.getByRole("heading", { level: 2, name: catalog["drillHeading"]! }),
       ).toHaveCount(0);
-      await expect(page.locator("#tab-review .card")).toHaveCount(0);
+      await expect(
+        page.locator("#tab-review .review-today button"),
+      ).toHaveCount(0);
+      await expect(page.locator("#tab-review .strength-row")).toHaveCount(0);
     };
 
     await page.getByRole("button", { name: catalog["backButton"]! }).click();

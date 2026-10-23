@@ -10,7 +10,9 @@ export type Route =
   | { readonly kind: "settings" }
   | { readonly kind: "teacher" }
   | { readonly kind: "reviewHelp" }
-  | { readonly kind: "lesson"; readonly unitId: string };
+  | { readonly kind: "lesson"; readonly unitId: string }
+  | { readonly kind: "trace"; readonly glyphId: string }
+  | { readonly kind: "reviewQuiz" };
 
 export const tabIds: readonly TabId[] = [
   "ladder",
@@ -28,6 +30,8 @@ export const auditRoutes: readonly Route[] = [
   { kind: "teacher" },
   { kind: "reviewHelp" },
   { kind: "lesson", unitId: "g1" },
+  { kind: "trace", glyphId: "pa" },
+  { kind: "reviewQuiz" },
 ];
 
 const ladder = { kind: "ladder" } as Route;
@@ -46,6 +50,8 @@ export function parseHash(hash: string): Route {
       return { kind: path };
     case "review-help":
       return { kind: "reviewHelp" };
+    case "review/quiz":
+      return { kind: "reviewQuiz" };
     case null:
       return ladder;
   }
@@ -53,6 +59,14 @@ export function parseHash(hash: string): Route {
   if (lesson?.[1] !== undefined) {
     try {
       return { kind: "lesson", unitId: decodeURIComponent(lesson[1]) };
+    } catch {
+      return ladder;
+    }
+  }
+  const trace = /^trace\/([^/]+)$/.exec(path);
+  if (trace?.[1] !== undefined) {
+    try {
+      return { kind: "trace", glyphId: decodeURIComponent(trace[1]) };
     } catch {
       return ladder;
     }
@@ -66,8 +80,12 @@ export function href(route: Route): string {
       return "#/";
     case "reviewHelp":
       return "#/review-help";
+    case "reviewQuiz":
+      return "#/review/quiz";
     case "lesson":
       return `#/lesson/${encodeURIComponent(route.unitId)}`;
+    case "trace":
+      return `#/trace/${encodeURIComponent(route.glyphId)}`;
     default:
       return `#/${route.kind}`;
   }
@@ -81,6 +99,15 @@ export function tabOf(route: Route): TabId | null {
 
 export function isTabRoot(route: Route): boolean {
   return tabOf(route) !== null;
+}
+
+/** Pages that run an activity (a lesson, a tracing practice, a review quiz): no update banner. */
+export function isActivityRoute(route: Route): boolean {
+  return (
+    route.kind === "lesson" ||
+    route.kind === "trace" ||
+    route.kind === "reviewQuiz"
+  );
 }
 
 interface CarakanHistoryState {

@@ -33,13 +33,22 @@
     children,
     ...rest
   }: Props = $props();
+
+  /** Quiet buttons are flat text; everything else presses like a tile. */
+  const pressable = $derived(variant !== "quiet");
 </script>
 
 {#if href !== undefined && !disabled}
   <a
     {...rest}
     {href}
-    class={["btn", `btn--${variant}`, block && "btn--block", className]}
+    class={[
+      "btn",
+      `btn--${variant}`,
+      pressable && "press",
+      block && "btn--block",
+      className,
+    ]}
   >
     {@render children()}
   </a>
@@ -51,6 +60,7 @@
     class={[
       "btn",
       `btn--${variant}`,
+      pressable && "press",
       block && "btn--block",
       mark && `is-${mark}`,
       className,
@@ -58,10 +68,7 @@
   >
     {@render children()}
     {#if mark}
-      <Icon
-        name={mark === "correct" ? "check" : "circle-x"}
-        class="btn__mark"
-      />
+      <Icon name={mark === "correct" ? "check" : "x"} class="btn__mark" />
     {/if}
   </button>
 {/if}
@@ -75,61 +82,51 @@
     min-height: var(--touch-min);
     min-width: var(--touch-min);
     padding: var(--space-2) var(--space-5);
-    border: 2px solid transparent;
-    border-radius: var(--radius-lg);
+    border: var(--border-width) solid transparent;
     background: transparent;
-    color: var(--color-text);
-    font-weight: var(--weight-bold);
-    font-size: var(--text-md);
+    color: var(--color-ink);
+    font-weight: var(--weight-black);
+    font-size: var(--text-button);
     line-height: var(--leading-snug);
     text-align: center;
     text-decoration: none;
     transition:
-      background-color var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-out);
-  }
-
-  .btn:active:not(:disabled) {
-    transform: translateY(1px);
+      translate var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
   }
 
   .btn:disabled {
     cursor: not-allowed;
-    background: var(--color-surface-sunken);
-    border-color: var(--color-border);
-    color: var(--color-text-muted);
+    background: var(--color-neutral);
+    border-color: var(--color-ink);
+    box-shadow: none;
+    color: var(--color-ink-muted);
   }
 
   .btn--primary {
-    background: var(--color-accent);
-    color: var(--color-on-accent);
-    box-shadow: 0 2px 0 var(--color-accent-pressed);
-  }
-
-  .btn--primary:active:not(:disabled) {
-    background: var(--color-accent-pressed);
-    box-shadow: none;
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: var(--color-on-ink);
+    --press-depth: 0px;
   }
 
   .btn--secondary {
-    background: var(--color-surface-raised);
-    border-color: var(--color-border-strong);
+    background: var(--color-card);
+    border: var(--border);
   }
 
   .btn--danger {
-    background: var(--color-surface-raised);
-    border-color: var(--color-danger);
-    color: var(--color-danger);
-  }
-
-  .btn--danger:active:not(:disabled) {
-    background: var(--color-danger-soft);
+    background: var(--color-card);
+    border: 2px dashed var(--color-stamp);
+    color: var(--color-stamp);
+    --press-depth: 0px;
   }
 
   .btn--quiet {
-    color: var(--color-link);
+    color: var(--color-ink);
     padding-inline: var(--space-3);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
 
   .btn--block {
@@ -137,25 +134,22 @@
   }
 
   .btn--icon {
-    width: var(--touch-min);
+    width: var(--icon-button);
+    height: var(--icon-button);
     padding: 0;
-    border-radius: var(--radius-full);
-    color: var(--color-text);
+    border: var(--border);
+    background: var(--color-paper);
+    color: var(--color-ink);
   }
 
-  .btn--icon:active {
-    background: var(--color-surface-sunken);
-  }
-
-  /* Answer options: full-width, thumb-sized, state carried by icon + border. */
+  /* AnswerTile: card, 2px border, 3px shadow; state carried by fill + icon. */
   .btn--option,
   .btn--aksara-option {
     position: relative;
     width: 100%;
-    min-height: 3.5rem;
-    background: var(--color-surface-raised);
-    border-color: var(--color-border-strong);
-    box-shadow: var(--shadow-slip);
+    min-height: var(--answer-height);
+    background: var(--color-card);
+    border: var(--border);
     font-size: var(--text-lg);
   }
 
@@ -166,8 +160,6 @@
   }
 
   .btn--aksara-option {
-    min-height: 5rem;
-    background: var(--color-surface);
     font-family: var(--font-aksara);
     font-size: var(--aksara-lg);
     font-weight: var(--weight-regular);
@@ -175,26 +167,19 @@
   }
 
   .btn :global(.btn__mark) {
-    margin-inline-start: auto;
-  }
-
-  .btn--aksara-option :global(.btn__mark) {
     position: absolute;
     top: var(--space-2);
     right: var(--space-2);
   }
 
   .btn.is-correct {
-    background: var(--color-success-soft);
-    border-color: var(--color-success);
-    color: var(--color-success);
+    background: var(--color-sage);
+    color: var(--color-ink);
   }
 
   .btn.is-wrong {
-    background: var(--color-danger-soft);
-    border-color: var(--color-danger);
-    border-style: dashed;
-    color: var(--color-danger);
+    background: var(--color-coral);
+    color: var(--color-ink);
   }
 
   .btn--option:disabled:not(.is-correct, .is-wrong),

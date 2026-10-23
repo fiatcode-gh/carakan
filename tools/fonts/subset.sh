@@ -28,3 +28,8 @@ uv run --quiet --with "fonttools[woff]==$FONTTOOLS" python tools/fonts/check_cov
   fonts/source/MPLUSRounded1c-Bold.ttf \
   public/fonts/mplus-rounded-1c-400.woff2 \
   public/fonts/mplus-rounded-1c-700.woff2
+
+uv run --quiet --with "fonttools[woff]==$FONTTOOLS" python tools/fonts/display_coverage.py \
+  src/styles/fonts.css \
+  public \
+  src/ui/display-coverage.ts

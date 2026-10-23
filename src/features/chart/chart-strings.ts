@@ -16,8 +16,10 @@ export function chartStrings(
     rekan: t("sectionRekan"),
     angka: t("sectionAngka"),
     pada: t("sectionPada"),
+    pasangan: t("pasanganLabel"),
     murdaHint: t("murdaHint"),
     writtenAs: (form) => t("writtenAs", { form }),
     longFormName: (name) => t("longFormName", { name }),
+    pasanganName: (name) => t("breakdownPasangan", { name }),
   };
 }

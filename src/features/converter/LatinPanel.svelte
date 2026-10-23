@@ -1,16 +1,17 @@
 <script lang="ts">
+  import { tick } from "svelte";
+  import { navigate } from "../../app/router.ts";
   import { getServices } from "../../app/services.ts";
   import { getI18n } from "../../l10n/context.ts";
   import AksaraText from "../../ui/AksaraText.svelte";
-  import Button from "../../ui/Button.svelte";
   import Chip from "../../ui/Chip.svelte";
   import Icon from "../../ui/Icon.svelte";
   import TextField from "../../ui/TextField.svelte";
   import ChartDetailSheet from "../chart/ChartDetailSheet.svelte";
   import {
-    buildChartSections,
+    buildChartTabs,
     findChartEntry,
-    type ChartEntry,
+    type ChartLocation,
   } from "../chart/chart-catalog.ts";
   import { chartStrings } from "../chart/chart-strings.ts";
   import ClusterBreakdown from "./ClusterBreakdown.svelte";
@@ -20,19 +21,27 @@
   import { ambiguityTitleKey } from "./engine-messages.ts";
   import ErrorNotice from "./ErrorNotice.svelte";
   import { LatinToAksaraConverter } from "./latin-to-aksara-state.ts";
+  import SoundButton from "../../ui/SoundButton.svelte";
   import ResultCard from "./ResultCard.svelte";
   import { markSpans } from "./source-echo.ts";
 
   let { oncopied }: { oncopied: () => void } = $props();
 
   const { t } = getI18n();
-  const { content } = getServices();
+  const { content, clips } = getServices();
   const partTable = ClusterPartTable.build(content);
   // The page keys this panel on direction: a fresh converter, empty input (P-U02).
   const converter = new LatinToAksaraConverter(content.ruleset.id);
   const result = converter.state;
   let value = $state("");
-  let chartEntry = $state<ChartEntry | null>(null);
+  let chartLocation = $state<ChartLocation | null>(null);
+
+  /** The modal sheet must be closed before the shell goes inert for the pushed page. */
+  async function trace(glyphId: string): Promise<void> {
+    chartLocation = null;
+    await tick();
+    navigate({ kind: "trace", glyphId });
+  }
 
   const detail = $derived.by(() => {
     const state = $result;
@@ -69,8 +78,8 @@
   }
 
   function openChart(id: string): void {
-    chartEntry = findChartEntry(
-      buildChartSections({
+    chartLocation = findChartEntry(
+      buildChartTabs({
         aksara: content.aksara,
         sandhangan: content.sandhangan,
         strings: chartStrings($t),
@@ -91,14 +100,16 @@
 <div class="panel">
   <TextField
     label={$t("inputHintLatin")}
+    labelStyle="hand"
     multiline
+    rows={2}
     bind:value
     oninput={onInput}
     invalid={$result.kind === "error"}
   />
 
   {#if detail}
-    <p class="source-echo">
+    <p class="source-echo latin">
       <span class="source-echo__label">{$t("sourceEchoLabel")}</span>
       {#each detail.echoParts as part, index (index)}
         {#if part.marked}<mark>{part.text}</mark>{:else}{part.text}{/if}
@@ -118,14 +129,14 @@
     <ResultCard label={$t(ambiguityTitleKey($result.reason))}>
       <div class="chips">
         {#each $result.candidates as candidate, index (index)}
-          <Chip variant="choice" onclick={() => converter.choose(index)}>
-            <AksaraText text={candidate.output} size="sm" />
+          <Chip onclick={() => converter.choose(index)}>
+            <AksaraText text={candidate.output} size="md" />
           </Chip>
         {/each}
       </div>
     </ResultCard>
   {:else if $result.kind === "idle" && detail}
-    <ResultCard label={$t("outputLabel")}>
+    <ResultCard label={$t("outputLabel")} tone="coral" tape>
       <ClusterResult
         output={$result.output}
         clusters={$result.clusters}
@@ -133,9 +144,17 @@
         selected={$result.selected}
         onselect={(i) => converter.select(i)}
       />
-      <Button variant="primary" block onclick={copy}>
-        <Icon name="copy" />{$t("copyButton")}
-      </Button>
+      {#snippet actions()}
+        <button type="button" onclick={copy}>
+          <Icon name="copy" />{$t("copyButton")}
+        </button>
+        <SoundButton
+          player={clips}
+          clipKey={$result.input.trim()}
+          label={$t("playSound", { reading: $result.input.trim() })}
+          text={$t("listenButton")}
+        />
+      {/snippet}
     </ResultCard>
     {#if detail.selection}
       <ClusterBreakdown
@@ -154,11 +173,12 @@
   {/if}
 </div>
 
-{#if chartEntry}
+{#if chartLocation}
   <ChartDetailSheet
-    entry={chartEntry}
-    examples={content.chartExamples.get(chartEntry.id) ?? []}
-    onclose={() => (chartEntry = null)}
+    location={chartLocation}
+    examples={content.chartExamples.get(chartLocation.entry.id) ?? []}
+    onclose={() => (chartLocation = null)}
+    ontrace={(glyphId) => void trace(glyphId)}
   />
 {/if}
 
@@ -176,8 +196,8 @@
 
   .source-echo {
     padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
-    background: var(--color-surface-raised);
+    border: var(--border);
+    background: var(--color-card);
     font-size: var(--text-lg);
     overflow-wrap: anywhere;
   }
@@ -185,14 +205,13 @@
   .source-echo__label {
     display: block;
     font-size: var(--text-sm);
-    color: var(--color-text-muted);
+    color: var(--color-ink-muted);
   }
 
   .source-echo mark {
     padding-inline: 2px;
-    border-radius: 4px;
-    background: var(--color-reward-soft);
-    color: var(--color-text);
+    background: var(--color-butter);
+    color: var(--color-ink);
     font-weight: var(--weight-bold);
     text-decoration: underline;
     text-decoration-thickness: 3px;

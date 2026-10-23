@@ -23,7 +23,7 @@
     {$t(localized.key, localized.params)}
   </p>
   {#if echo}
-    <p class="notice__echo">{@render echo()}</p>
+    <p class="notice__echo latin">{@render echo()}</p>
   {/if}
 </div>
 
@@ -34,10 +34,9 @@
     gap: var(--space-3);
     align-items: start;
     padding: var(--space-4);
-    border: 2px dashed var(--color-danger);
-    border-radius: var(--radius-lg);
-    background: var(--color-danger-soft);
-    color: var(--color-danger);
+    border: 2px dashed var(--color-stamp);
+    background: var(--color-card);
+    color: var(--color-stamp);
   }
 
   .notice__text {
@@ -48,17 +47,19 @@
   .notice__echo {
     grid-column: 1 / -1;
     padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
-    background: var(--color-surface-raised);
-    color: var(--color-text);
+    border: var(--border);
+    background: var(--color-card);
+    color: var(--color-ink);
     font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
     overflow-wrap: anywhere;
   }
 
   .notice__echo :global(mark) {
     padding-inline: 2px;
-    border-radius: 4px;
-    background: var(--color-danger);
-    color: var(--color-on-accent);
+    background: var(--color-butter);
+    color: var(--color-ink);
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
   }
 </style>

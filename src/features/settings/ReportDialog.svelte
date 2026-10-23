@@ -21,7 +21,7 @@
 <Sheet title={$t("reportButton")} {onclose}>
   <TextField
     label={$t("reportHint")}
-    hideLabel
+    labelStyle="default"
     placeholder={$t("reportHint")}
     multiline
     rows={6}
@@ -31,14 +31,14 @@
     <p class="failure" role="alert">{$t("reportCopyFailed")}</p>
   {/if}
   {#snippet footer()}
-    <Button variant="quiet" onclick={onclose}>{$t("cancelButton")}</Button>
+    <Button variant="secondary" onclick={onclose}>{$t("cancelButton")}</Button>
     <Button variant="primary" onclick={oncopy}>{$t("copyReportButton")}</Button>
   {/snippet}
 </Sheet>
 
 <style>
   .failure {
-    color: var(--color-danger);
+    color: var(--color-stamp);
     font-weight: var(--weight-bold);
     line-height: var(--leading-snug);
   }

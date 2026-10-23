@@ -24,7 +24,7 @@
   const tabs = $derived([
     { id: "ladder", label: $t("navLadder"), icon: "book-open" },
     { id: "chart", label: $t("navChart"), icon: "layout-grid" },
-    { id: "review", label: $t("navReview"), icon: "repeat" },
+    { id: "review", label: $t("navReview"), icon: "refresh-cw" },
     { id: "converter", label: $t("navConverter"), icon: "arrow-left-right" },
   ] as const);
 </script>

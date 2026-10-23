@@ -2,18 +2,26 @@
   import { back } from "../../app/router.ts";
   import { getServices } from "../../app/services.ts";
   import { getI18n } from "../../l10n/context.ts";
+  import AksaraText from "../../ui/AksaraText.svelte";
   import Button from "../../ui/Button.svelte";
-  import Chip from "../../ui/Chip.svelte";
-  import Flashcard from "../../ui/Flashcard.svelte";
+  import HandNote from "../../ui/HandNote.svelte";
   import Icon from "../../ui/Icon.svelte";
-  import OrnamentDivider from "../../ui/OrnamentDivider.svelte";
-  import Slip from "../../ui/Slip.svelte";
+  import IconButton from "../../ui/IconButton.svelte";
+  import PrimaryBar from "../../ui/PrimaryBar.svelte";
+  import Reading from "../../ui/Reading.svelte";
+  import SoundButton from "../../ui/SoundButton.svelte";
+  import Surface from "../../ui/Surface.svelte";
+  import Tape from "../../ui/Tape.svelte";
+  import TracePractice from "../tracing/TracePractice.svelte";
+  import QuizStep from "./QuizStep.svelte";
+  import { accentVar } from "../../ui/accent.ts";
+  import { splitUnitName, unitAccent } from "./unit-display.ts";
   import type { LessonSession } from "./lesson-session.ts";
 
   let { session }: { session: LessonSession } = $props();
 
-  const { t } = getI18n();
-  const { glyphInfo } = getServices();
+  const { t, locale } = getI18n();
+  const { glyphInfo, content, clips } = getServices();
   const lesson = $derived(session.state);
   const current = $derived($lesson);
   const failedStore = $derived(session.failed);
@@ -22,11 +30,13 @@
   const viewKey = $derived(
     current.kind === "meet"
       ? `meet-${current.index}`
-      : current.kind === "question"
-        ? `question-${current.number}`
-        : current.kind === "feedback"
-          ? `feedback-${current.number}`
-          : current.kind,
+      : current.kind === "trace"
+        ? `trace-${current.index}`
+        : current.kind === "question"
+          ? `question-${current.number}`
+          : current.kind === "feedback"
+            ? `feedback-${current.number}`
+            : current.kind,
   );
 
   // Every step re-creates the view, destroying the button just activated, so
@@ -43,16 +53,8 @@
     lessonEl?.querySelector<HTMLElement>("[data-autofocus]")?.focus();
   });
 
-  function promptChar(glyphId: string): string {
-    return glyphInfo.byId.get(glyphId)?.char ?? "";
-  }
-
-  function promptName(glyphId: string): string {
-    return glyphInfo.byId.get(glyphId)?.name ?? "";
-  }
-
-  function promptPujl(glyphId: string): string {
-    return glyphInfo.byId.get(glyphId)?.pujl ?? "";
+  function accentOf(unitId: string) {
+    return unitAccent(content.units.findIndex((u) => u.id === unitId));
   }
 </script>
 
@@ -60,7 +62,7 @@
   <div class="lesson" bind:this={lessonEl}>
     {#if failed}
       <div class="lesson__failure" role="alert">
-        <Icon name="hard-drive" />
+        <Icon name="triangle-alert" />
         <p>{$t("storageErrorTitle")}</p>
         <Button variant="secondary" onclick={() => void session.retry()}>
           <Icon name="refresh-cw" />{$t("retryButton")}
@@ -68,133 +70,141 @@
       </div>
     {/if}
     {#if current.kind === "meet"}
-      <div class="lesson__body">
-        <p class="lesson__counter">
-          <Chip variant="count">{current.index + 1}/{current.total}</Chip>
-        </p>
-        <Flashcard glyph={current.glyph.char} name={current.glyph.name}>
-          {#if current.glyph.pujl !== ""}
-            <Chip>{$t("soundLabel")} · {current.glyph.pujl}</Chip>
-          {/if}
-        </Flashcard>
-      </div>
-      <div class="lesson__foot">
-        <Button
-          variant="primary"
-          block
-          data-autofocus
-          onclick={() => void session.meetNext()}
-        >
-          {$t("continueButton")}
-        </Button>
-      </div>
-    {:else if current.kind === "question" || current.kind === "feedback"}
-      {@const { exercise, number, total } = current}
-      {@const options =
-        exercise.kind === "wordReading"
-          ? exercise.glossOptions
-          : exercise.options}
-      {@const aksaraOptions = exercise.kind === "soundToGlyph"}
-      <div class="lesson__body">
-        <div class="stack stack--tight">
-          <p class="kicker">{$t("questionProgress", { number, total })}</p>
-          <div
-            class="progress"
-            role="progressbar"
-            aria-valuemin="0"
-            aria-valuemax={total}
-            aria-valuenow={number}
-            aria-label={$t("questionProgress", { number, total })}
-            style:--value="{(number / total) * 100}%"
-          >
-            <div class="progress__bar"></div>
-          </div>
-        </div>
-        {#if current.kind === "feedback"}
-          <div
-            class={[
-              "feedback",
-              current.correct ? "feedback--correct" : "feedback--wrong",
-            ]}
-            role="status"
-            tabindex="-1"
-            data-autofocus
-          >
-            <Icon name={current.correct ? "circle-check" : "circle-x"} />
-            <span
-              >{current.correct ? $t("answerCorrect") : $t("answerWrong")}</span
-            >
-          </div>
-        {/if}
-        {#if exercise.kind === "glyphToSound"}
-          <Flashcard
-            compact
-            glyph={promptChar(exercise.glyphId)}
-            label={promptName(exercise.glyphId)}
+      {@const { unit, glyph, index, total } = current}
+      {@const note = content.shapeNotes.get(glyph.id)}
+      <div class="meet">
+        <header class={["meet__head", total > 5 && "meet__head--wrap"]}>
+          <IconButton
+            icon="chevron-left"
+            label={$t("backButton")}
+            tone="paper"
+            onclick={back}
           />
-        {:else if exercise.kind === "soundToGlyph"}
-          <Slip raised class="prompt">
-            <p class="prompt__sound">{promptPujl(exercise.glyphId)}</p>
-          </Slip>
-        {:else}
-          <Flashcard compact glyph={exercise.word.aksara} />
-        {/if}
-        <ul class={["options", aksaraOptions && "options--grid"]}>
-          {#each options as option, index}
-            <li>
-              {#if current.kind === "question"}
-                <Button
-                  variant={aksaraOptions ? "aksara-option" : "option"}
-                  data-autofocus={index === 0 ? "" : undefined}
-                  onclick={() => void session.answer(index)}
-                >
-                  {option}
-                </Button>
-              {:else}
-                <Button
-                  variant={aksaraOptions ? "aksara-option" : "option"}
-                  disabled
-                  mark={index === exercise.answerIndex
-                    ? "correct"
-                    : index === current.selectedIndex
-                      ? "wrong"
-                      : undefined}
-                >
-                  {option}
-                </Button>
-              {/if}
-            </li>
-          {/each}
-        </ul>
-      </div>
-      {#if current.kind === "feedback"}
-        <div class="lesson__foot">
-          <Button
-            variant="primary"
-            block
-            onclick={() => void session.continueAfterFeedback()}
+          <h2 class="eyebrow meet__eyebrow">
+            {$t("meetEyebrow", {
+              unit: splitUnitName(unit.name).head ?? unit.name,
+            })}
+          </h2>
+          <ol
+            class="meet-progress"
+            aria-hidden="true"
+            style:--accent-chip={accentVar(accentOf(unit.id))}
           >
-            {$t("continueButton")}
-          </Button>
-        </div>
-      {/if}
-    {:else if current.kind === "done"}
-      <div class="lesson__body lesson__body--done">
-        <div class="trophy" aria-hidden="true">
-          <Icon name="trophy" />
-        </div>
-        <h2 class="done__title" tabindex="-1" data-autofocus>
-          {$t("lessonDone", {
-            correct: current.correct,
-            total: current.total,
-          })}
-        </h2>
-        <OrnamentDivider />
+            {#each unit.glyphs as glyphId, position}
+              <li
+                class="chip"
+                data-state={position < index
+                  ? "done"
+                  : position === index
+                    ? "current"
+                    : "upcoming"}
+              >
+                {#if position < index}
+                  <Icon name="check" />
+                {:else}
+                  <AksaraText
+                    text={glyphInfo.byId.get(glyphId)?.char ?? ""}
+                    size="sm"
+                  />
+                {/if}
+              </li>
+            {/each}
+          </ol>
+          <span class="visually-hidden"
+            >{$t("meetProgressLabel", { number: index + 1, total })}</span
+          >
+        </header>
+
+        <Surface tone={accentOf(unit.id)} shadow="hero" class="meet__card">
+          <span class="meet__tape"><Tape rotate={-3} /></span>
+          <div
+            class="meet__glyph"
+            role="img"
+            aria-label={$t("aksaraName", {
+              reading: glyph.pujl || glyph.name,
+            })}
+          >
+            <AksaraText text={glyph.char} size="hero" aria-hidden="true" />
+          </div>
+          <div class="meet__foot">
+            <div>
+              <p class="eyebrow meet__label">{$t("readingLabel")}</p>
+              <p class="meet__reading">
+                <Reading text={glyph.pujl || glyph.name} />
+              </p>
+            </div>
+            <SoundButton
+              player={clips}
+              clipKey={glyph.pujl || glyph.name}
+              label={$t("playSound", { reading: glyph.pujl || glyph.name })}
+              size="lg"
+            />
+          </div>
+        </Surface>
+
+        {#if note !== undefined}
+          <div class="meet__note">
+            <Icon name="lightbulb" />
+            <HandNote>{note[$locale]}</HandNote>
+          </div>
+        {/if}
+
+        <PrimaryBar
+          primary={{
+            label: $t(
+              current.traceable ? "tryWritingButton" : "continueButton",
+            ),
+            onclick: () => void session.meetNext(),
+            autofocus: true,
+          }}
+        />
       </div>
-      <div class="lesson__foot">
-        <Button variant="primary" block onclick={back}>
-          {$t("backButton")}
-        </Button>
+    {:else if current.kind === "trace"}
+      <TracePractice
+        glyph={current.glyph}
+        accent={accentOf(current.unit.id)}
+        backIcon="chevron-left"
+        onback={back}
+        onfinish={() => void session.finishTrace()}
+      >
+        {#snippet sound()}
+          <SoundButton
+            player={clips}
+            clipKey={current.glyph.pujl || current.glyph.name}
+            label={$t("playSound", {
+              reading: current.glyph.pujl || current.glyph.name,
+            })}
+            size="lg"
+          />
+        {/snippet}
+      </TracePractice>
+    {:else if current.kind === "question" || current.kind === "feedback"}
+      <QuizStep
+        exercise={current.exercise}
+        number={current.number}
+        total={current.total}
+        phase={current.kind}
+        selectedIndex={current.kind === "feedback"
+          ? current.selectedIndex
+          : undefined}
+        correct={current.kind === "feedback" ? current.correct : undefined}
+        onanswer={(index) => void session.answer(index)}
+        oncontinue={() => void session.continueAfterFeedback()}
+        onclose={back}
+      />
+    {:else if current.kind === "done"}
+      <div class="lesson-done">
+        <div class="lesson-done__body">
+          <Surface tone="sage" shadow="hero" class="lesson-done__card">
+            <h2 class="lesson-done__title" tabindex="-1" data-autofocus>
+              {$t("lessonDone", {
+                correct: current.correct,
+                total: current.total,
+              })}
+            </h2>
+          </Surface>
+        </div>
+        <PrimaryBar primary={{ label: $t("backButton"), onclick: back }} />
       </div>
     {/if}
   </div>
@@ -204,133 +214,197 @@
   .lesson {
     display: flex;
     flex-direction: column;
-    gap: var(--space-5);
-    min-height: calc(100dvh - var(--bar-height) - var(--space-9));
     animation: rise var(--dur-base) var(--ease-out) backwards;
-  }
-
-  .lesson__body {
-    flex: 1;
-    display: grid;
-    gap: var(--space-5);
-    align-content: start;
-  }
-
-  .lesson__body--done {
-    align-content: center;
-    justify-items: center;
-    text-align: center;
   }
 
   .lesson__failure {
     display: grid;
     justify-items: start;
     gap: var(--space-3);
+    margin-block-end: var(--space-4);
     padding: var(--space-4);
-    border: 2px dashed var(--color-danger);
-    border-radius: var(--radius-lg);
-    background: var(--color-danger-soft);
-    color: var(--color-danger);
+    border: 2px dashed var(--color-stamp);
+    background: var(--color-card);
+    color: var(--color-stamp);
     font-weight: var(--weight-bold);
     line-height: var(--leading-snug);
   }
 
-  .lesson__counter {
-    justify-self: center;
-  }
-
-  .lesson__foot {
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
-    padding: var(--space-4) 0;
-    background: linear-gradient(to bottom, transparent, var(--color-bg) 28%);
-  }
-
-  .progress {
-    height: 0.5rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-full);
-    background: var(--color-surface-sunken);
-    overflow: hidden;
-  }
-
-  .progress__bar {
-    width: var(--value, 0%);
-    height: 100%;
-    border-radius: var(--radius-full);
-    background: var(--color-accent);
-  }
-
-  .feedback {
+  /* The meet, quiz and done screens bleed out of the page padding so the
+     primary bar spans the column. */
+  .meet,
+  .lesson-done {
     display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    margin: calc(-1 * var(--space-4)) calc(-1 * var(--gutter))
+      calc(-1 * var(--space-9));
+  }
+
+  .meet__head {
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-4);
-    border: 2px solid currentcolor;
-    border-radius: var(--radius-lg);
-    font-size: var(--text-lg);
-    font-weight: var(--weight-bold);
-    line-height: var(--leading-snug);
+    gap: 12px;
+    padding: var(--gutter);
   }
 
-  .feedback--correct {
-    background: var(--color-success-soft);
-    color: var(--color-success);
+  .meet__eyebrow {
+    flex: 1;
+    margin: 0;
   }
 
-  .feedback--wrong {
-    border-style: dashed;
-    background: var(--color-danger-soft);
-    color: var(--color-danger);
-  }
-
-  .prompt__sound {
-    font-size: var(--text-2xl);
-    font-weight: var(--weight-bold);
-    text-align: center;
-  }
-
-  .options {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-3);
+  .meet-progress {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  .options--grid {
-    grid-template-columns: 1fr 1fr;
+  .meet__head--wrap .meet-progress {
+    flex-basis: 100%;
   }
 
-  .lesson__body--done :global(.ornament) {
-    width: min(100%, 14rem);
+  .chip {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    box-sizing: border-box;
+    border: var(--border);
+    background: var(--accent-chip, var(--color-coral));
+  }
+
+  /* Done: card fill and a check. Current: accent fill, lifted by a shadow.
+     Upcoming: dashed. Shape and mark carry the state, not colour alone. */
+  .chip[data-state="done"] {
+    background: var(--color-card);
+  }
+
+  .chip[data-state="current"] {
+    box-shadow: var(--shadow-tile);
+  }
+
+  .chip[data-state="upcoming"] {
+    border: var(--border-dashed);
+    background: var(--color-card);
+    color: var(--color-ink-subtle);
+  }
+
+  .chip :global(.icon) {
+    width: 1.125rem;
+    height: 1.125rem;
+    stroke-width: 3;
+  }
+
+  .chip :global(.aksara) {
+    font-size: 17px;
+    line-height: 1;
+    padding-block-end: 0.35em;
+  }
+
+  .meet :global(.meet__card) {
+    display: flex;
+    flex: 0 1 460px;
+    flex-direction: column;
+    margin: 6px var(--gutter) 0;
+    padding: 0;
+    min-height: 20rem;
+  }
+
+  .meet__tape {
+    position: absolute;
+    top: -8px;
+    inset-inline-start: calc(50% - 42px);
+    z-index: 1;
+  }
+
+  .meet__glyph {
+    display: grid;
+    flex: 1;
+    place-items: center;
+    padding-block-start: var(--space-4);
+  }
+
+  .meet__glyph :global(.aksara) {
+    font-size: clamp(9rem, 26dvh, var(--aksara-hero));
+    line-height: 1.5;
+  }
+
+  .meet__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-height: 120px;
+    padding: 0 var(--gutter);
+    border-top: var(--border);
+    background: var(--color-card);
+  }
+
+  .meet__label,
+  .meet__reading {
+    margin: 0;
+  }
+
+  .meet__label {
+    color: var(--color-ink-muted);
+  }
+
+  .meet__reading {
+    font-size: var(--text-syllable-xl);
+    font-weight: var(--weight-black);
+    line-height: 0.9;
+    letter-spacing: var(--tracking-title);
+  }
+
+  .meet__note {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 24px var(--gutter) 0;
+    color: var(--color-hand);
+  }
+
+  .meet__note :global(.icon) {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    margin-top: 2px;
+  }
+
+  .meet__note :global(.hand) {
+    font-size: 21px;
+    line-height: 1.2;
+  }
+
+  .meet > :global(.bar),
+  .lesson-done > :global(.bar) {
+    margin-top: auto;
+  }
+
+  .lesson-done__body {
+    display: grid;
+    flex: 1;
+    place-items: center;
+    padding: var(--gutter);
+  }
+
+  .lesson-done :global(.lesson-done__card) {
+    width: 100%;
+    padding: var(--space-8) var(--space-5);
+    text-align: center;
   }
 
   /* The heading takes focus when the lesson ends; it is not a control. */
-  .done__title:focus {
+  .lesson-done__title:focus {
     outline: none;
   }
 
-  .done__title {
+  .lesson-done__title {
+    margin: 0;
     font-size: var(--text-xl);
-  }
-
-  .trophy {
-    display: grid;
-    place-items: center;
-    width: 7rem;
-    height: 7rem;
-    border: 3px solid var(--color-reward);
-    border-radius: var(--radius-full);
-    background: var(--color-reward-fill);
-    box-shadow: 0 0 0 8px var(--color-reward-soft);
-    color: var(--color-text);
-  }
-
-  .trophy :global(.icon) {
-    width: 3.5rem;
-    height: 3.5rem;
   }
 </style>

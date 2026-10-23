@@ -13,11 +13,35 @@
     label: string;
     icon: IconName;
     disabled?: boolean;
+    /** Fill behind the glyph: the page paper, a card or a butter accent. */
+    tone?: "paper" | "card" | "butter";
   }
 
-  let { label, icon, ...rest }: Props = $props();
+  let {
+    label,
+    icon,
+    tone = "paper",
+    class: className,
+    ...rest
+  }: Props = $props();
 </script>
 
-<Button {...rest} variant="icon" aria-label={label} title={label}>
+<Button
+  {...rest}
+  variant="icon"
+  class={["icon-button", `icon-button--${tone}`, className]}
+  aria-label={label}
+  title={label}
+>
   <Icon name={icon} />
 </Button>
+
+<style>
+  :global(.icon-button--card) {
+    background: var(--color-card);
+  }
+
+  :global(.icon-button--butter) {
+    background: var(--color-butter);
+  }
+</style>

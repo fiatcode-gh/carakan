@@ -93,3 +93,20 @@ test("[P-R08] grade emits changes", async () => {
   await queue.grade("ha", "good", now);
   expect(emitted).toBe(1);
 });
+
+test("[P-R18] allStates returns every row, due or not, unchanged", async () => {
+  const { queue } = await setup();
+  await queue.enqueue("ha", now);
+  await queue.enqueue("na", now);
+  await queue.grade("na", "good", now);
+  const states = await queue.allStates();
+  expect(states.map((s) => s.itemId).sort()).toEqual(["ha", "na"]);
+  expect(states.find((s) => s.itemId === "na")).toEqual({
+    itemId: "na",
+    intervalDays: 1,
+    ease: 2.5,
+    repetitions: 1,
+    dueAt: now + DAY,
+    lastReviewedAt: now,
+  });
+});

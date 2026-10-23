@@ -9,3 +9,5 @@ fonts/
 test-results/
 playwright-report/
 .flow/
+docs/design/buku-poster/
+src/ui/display-coverage.ts

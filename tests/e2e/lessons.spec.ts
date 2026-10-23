@@ -2,7 +2,6 @@ import type { Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { Unit } from "../../src/content/unit.ts";
 import {
-  DB_NAME,
   MISTAKE_LOGS,
   SRS_ITEMS,
   UNIT_COMPLETIONS,
@@ -11,8 +10,15 @@ import {
   type UnitCompletionRow,
 } from "../../src/core/db/schema.ts";
 import { kajRulesetId } from "../../src/engine/index.ts";
-import { generateExercises } from "../../src/features/lessons/exercise-generator.ts";
-import { ladderPreview } from "../../src/features/lessons/ladder.ts";
+import {
+  generateExercises,
+  type Exercise,
+} from "../../src/features/lessons/exercise-generator.ts";
+import { groupByGlyph } from "../../src/features/lessons/lesson-session.ts";
+import {
+  splitUnitName,
+  unitWatermark,
+} from "../../src/features/lessons/unit-display.ts";
 import {
   expectAccessible,
   expectNoHorizontalOverflow,
@@ -20,12 +26,18 @@ import {
 } from "./support/a11y.ts";
 import { gotoRoute } from "./support/app.ts";
 import { expect, test } from "./support/fixtures.ts";
-import { answerCurrentQuestion, writeRows } from "./support/lesson.ts";
 import {
-  createSolver,
-  type QuestionPrompt,
-  type Solver,
-} from "./support/solver.ts";
+  advanceToQuestion,
+  answerCurrentQuestion,
+  completeLesson,
+  continueButton,
+  playLesson,
+  readQuestion,
+  readStore,
+  unitButton,
+  writeRows,
+} from "./support/lesson.ts";
+import { createSolver, type Solver } from "./support/solver.ts";
 
 const messages = (locale: "id" | "en") =>
   JSON.parse(readFileSync(`src/l10n/${locale}.json`, "utf8")) as Record<
@@ -55,104 +67,80 @@ const wuluSuku = (): Unit => solver.content.units[1]!;
 const shoot = (page: Page, name: string) =>
   page.screenshot({ path: `test-results/belajar-${name}.png` });
 
-interface Question {
-  number: number;
-  total: number;
-  prompt: QuestionPrompt;
-  options: string[];
-}
-
-async function readQuestion(page: Page): Promise<Question> {
-  const options = page.locator(".options button:not([disabled])");
-  await options.first().waitFor();
-  const bar = page.getByRole("progressbar");
-  const number = Number(await bar.getAttribute("aria-valuenow"));
-  const total = Number(await bar.getAttribute("aria-valuemax"));
-  const sound = page.locator(".prompt__sound");
-  const prompt: QuestionPrompt =
-    (await sound.count()) > 0
-      ? { sound: ((await sound.textContent()) ?? "").trim() }
-      : {
-          glyph: (
-            (await page.locator(".flashcard .aksara").textContent()) ?? ""
-          ).trim(),
-        };
-  const texts = (await options.allTextContents()).map((s) => s.trim());
-  return { number, total, prompt, options: texts };
-}
-
-const continueButton = (page: Page) =>
-  page.getByRole("button", { name: id["continueButton"]! });
-
-async function walkMeet(page: Page, glyphs: number): Promise<void> {
-  for (let i = 0; i < glyphs; i++) {
-    await expect(page.locator(".lesson .chip--count")).toHaveText(
-      `${i + 1}/${glyphs}`,
-    );
-    await continueButton(page).click();
-  }
-}
+const pinSeed = async (
+  page: Page,
+  target: Unit,
+  accept: (plan: Exercise[]) => boolean,
+): Promise<void> => {
+  const pinned = Array.from({ length: 500 }, (_, i) => i / 500).find((r) =>
+    accept(
+      groupByGlyph(
+        generateExercises({
+          unit: target,
+          taughtGlyphs: new Set(),
+          corpus: solver.content.words,
+          seed: Math.floor(r * 0x7fffffff),
+          glyphInfo: solver.table,
+        }),
+        target.glyphs,
+      ),
+    ),
+  );
+  expect(pinned).toBeDefined();
+  await page.addInitScript((value) => {
+    Math.random = () => value;
+  }, pinned!);
+};
 
 async function openLesson(page: Page, unitId: string): Promise<void> {
   await gotoRoute(page, `#/lesson/${unitId}`);
   await expect(page.locator(".lesson")).toBeVisible();
 }
 
-/** Plays a whole lesson, right answers only, ending on the done view. */
-async function completeLesson(page: Page, unitId: string): Promise<void> {
-  await openLesson(page, unitId);
-  await walkMeet(page, unit(unitId).glyphs.length);
-  for (;;) {
-    const q = await readQuestion(page);
-    const index = solver.correctIndex(q.prompt, q.options);
-    await page.locator(".options button").nth(index).click();
-    await page.locator(".feedback").waitFor();
-    await continueButton(page).click();
-    if (q.number === q.total) break;
-  }
-  await expect(page.locator(".trophy")).toBeVisible();
-}
-
-async function readStore<T>(page: Page, store: string): Promise<T[]> {
-  return page.evaluate(
-    async ({ name, storeName }) => {
-      const db = await new Promise<IDBDatabase>((resolve, reject) => {
-        const request = indexedDB.open(name);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-      return new Promise<unknown[]>((resolve, reject) => {
-        const request = db
-          .transaction(storeName)
-          .objectStore(storeName)
-          .getAll();
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-    },
-    { name: DB_NAME, storeName: store },
-  ) as Promise<T[]>;
-}
-
-const row = (page: Page, n: number) => page.locator(".ladder > li").nth(n - 1);
 const rowButton = (page: Page, n: number) =>
-  row(page, n).locator("button.unit");
+  unitButton(page, solver.content.units[n - 1]!.id);
+const tiles = (page: Page) => page.locator(".ladder ul button[data-unit]");
 
-test("[P-B01] the ladder lists the 9 units in order with numbered medallions and names", async ({
+test("[P-B01] the hero is unit 1 and the tiles list units 2-9 in order, numbered and locked", async ({
   page,
 }) => {
   await gotoRoute(page, "");
   await expect(
-    page.getByRole("heading", { level: 1, name: id["navLadder"]! }),
+    page.getByRole("heading", { level: 1, name: id["ladderTitle"]! }),
   ).toBeVisible();
-  const rows = page.locator(".ladder > li");
-  await expect(rows).toHaveCount(solver.content.units.length);
-  expect(solver.content.units).toHaveLength(9);
-  for (const [i, u] of solver.content.units.entries()) {
-    await expect(row(page, i + 1).locator(".medallion")).toContainText(
-      String(i + 1),
+  const units = solver.content.units;
+  expect(units).toHaveLength(9);
+
+  const hero = page.locator(".hero");
+  await expect(hero).toHaveCount(1);
+  await expect(hero.locator(".eyebrow")).toHaveText("01 — Kelompok 1");
+  await expect(hero.locator("button[data-unit]")).toHaveAttribute(
+    "data-unit",
+    units[0]!.id,
+  );
+  await expect(hero.getByRole("button")).toHaveAccessibleName(
+    `${id["startLessonButton"]!} ${units[0]!.name}`,
+  );
+
+  await expect(hero.getByRole("heading", { level: 2 })).toHaveText(
+    splitUnitName(units[0]!.name).tail,
+  );
+  await expect(
+    page.getByRole("heading", { level: 2, name: id["ladderNext"]! }),
+  ).toBeVisible();
+  const list = tiles(page);
+  await expect(list).toHaveCount(units.length - 1);
+  for (const [i, u] of units.slice(1).entries()) {
+    const tile = list.nth(i);
+    await expect(tile).toHaveAttribute("data-unit", u.id);
+    await expect(tile).toHaveAttribute("data-status", "locked");
+    await expect(tile.locator(".tile__number")).toHaveText(
+      String(i + 2).padStart(2, "0"),
     );
-    await expect(row(page, i + 1).locator(".unit__name")).toContainText(u.name);
+    await expect(tile.locator("svg")).toHaveAttribute("data-icon", "lock");
+    await expect(tile).toHaveAccessibleName(
+      `${i + 2}. ${u.name}, ${id["unitStatusLocked"]!}`,
+    );
   }
   await expectAccessible(page);
   await expectTouchTargets(page);
@@ -160,30 +148,46 @@ test("[P-B01] the ladder lists the 9 units in order with numbered medallions and
   await shoot(page, "ladder");
 });
 
-test("[P-B02][P-S07] each unit previews its first five glyphs in Jejeg", async ({
+test("[P-B01] the note counts the base letters learned: 0 / 20 fresh, 3 / 20 after unit 1", async ({
+  page,
+}) => {
+  await gotoRoute(page, "");
+  const note = page.locator(".top-bar__note:visible");
+  await expect(note).toHaveText("0 / 20 aksara");
+  await writeRows(page, UNIT_COMPLETIONS, [
+    { unitId: first().id, completedAt: 1 },
+  ]);
+  await page.reload();
+  await page.locator('#app[data-boot="ready"]').waitFor();
+  await expect(note).toHaveText("3 / 20 aksara");
+});
+
+test("[P-B02][P-S07] each tile and the hero show their first glyph as an aria-hidden Jejeg watermark", async ({
   page,
 }) => {
   await gotoRoute(page, "");
   for (const [i, u] of solver.content.units.entries()) {
-    const expected = ladderPreview(u, solver.table);
+    const expected = unitWatermark(u, solver.table);
     expect(expected).not.toBe("");
-    await expect(row(page, i + 1).locator(".aksara")).toHaveText(expected);
+    const mark =
+      i === 0
+        ? page.locator(".hero .aksara")
+        : rowButton(page, i + 1).locator(".aksara");
+    await expect(mark).toHaveText(expected);
+    await expect(mark).toHaveAttribute("aria-hidden", "true");
+    await expect(mark).toHaveCSS("font-family", /Jejeg/);
   }
-  const ha = solver.table.byId.get("ha")!.char;
+  const ha = solver.table.byId.get("pa")!.char;
   await expect
     .poll(() =>
       page.evaluate((char) => document.fonts.check("32px Jejeg", char), ha),
     )
     .toBe(true);
-  await expect(row(page, 1).locator(".aksara")).toHaveCSS(
-    "font-family",
-    /Jejeg/,
-  );
 });
 
 test("[P-B03] on a fresh install only unit 1 is ready", async ({ page }) => {
   await gotoRoute(page, "");
-  await expect(rowButton(page, 1)).toContainText(id["unitStatusReady"]!);
+  await expect(rowButton(page, 1)).toHaveAttribute("data-status", "ready");
   await expect(rowButton(page, 1)).not.toHaveAttribute("aria-disabled", "true");
   for (let n = 2; n <= solver.content.units.length; n++) {
     await expect(rowButton(page, n)).toContainText(id["unitStatusLocked"]!);
@@ -215,7 +219,7 @@ test("[P-B06][P-B07] the teacher button opens the teacher page with both cards",
   await expect(
     page.getByRole("heading", { level: 1, name: id["teacherTitle"]! }),
   ).toBeVisible();
-  const slips = page.locator("main .slip");
+  const slips = page.locator("main .surface:visible");
   await expect(slips).toHaveCount(2);
   await expect(slips.nth(0).getByRole("heading")).toHaveText(
     id["deviationTitle"]!,
@@ -236,66 +240,178 @@ test("[P-B06][P-B07] the teacher button opens the teacher page with both cards",
   await expectNoHorizontalOverflow(page);
 });
 
-test("[P-B08] the meet phase walks every glyph of unit 1", async ({ page }) => {
+test("[P-B08] the first meet card shows glyph one with its counter, name, sound and a write button", async ({
+  page,
+}) => {
   await openLesson(page, first().id);
   await expect(
-    page.getByRole("heading", { level: 1, name: id["lessonTitle"]! }),
+    page.getByRole("heading", { level: 1, name: first().name }),
   ).toBeVisible();
   const firstUnit = first();
-  for (const [i, glyphId] of firstUnit.glyphs.entries()) {
+  const info = solver.table.byId.get(firstUnit.glyphs[0]!)!;
+  await expect(page.locator(".meet__head .eyebrow")).toHaveText(
+    fmt(id["meetEyebrow"]!, {
+      unit: splitUnitName(firstUnit.name).head ?? firstUnit.name,
+    }),
+  );
+  await expect(page.locator(".meet .visually-hidden")).toHaveText(
+    fmt(id["meetProgressLabel"]!, {
+      number: 1,
+      total: firstUnit.glyphs.length,
+    }),
+  );
+  await expect(page.locator(".meet__glyph .aksara")).toHaveText(info.char);
+  await expect(page.locator(".meet__glyph")).toHaveAccessibleName(
+    fmt(id["aksaraName"]!, { reading: info.pujl }),
+  );
+  await expect(page.locator(".meet__foot .eyebrow")).toHaveText(
+    id["readingLabel"]!,
+  );
+  await expect(page.locator(".meet__foot .reading")).toHaveText(info.pujl);
+  await expect(
+    page.getByRole("button", { name: id["tryWritingButton"]! }),
+  ).toBeVisible();
+  await expectAccessible(page);
+  await expectTouchTargets(page);
+  await expectNoHorizontalOverflow(page);
+  await shoot(page, "meet");
+});
+
+test("[P-B19] unit 1 goes glyph by glyph: meet, trace, that glyph's question, next glyph, then done", async ({
+  page,
+}) => {
+  await openLesson(page, first().id);
+  const glyphs = first().glyphs;
+  for (const [i, glyphId] of glyphs.entries()) {
     const info = solver.table.byId.get(glyphId)!;
-    await expect(page.locator(".lesson .chip--count")).toHaveText(
-      `${i + 1}/${firstUnit.glyphs.length}`,
+    await expect(page.locator(".meet .visually-hidden")).toHaveText(
+      fmt(id["meetProgressLabel"]!, { number: i + 1, total: glyphs.length }),
     );
-    await expect(page.locator(".flashcard .aksara")).toHaveText(info.char);
-    await expect(page.locator(".flashcard__name")).toHaveText(info.name);
-    await expect(page.locator(".flashcard .chip")).toHaveText(
-      `${id["soundLabel"]!} · ${info.pujl}`,
+    const chips = await page
+      .locator(".meet-progress .chip")
+      .evaluateAll((els: HTMLElement[]) =>
+        els.map((el) => ({
+          state: el.dataset["state"],
+          mark: el.querySelector("svg") !== null,
+          lifted: getComputedStyle(el).boxShadow !== "none",
+          dashed: getComputedStyle(el).borderStyle === "dashed",
+        })),
+      );
+    // Each state differs by more than colour: a check, a shadow, a dashed frame.
+    expect(chips).toEqual(
+      glyphs.map((_, p) =>
+        p < i
+          ? { state: "done", mark: true, lifted: false, dashed: false }
+          : p === i
+            ? { state: "current", mark: false, lifted: true, dashed: false }
+            : { state: "upcoming", mark: false, lifted: false, dashed: true },
+      ),
     );
+    await expect(page.locator(".meet__glyph .aksara")).toHaveText(info.char);
+    await page.getByRole("button", { name: id["tryWritingButton"]! }).click();
+
+    await expect(page.locator(".lesson .trace")).toBeVisible();
+    await expect(page.locator(".trace__reading")).toHaveText(info.pujl);
     if (i === 0) {
       await expectAccessible(page);
-      await expectTouchTargets(page);
-      await expectNoHorizontalOverflow(page);
-      await shoot(page, "meet");
+      await shoot(page, "trace");
     }
+    await page.getByRole("button", { name: id["traceSkip"]! }).click();
+
+    const q = await readQuestion(page);
+    expect(q.number).toBe(i + 1);
+    expect(solver.targetIds(q.prompt)).toContain(glyphId);
+    await page
+      .locator(".answers button")
+      .nth(solver.correctIndex(q.prompt, q.options))
+      .click();
     await continueButton(page).click();
   }
-  await expect(page.locator(".progress")).toBeVisible();
+  await expect(page.locator(".lesson-done")).toBeVisible();
+  expect(
+    (await readStore<UnitCompletionRow>(page, UNIT_COMPLETIONS)).map(
+      (r) => r.unitId,
+    ),
+  ).toEqual([first().id]);
+  expect(
+    (await readStore<SrsItemRow>(page, SRS_ITEMS)).map((r) => r.itemId).sort(),
+  ).toEqual([...glyphs].sort());
+});
+
+test("[P-B19] wulu and suku are not base letters: no trace screen, a question after each meet", async ({
+  page,
+}) => {
+  await seedOldCompletions(page, [first().id]);
+  await openLesson(page, wuluSuku().id);
+  const glyphs = wuluSuku().glyphs;
+  for (const [i, glyphId] of glyphs.entries()) {
+    const info = solver.table.byId.get(glyphId)!;
+    await expect(page.locator(".meet .visually-hidden")).toHaveText(
+      fmt(id["meetProgressLabel"]!, { number: i + 1, total: glyphs.length }),
+    );
+    await expect(page.locator(".meet__glyph .aksara")).toHaveText(info.char);
+    await expect(
+      page.getByRole("button", { name: id["tryWritingButton"]! }),
+    ).toHaveCount(0);
+    await continueButton(page).click();
+    const q = await readQuestion(page);
+    expect(q.number).toBe(i + 1);
+    await expect(page.locator(".trace")).toHaveCount(0);
+    expect(solver.targetIds(q.prompt)).toContain(glyphId);
+    await page
+      .locator(".answers button")
+      .nth(solver.correctIndex(q.prompt, q.options))
+      .click();
+    await continueButton(page).click();
+  }
+  await expect(page.locator(".lesson-done")).toBeVisible();
 });
 
 test("[P-B11] the question view shows the progress, a prompt card and one button per option", async ({
   page,
 }) => {
+  // Pin the seed so the first glyph is asked glyph to sound and the second
+  // sound to glyph; the kind of each follows the shuffled position.
+  await pinSeed(
+    page,
+    first(),
+    (plan) =>
+      plan[0]?.kind === "glyphToSound" && plan[1]?.kind === "soundToGlyph",
+  );
   await openLesson(page, first().id);
   const n = first().glyphs.length;
-  await walkMeet(page, n);
+  await advanceToQuestion(page, solver);
   const q = await readQuestion(page);
   expect(q.number).toBe(1);
   expect(q.total).toBe(n);
-  await expect(page.locator(".kicker")).toHaveText(
+  await expect(page.getByRole("progressbar")).toHaveAccessibleName(
     fmt(id["questionProgress"]!, { number: 1, total: n }),
   );
   // A confusion partner is forced in even when untaught (decision 10).
   expect(q.options.length).toBeGreaterThanOrEqual(3);
   expect(q.options.length).toBeLessThanOrEqual(4);
   expect(new Set(q.options).size).toBe(q.options.length);
-  await expect(page.locator(".options button")).toHaveCount(q.options.length);
-  // Unit 1 starts with the first question as glyph to sound.
+  await expect(page.locator(".answers button")).toHaveCount(q.options.length);
   expect(q.prompt).toHaveProperty("glyph");
-  await expect(page.locator(".options")).not.toHaveClass(/options--grid/);
+  await expect(page.locator(".quiz__eyebrow")).toHaveText(
+    fmt(id["questionEyebrowGlyphToSound"]!, { number: 1 }),
+  );
   await expectAccessible(page);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);
   await shoot(page, "question");
 
   await page
-    .locator(".options button")
+    .locator(".answers button")
     .nth(solver.correctIndex(q.prompt, q.options))
     .click();
   await continueButton(page).click();
+  await advanceToQuestion(page, solver);
   const second = await readQuestion(page);
   expect(second.prompt).toHaveProperty("sound");
-  await expect(page.locator(".options")).toHaveClass(/options--grid/);
+  await expect(page.locator(".quiz__eyebrow")).toHaveText(
+    fmt(id["questionEyebrowSoundToGlyph"]!, { number: 2 }),
+  );
   expect(second.options.length).toBeGreaterThanOrEqual(3);
   expect(second.options.length).toBeLessThanOrEqual(4);
   expect(new Set(second.options).size).toBe(second.options.length);
@@ -304,22 +420,94 @@ test("[P-B11] the question view shows the progress, a prompt card and one button
   await shoot(page, "question-sound");
 });
 
+test("[P-B11] a three-option question lays its answers out in 3 columns, a four-option one in 2", async ({
+  page,
+}) => {
+  await openLesson(page, first().id);
+  let seen = 0;
+  await playLesson(page, solver, first().id, {
+    navigate: false,
+    onQuestion: async (p, question) => {
+      const tiles = p.locator(".lesson .answers button");
+      await expect(tiles).toHaveCount(question.options.length);
+      const columns = new Set(
+        await tiles.evaluateAll((els) =>
+          els.map((el) => Math.round(el.getBoundingClientRect().x)),
+        ),
+      );
+      expect(columns.size).toBe(question.options.length === 3 ? 3 : 2);
+      seen += 1;
+      await tiles
+        .nth(solver.correctIndex(question.prompt, question.options))
+        .click();
+      await expect(p.locator(".lesson").getByRole("status")).toBeVisible();
+    },
+  });
+  expect(seen).toBe(first().glyphs.length);
+});
+
+test("[P-B12] the feedback row carries the stamp and a hand explanation quoting the glyph's reading", async ({
+  page,
+}) => {
+  await openLesson(page, first().id);
+  await advanceToQuestion(page, solver);
+  const q = await readQuestion(page);
+  const target = solver.table.byId.get(solver.targetIds(q.prompt)[0]!)!;
+  await page
+    .locator(".answers button")
+    .nth(solver.correctIndex(q.prompt, q.options))
+    .click();
+  const row = page.locator(".lesson .feedback-row");
+  await expect(row.locator(".stamp")).toHaveText(id["answerCorrect"]!);
+  await expect(row.locator(".hand")).toHaveText(
+    fmt(id["feedbackGlyphReads"]!, {
+      aksara: target.char,
+      reading: target.pujl,
+    }),
+  );
+  await expect(row.locator(".hand .reading")).toHaveText(target.pujl);
+  await continueButton(page).click();
+
+  await advanceToQuestion(page, solver);
+  const second = await readQuestion(page);
+  const correct = solver.correctIndex(second.prompt, second.options);
+  await page
+    .locator(".answers button")
+    .nth((correct + 1) % second.options.length)
+    .click();
+  await expect(row.locator(".stamp")).toHaveText(id["answerWrong"]!);
+  await expect(row.locator(".hand .reading")).toHaveText(
+    solver.table.byId.get(solver.targetIds(second.prompt)[0]!)!.pujl,
+  );
+});
+
+test("[P-B21] the pa meet card shows its shape note", async ({ page }) => {
+  await openLesson(page, first().id);
+  await expect(page.locator(".meet__note")).toHaveText("Kait dan kaki.");
+});
+
+test("[P-B21] the wulu meet card shows no note row", async ({ page }) => {
+  await seedOldCompletions(page, [first().id]);
+  await openLesson(page, wuluSuku().id);
+  await expect(page.locator(".meet")).toBeVisible();
+  await expect(page.locator(".meet__note")).toHaveCount(0);
+});
+
 test("[P-B12] feedback shows right and wrong answers; the last question gets feedback too (W05)", async ({
   page,
 }) => {
   await openLesson(page, first().id);
-  await walkMeet(page, first().glyphs.length);
+  await advanceToQuestion(page, solver);
 
   // Right answer on the first question.
   let q = await readQuestion(page);
   const right = solver.correctIndex(q.prompt, q.options);
-  await page.locator(".options button").nth(right).click();
-  const status = page.getByRole("status");
+  await page.locator(".answers button").nth(right).click();
+  const status = page.locator(".lesson .feedback-row .stamp");
   await expect(status).toHaveText(id["answerCorrect"]!);
-  await expect(status).toHaveClass(/feedback--correct/);
-  await expect(page.locator(".options button.is-correct")).toHaveCount(1);
-  await expect(page.locator(".options button.is-wrong")).toHaveCount(0);
-  await expect(page.locator(".options button.is-correct")).toHaveText(
+  await expect(page.locator(".answers button.is-correct")).toHaveCount(1);
+  await expect(page.locator(".answers button.is-wrong")).toHaveCount(0);
+  await expect(page.locator(".answers button.is-correct")).toHaveText(
     q.options[right]!,
   );
   await expectAccessible(page);
@@ -328,17 +516,17 @@ test("[P-B12] feedback shows right and wrong answers; the last question gets fee
   await continueButton(page).click();
 
   // Wrong answer on the second.
+  await advanceToQuestion(page, solver);
   q = await readQuestion(page);
   const correct = solver.correctIndex(q.prompt, q.options);
   const wrong = (correct + 1) % q.options.length;
-  await page.locator(".options button").nth(wrong).click();
+  await page.locator(".answers button").nth(wrong).click();
   await expect(status).toHaveText(id["answerWrong"]!);
-  await expect(status).toHaveClass(/feedback--wrong/);
-  await expect(page.locator(".options button.is-wrong")).toHaveCount(1);
-  await expect(page.locator(".options button.is-wrong")).toHaveText(
+  await expect(page.locator(".answers button.is-wrong")).toHaveCount(1);
+  await expect(page.locator(".answers button.is-wrong")).toHaveText(
     q.options[wrong]!,
   );
-  await expect(page.locator(".options button.is-correct")).toHaveText(
+  await expect(page.locator(".answers button.is-correct")).toHaveText(
     q.options[correct]!,
   );
   await expectAccessible(page);
@@ -349,27 +537,28 @@ test("[P-B12] feedback shows right and wrong answers; the last question gets fee
 
   // Answer through to the last question: feedback first, done after Continue.
   for (;;) {
+    await advanceToQuestion(page, solver);
     q = await readQuestion(page);
     await page
-      .locator(".options button")
+      .locator(".answers button")
       .nth(solver.correctIndex(q.prompt, q.options))
       .click();
     await expect(status).toHaveText(id["answerCorrect"]!);
     if (q.number === q.total) break;
     await continueButton(page).click();
   }
-  await expect(page.locator(".trophy")).toHaveCount(0);
+  await expect(page.locator(".lesson-done")).toHaveCount(0);
   expect(await readStore<UnitCompletionRow>(page, UNIT_COMPLETIONS)).toEqual(
     [],
   );
   await continueButton(page).click();
-  await expect(page.locator(".trophy")).toBeVisible();
+  await expect(page.locator(".lesson-done")).toBeVisible();
 });
 
 test("[P-B14] the done view reports the score and Back returns to the ladder; the unit is saved and its glyphs queued", async ({
   page,
 }) => {
-  await completeLesson(page, first().id);
+  await completeLesson(page, solver, first().id);
   await expect(
     page.getByRole("heading", {
       level: 2,
@@ -394,7 +583,7 @@ test("[P-B14] the done view reports the score and Back returns to the ladder; th
     [...first().glyphs].sort(),
   );
 
-  await page.locator(".lesson__foot").getByRole("button").click();
+  await page.locator(".lesson-done .bar").getByRole("button").click();
   await expect.poll(() => new URL(page.url()).hash).toBe("#/");
   await expect(page.locator(".ladder")).toBeVisible();
 });
@@ -405,22 +594,24 @@ test("[P-B05] after a lesson the ladder shows unit 1 completed and unit 2 ready 
   await gotoRoute(page, "");
   await rowButton(page, 1).click();
   await expect(page.locator(".lesson")).toBeVisible();
-  await walkMeet(page, first().glyphs.length);
-  for (;;) {
-    const q = await readQuestion(page);
-    await page
-      .locator(".options button")
-      .nth(solver.correctIndex(q.prompt, q.options))
-      .click();
-    await continueButton(page).click();
-    if (q.number === q.total) break;
-  }
-  await page.locator(".lesson__foot").getByRole("button").click();
+  await playLesson(page, solver, first().id, { navigate: false });
+  await page.locator(".lesson-done .bar").getByRole("button").click();
   await expect(page.locator(".ladder")).toBeVisible();
   await expect(rowButton(page, 1)).toContainText(id["unitStatusCompleted"]!);
-  await expect(rowButton(page, 2)).toContainText(id["unitStatusReady"]!);
+  await expect(rowButton(page, 2)).toHaveAttribute("data-status", "ready");
   await expect(rowButton(page, 2)).not.toHaveAttribute("aria-disabled", "true");
   await expect(rowButton(page, 3)).toHaveAttribute("aria-disabled", "true");
+  await expect(page.locator(".top-bar__note:visible")).toHaveText(
+    "3 / 20 aksara",
+  );
+  const done = page.locator(".ladder section").filter({
+    has: page.getByRole("heading", { level: 2, name: id["ladderDone"]! }),
+  });
+  await expect(done.locator("button[data-unit]")).toHaveCount(1);
+  await expect(done.locator("svg").first()).toHaveAttribute(
+    "data-icon",
+    "circle-check",
+  );
   // A completed unit can be replayed.
   await rowButton(page, 1).click();
   await expect
@@ -455,34 +646,32 @@ test("[P-B13] a wrong answer that picks the confusion-pair partner is logged onc
     Math.random = () => value;
   }, pinned!);
 
-  await completeLesson(page, first().id);
-  await openLesson(page, wuluSuku().id);
-  await walkMeet(page, 2);
+  await completeLesson(page, solver, first().id);
 
   let logged = false;
-  for (;;) {
-    const q = await readQuestion(page);
-    const targets = solver
-      .targetIds(q.prompt)
-      .filter((t) => t === "wulu" || t === "suku");
-    const partnerIndex =
-      targets
-        .map((t) => solver.optionFor(partnerOf(t), q.prompt, q.options))
-        .find((i) => i >= 0) ?? -1;
-    if (!logged && "sound" in q.prompt && partnerIndex >= 0) {
-      await page.locator(".options button").nth(partnerIndex).click();
-      await expect(page.getByRole("status")).toHaveText(id["answerWrong"]!);
-      logged = true;
-    } else {
-      await page
-        .locator(".options button")
-        .nth(solver.correctIndex(q.prompt, q.options))
-        .click();
-      await expect(page.getByRole("status")).toHaveText(id["answerCorrect"]!);
-    }
-    if (q.number === q.total) break;
-    await continueButton(page).click();
-  }
+  const lessonOptions = (p: Page) => p.locator(".lesson .answers button");
+  const lessonStatus = (p: Page) => p.locator(".lesson .feedback-row .stamp");
+  await playLesson(page, solver, wuluSuku().id, {
+    onQuestion: async (p, q) => {
+      const targets = solver
+        .targetIds(q.prompt)
+        .filter((t) => t === "wulu" || t === "suku");
+      const partnerIndex =
+        targets
+          .map((t) => solver.optionFor(partnerOf(t), q.prompt, q.options))
+          .find((i) => i >= 0) ?? -1;
+      if (!logged && "sound" in q.prompt && partnerIndex >= 0) {
+        await lessonOptions(p).nth(partnerIndex).click();
+        await expect(lessonStatus(p)).toHaveText(id["answerWrong"]!);
+        logged = true;
+      } else {
+        await lessonOptions(p)
+          .nth(solver.correctIndex(q.prompt, q.options))
+          .click();
+        await expect(lessonStatus(p)).toHaveText(id["answerCorrect"]!);
+      }
+    },
+  });
   expect(logged).toBe(true);
   const rows = await readStore<MistakeLogRow>(page, MISTAKE_LOGS);
   expect(rows.map((r) => [r.confusionPair, r.count])).toEqual([
@@ -504,14 +693,13 @@ test("[P-B15] meet to question transitions animate, and not under reduced motion
     () =>
       new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
   );
-  await continueButton(page).click();
+  await page.locator(".meet .bar__action--primary").click();
+  await page.locator(".lesson .trace").waitFor();
   expect(await running(), "animation after a transition").toBeGreaterThan(0);
 
   await page.emulateMedia({ reducedMotion: "reduce" });
-  for (let i = 0; i < first().glyphs.length - 1; i++) {
-    await continueButton(page).click();
-  }
-  await page.locator(".progress").waitFor();
+  await advanceToQuestion(page, solver);
+  await page.locator(".quiz").waitFor();
   await page.evaluate(
     () =>
       new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
@@ -542,14 +730,12 @@ test.describe("English interface", () => {
   }) => {
     await gotoRoute(page, "");
     await expect(
-      page.getByRole("heading", { level: 1, name: en["navLadder"]! }),
+      page.getByRole("heading", { level: 1, name: en["ladderTitle"]! }),
     ).toBeVisible();
-    await expect(rowButton(page, 1)).toContainText(en["unitStatusReady"]!);
+    await expect(rowButton(page, 1)).toHaveAttribute("data-status", "ready");
     await expect(rowButton(page, 2)).toContainText(en["unitStatusLocked"]!);
     for (const [i, u] of solver.content.units.entries()) {
-      await expect(row(page, i + 1).locator(".unit__name")).toContainText(
-        u.name,
-      );
+      await expect(rowButton(page, i + 1)).toContainText(u.name);
     }
     await expectAccessible(page);
 
@@ -561,16 +747,20 @@ test.describe("English interface", () => {
 
     await rowButton(page, 1).click();
     const info = solver.table.byId.get(first().glyphs[0]!)!;
-    await expect(page.locator(".flashcard .chip")).toHaveText(
-      `${en["soundLabel"]!} · ${info.pujl}`,
+    await expect(page.locator(".meet .eyebrow").first()).toHaveText(
+      fmt(en["meetEyebrow"]!, {
+        unit: splitUnitName(first().name).head ?? first().name,
+      }),
     );
-    await expect(page.locator(".flashcard__name")).toHaveText(info.name);
+    await expect(page.locator(".meet__note")).toHaveText("Hook and leg.");
+    await expect(page.locator(".meet__foot .reading")).toHaveText(info.pujl);
     await expect(
-      continueButton(page).or(
-        page.getByRole("button", { name: en["continueButton"]! }),
-      ),
+      page.getByRole("button", { name: en["tryWritingButton"]! }),
     ).toBeVisible();
-    await page.getByRole("button", { name: en["continueButton"]! }).click();
+    await page.getByRole("button", { name: en["tryWritingButton"]! }).click();
+    await expect(
+      page.getByRole("button", { name: en["traceSkip"]! }),
+    ).toBeVisible();
     await expectAccessible(page);
   });
 });
@@ -580,34 +770,34 @@ test("[P-A11Y] focus stays in the lesson after every step instead of falling to 
 }) => {
   const body = () =>
     page.evaluate(() => document.activeElement === document.body);
-  const proceed = page.getByRole("button", { name: id["continueButton"]! });
+  const tryWriting = page.getByRole("button", {
+    name: id["tryWritingButton"]!,
+  });
+  const checkTrace = page.getByRole("button", { name: id["traceCheck"]! });
+  const skipTrace = page.getByRole("button", { name: id["traceSkip"]! });
   await gotoRoute(page, `#/lesson/${first().id}`);
-  const glyphs = first().glyphs.length;
 
-  // Each meet card puts focus on Continue.
-  for (let i = 0; i < glyphs; i++) {
-    await expect(page.locator(".lesson .chip--count")).toHaveText(
-      `${i + 1}/${glyphs}`,
-    );
-    if (i > 0) await expect(proceed).toBeFocused();
-    await proceed.click();
-  }
+  // The first meet card is focused by the page; "Coba tulis" opens the trace
+  // screen, whose primary action takes focus.
+  await expect(tryWriting).toBeVisible();
+  await tryWriting.click();
+  await expect(page.locator(".lesson .trace")).toBeVisible();
+  await expect(checkTrace).toBeFocused();
+  await skipTrace.click();
 
   // A new question focuses its first option; an answer focuses the feedback.
-  await expect(page.locator(".options button").first()).toBeFocused();
+  await expect(page.locator(".answers button").first()).toBeFocused();
   await answerCurrentQuestion(page, solver);
-  await expect(page.locator(".feedback")).toBeFocused();
+  await expect(page.locator(".feedback-row")).toBeFocused();
   expect(await body()).toBe(false);
-  await proceed.click();
-  await expect(page.locator(".options button").first()).toBeFocused();
+  await continueButton(page).click();
+
+  // The next glyph's meet card puts focus on its button.
+  await expect(tryWriting).toBeFocused();
+  await playLesson(page, solver, first().id, { navigate: false });
 
   // Finish the lesson: the done heading takes focus.
-  for (;;) {
-    const q = await answerCurrentQuestion(page, solver);
-    await proceed.click();
-    if (q.number === q.total) break;
-  }
-  await expect(page.locator(".done__title")).toBeFocused();
+  await expect(page.locator(".lesson-done__title")).toBeFocused();
 });
 
 test("[P-S10] a storage read that fails after boot shows the storage error with a retry, on the ladder and in a lesson", async ({
@@ -648,19 +838,15 @@ test("[P-S10] a storage read that fails after boot shows the storage error with 
 });
 
 const ladderStatuses = async (page: Page): Promise<string[]> => {
-  const labels = [
-    [id["unitStatusCompleted"]!, "completed"],
-    [id["unitStatusReady"]!, "ready"],
-    [id["unitStatusLocked"]!, "locked"],
-  ] as const;
-  const rows = page.locator(".ladder > li button.unit");
-  const count = await rows.count();
-  const out: string[] = [];
-  for (let i = 0; i < count; i++) {
-    const text = (await rows.nth(i).textContent()) ?? "";
-    out.push(labels.find(([label]) => text.includes(label))?.[1] ?? "?");
+  const byUnit = new Map<string, string>();
+  const all = page.locator("button[data-unit][data-status]");
+  for (let i = 0; i < (await all.count()); i++) {
+    byUnit.set(
+      (await all.nth(i).getAttribute("data-unit")) ?? "",
+      (await all.nth(i).getAttribute("data-status")) ?? "?",
+    );
   }
-  return out;
+  return solver.content.units.map((u) => byUnit.get(u.id) ?? "missing");
 };
 
 async function seedOldCompletions(page: Page, ids: string[]): Promise<void> {

@@ -1,0 +1,50 @@
+[
+  {
+    "file": "screens/01-learn-path.html",
+    "png": "screenshots/01-learn-path.png",
+    "title": "Learn path (home)",
+    "source": "source/E-Path.dc.html"
+  },
+  {
+    "file": "screens/02-meet-aksara.html",
+    "png": "screenshots/02-meet-aksara.png",
+    "title": "Meet the aksara (Kenalan card)",
+    "source": "source/E-Card.dc.html"
+  },
+  {
+    "file": "screens/03-trace.html",
+    "png": "screenshots/03-trace.png",
+    "title": "Trace practice",
+    "source": "source/E-Trace.dc.html"
+  },
+  {
+    "file": "screens/04-quiz.html",
+    "png": "screenshots/04-quiz.png",
+    "title": "Quiz",
+    "source": "source/E-Quiz.dc.html"
+  },
+  {
+    "file": "screens/05-chart.html",
+    "png": "screenshots/05-chart.png",
+    "title": "Aksara chart",
+    "source": "source/E-Chart.dc.html"
+  },
+  {
+    "file": "screens/06-chart-detail.html",
+    "png": "screenshots/06-chart-detail.png",
+    "title": "Chart detail sheet (ha)",
+    "source": "source/E-ChartDetail.dc.html"
+  },
+  {
+    "file": "screens/07-converter.html",
+    "png": "screenshots/07-converter.png",
+    "title": "Converter",
+    "source": "source/E-Convert.dc.html"
+  },
+  {
+    "file": "screens/08-review.html",
+    "png": "screenshots/08-review.png",
+    "title": "Review",
+    "source": "source/E-Review.dc.html"
+  }
+]

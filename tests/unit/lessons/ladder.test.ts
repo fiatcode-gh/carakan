@@ -4,7 +4,6 @@ import {
   contentFor,
   readContent,
 } from "../../../src/content/content-repository.ts";
-import { GlyphInfoTable } from "../../../src/content/glyph-info-table.ts";
 import { RetiredUnit, Unit } from "../../../src/content/unit.ts";
 import { LearnerProgress } from "../../../src/core/db/learner-progress.ts";
 import { UnitCompletionRepository } from "../../../src/core/db/unit-completion-repository.ts";
@@ -14,7 +13,6 @@ import {
   computeLadder,
   LadderModel,
   ladderModel,
-  ladderPreview,
   unitsCompletedByRetired,
 } from "../../../src/features/lessons/ladder.ts";
 import { loadFromPublic, loadView } from "../../support/content-files.ts";
@@ -45,8 +43,7 @@ const statusesOf = (done: string[]) =>
   computeLadder(units, new Set(done)).statuses.map((e) => e.status);
 
 async function content() {
-  const loaded = await loadView(kajRulesetId);
-  return { loaded, table: GlyphInfoTable.build(loaded) };
+  return { loaded: await loadView(kajRulesetId) };
 }
 
 test("[P-B03] first launch: only unit 1 is ready", () => {
@@ -106,55 +103,6 @@ test("[P-B10] (W06) taughtGlyphIds is the glyph ids of completed units", async (
   expect([...ladder.taughtGlyphIds].sort()).toEqual(
     ["ha", "na", "ca", "ra", "ka", "wulu", "suku"].sort(),
   );
-});
-
-test("[P-B02] no unit glyph starts with a bare combining mark (dotted circle)", async () => {
-  const isCombiningMark = (r: number) =>
-    (r >= 0xa980 && r <= 0xa983) || (r >= 0xa9b3 && r <= 0xa9c0);
-  const { loaded, table } = await content();
-  for (const unit of loaded.units) {
-    for (const id of unit.glyphs) {
-      const char = table.byId.get(id)?.char ?? "";
-      if (char === "") continue;
-      expect(
-        isCombiningMark(char.codePointAt(0)!),
-        `unit ${unit.id} glyph ${id} starts with a bare mark`,
-      ).toBe(false);
-    }
-  }
-});
-
-test("[P-B02] unit 2 sandhangan preview carries each sign on a base", async () => {
-  const isCombiningMark = (r: number) =>
-    (r >= 0xa980 && r <= 0xa983) || (r >= 0xa9b3 && r <= 0xa9c0);
-  const { loaded, table } = await content();
-  const unit = loaded.units.find((u) => u.id === "u2")!;
-  const preview = ladderPreview(unit, table);
-  const runes = Array.from(preview, (c) => c.codePointAt(0)!);
-  runes.forEach((r, i) => {
-    if (isCombiningMark(r)) {
-      expect(i).toBeGreaterThan(0);
-      expect(runes[i - 1], "mark after a space").not.toBe(0x20);
-    }
-  });
-  expect(preview.split(" ").every((c) => Array.from(c).length >= 2)).toBe(true);
-});
-
-test("[P-B02] preview is the first five non-empty glyph chars joined by a space", async () => {
-  const { loaded, table } = await content();
-  const firstUnit = loaded.units[0]!;
-  expect(ladderPreview(firstUnit, table)).toBe(
-    firstUnit.glyphs.map((g) => table.byId.get(g)!.char).join(" "),
-  );
-  const long = loaded.units.find((u) => u.glyphs.length > 5)!;
-  expect(ladderPreview(long, table).split(" ")).toHaveLength(5);
-  const unknown = new Unit({
-    id: "x",
-    name: "x",
-    glyphs: ["nope", "ha"],
-    unlock: "previous",
-  });
-  expect(ladderPreview(unknown, table)).toBe(table.byId.get("ha")!.char);
 });
 
 test("[P-S10] a rejected completions read leaves an error state that a retry clears", async () => {

@@ -2,6 +2,7 @@ import { getContext, setContext } from "svelte";
 import type { Readable } from "svelte/store";
 import type { ContentData } from "../content/content-repository.ts";
 import { GlyphInfoTable } from "../content/glyph-info-table.ts";
+import type { ClipPlayer } from "../core/audio/clip-player.ts";
 import type { LearnerProgress } from "../core/db/learner-progress.ts";
 import type { MistakeLogRepository } from "../core/db/mistake-log-repository.ts";
 import type { UnitCompletionRepository } from "../core/db/unit-completion-repository.ts";
@@ -13,6 +14,8 @@ import type { createI18n } from "../l10n/i18n.ts";
 import type { TabId } from "./router.ts";
 
 export interface Services {
+  /** Recorded sound clips; one player shared by every scope. */
+  readonly clips: ClipPlayer;
   readonly completions: UnitCompletionRepository;
   readonly mistakes: MistakeLogRepository;
   readonly progress: LearnerProgress;

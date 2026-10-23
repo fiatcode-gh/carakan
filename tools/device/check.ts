@@ -26,10 +26,9 @@ import {
 } from "../../src/core/db/schema.ts";
 import { defaultRulesetId } from "../../src/engine/index.ts";
 import {
-  answerCurrentQuestion,
   id,
+  playLesson,
   readStore,
-  walkMeet,
   writeRows,
 } from "../../tests/e2e/support/lesson.ts";
 import { createSolver } from "../../tests/e2e/support/solver.ts";
@@ -130,16 +129,8 @@ async function lesson(page: Page, unitId: string) {
   }
 
   await goto(page, `#/lesson/${unitId}`);
-  await expect(page.locator(".lesson")).toBeVisible();
-  await walkMeet(page, unit.glyphs.length, messages);
-  const next = page.getByRole("button", { name: messages["continueButton"]! });
-  for (;;) {
-    const q = await answerCurrentQuestion(page, solver);
-    await next.click();
-    if (q.number === q.total) break;
-  }
-  await expect(page.locator(".trophy")).toBeVisible();
-  await page.locator(".lesson__foot").getByRole("button").click();
+  await playLesson(page, solver, unitId, { messages, navigate: false });
+  await page.locator(".lesson-done .bar").getByRole("button").click();
   await ready(page);
   return { unitId, completed: true };
 }

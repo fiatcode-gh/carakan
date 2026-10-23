@@ -80,6 +80,34 @@ test("[P-U03] typing shows the engine output; clearing shows nothing", async ({
   await expect(outputOf(page)).toHaveCount(0);
 });
 
+test("[P-U03] the result keeps room below the aksara", async ({ page }) => {
+  await gotoRoute(page, "#/converter");
+  await latinInput(page).fill("aku");
+  const section = outputOf(page);
+  const aksara = section.locator(".aksara");
+  await expect(aksara).toHaveText(successOutput("aku"));
+  await settle(page);
+  const { size, textBottom, sectionBottom, actionsTop } = await aksara.evaluate(
+    (el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const card = el.closest("section")!;
+      const button = card.querySelector("button:not(.cluster-result__hit)")!;
+      return {
+        size: parseFloat(getComputedStyle(el).fontSize),
+        textBottom: range.getBoundingClientRect().bottom,
+        sectionBottom: card.getBoundingClientRect().bottom,
+        actionsTop: button.getBoundingClientRect().top,
+      };
+    },
+  );
+  // The aksara is set at --aksara-xl (4.5rem) and a suku or pasangan
+  // hangs below the baseline, so the card must not clip or crowd it.
+  expect(size).toBe(72);
+  expect(sectionBottom - textBottom).toBeGreaterThanOrEqual(0.6 * size);
+  expect(actionsTop - textBottom).toBeGreaterThanOrEqual(0.6 * size);
+});
+
 test("[P-U02] switching direction clears input and output", async ({
   page,
 }) => {
@@ -267,8 +295,9 @@ test("[P-U08] [W11] [W12] [W13] the picker is a modal sheet with stacked section
   const sheet = picker(page);
   await expect(sheet).toBeVisible();
   await expect(sheet.getByRole("tablist")).toHaveCount(0);
-  const headings = sheet.getByRole("heading", { level: 3 });
+  const headings = sheet.getByRole("heading", { level: 2 });
   await expect(headings).toHaveText([
+    id["glyphPickerTitle"]!,
     id["sectionCarakan"]!,
     id["sectionSwara"]!,
     id["sectionMurda"]!,
@@ -287,7 +316,7 @@ test("[P-U08] [W11] [W12] [W13] the picker is a modal sheet with stacked section
     id["sectionAngka"]!,
     id["sectionPada"]!,
   ]) {
-    const heading = sheet.getByRole("heading", { level: 3, name, exact: true });
+    const heading = sheet.getByRole("heading", { level: 2, name, exact: true });
     await heading.scrollIntoViewIfNeeded();
     await expect(heading).toBeVisible();
   }
