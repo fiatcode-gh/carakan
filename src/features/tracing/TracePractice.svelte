@@ -104,8 +104,16 @@
   </header>
 
   <div class="trace__body">
+    <!-- The result sits above the pad, where the sticky bar cannot cover it. -->
     <div class="trace__hint">
-      <HandNote tilt>{$t("traceHint")}</HandNote>
+      <div class="trace__note">
+        <div class="trace__guide" data-replaced={message !== null}>
+          <HandNote tilt>{$t("traceHint")}</HandNote>
+        </div>
+        <p class="trace__status" role="status" aria-live="polite">
+          {#if message !== null}{$t(message)}{/if}
+        </p>
+      </div>
       <Button variant="quiet" onclick={onfinish}>{$t("traceSkip")}</Button>
     </div>
 
@@ -128,10 +136,6 @@
         </li>
       {/each}
     </ul>
-
-    <p class="trace__status" role="status" aria-live="polite">
-      {#if message !== null}{$t(message)}{/if}
-    </p>
   </div>
 
   <PrimaryBar
@@ -231,6 +235,22 @@
     gap: var(--space-3);
   }
 
+  /* The hint and the result share one cell: the result covers the hint. */
+  .trace__note {
+    display: grid;
+    flex: 1;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .trace__note > * {
+    grid-area: 1 / 1;
+  }
+
+  .trace__guide[data-replaced="true"] {
+    visibility: hidden;
+  }
+
   .trace__slots {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -259,7 +279,6 @@
   }
 
   .trace__status {
-    min-height: 1.5em;
     margin: 0;
     font-weight: var(--weight-bold);
   }

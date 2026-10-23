@@ -348,3 +348,47 @@ for (const glyphId of ["wulu", "nope"]) {
     await expect(page).toHaveURL(/#\/chart$/);
   });
 }
+
+/** The phones the bar used to cover the result on: the user's, and a taller one. */
+for (const viewport of [
+  { width: 392, height: 755 },
+  { width: 390, height: 844 },
+]) {
+  test.describe(`at ${viewport.width}x${viewport.height}`, () => {
+    test.use({ viewport });
+
+    /**
+     * The result line is on screen and clear of the sticky action bar, with the
+     * page at its top: a user who has not scrolled must see it.
+     */
+    async function expectResultInView(page: Page, text: string): Promise<void> {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await expect(status(page)).toHaveText(text);
+      const result = (await status(page).boundingBox())!;
+      const bar = (await page.locator(".trace .bar").boundingBox())!;
+      expect(result.height, "the result has a box").toBeGreaterThan(0);
+      expect(result.y, "below the top of the screen").toBeGreaterThanOrEqual(0);
+      expect(
+        result.y + result.height,
+        "above the action bar",
+      ).toBeLessThanOrEqual(bar.y);
+    }
+
+    test("[P-B20] the result of an empty, a failed and a passed attempt is in view above the bar", async ({
+      page,
+    }) => {
+      await openTrace(page);
+      await button(page, "traceCheck").click();
+      await expectResultInView(page, id["traceEmpty"]!);
+
+      await draw(page, "mouse", await scribble(page));
+      await button(page, "traceCheck").click();
+      await expectResultInView(page, id["traceFail"]!);
+
+      await button(page, "traceClear").click();
+      await traceGlyph(page, "mouse");
+      await button(page, "traceCheck").click();
+      await expectResultInView(page, id["tracePass"]!);
+    });
+  });
+}
