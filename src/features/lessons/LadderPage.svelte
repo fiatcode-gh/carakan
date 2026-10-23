@@ -48,7 +48,7 @@
   );
 </script>
 
-<Page title={$t("ladderTitle")} margin>
+<Page title={$t("ladderTitle")} margin width="wide">
   {#snippet note()}
     {#if $state.kind === "ready"}
       <HandNote tilt
@@ -167,6 +167,18 @@
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+
+  @media (min-width: 48rem) {
+    .ladder__tiles {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 75rem) {
+    .ladder__tiles {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
   }
 
   .ladder__stamp {

@@ -13,6 +13,8 @@
     actions?: Snippet;
     /** Notebook margin line (Learn only). */
     margin?: boolean;
+    /** wide: a tab root's column grows on wide screens. */
+    width?: "reading" | "wide";
     children?: Snippet;
   }
 
@@ -23,11 +25,12 @@
     note,
     actions,
     margin = false,
+    width = "reading",
     children,
   }: Props = $props();
 </script>
 
-<div class="screen">
+<div class={["screen", width === "wide" && "screen--wide"]}>
   {#if chrome === "none"}
     <h1 class="visually-hidden">{title}</h1>
   {:else}

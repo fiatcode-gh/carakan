@@ -216,7 +216,7 @@ button {
 
 .page {
   width: 100%;
-  max-width: var(--content-max);
+  max-width: var(--page-max, var(--content-max));
   margin-inline: auto;
   padding: var(--space-4) var(--gutter) var(--space-9);
 }
@@ -268,6 +268,10 @@ body[data-chrome="tabs"] .page {
 
   body[data-chrome="tabs"] .page {
     padding-bottom: var(--space-9);
+  }
+
+  .screen--wide {
+    --page-max: var(--content-wide);
   }
 
   /* The book draws the margin line on every page. */
