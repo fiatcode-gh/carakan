@@ -177,7 +177,7 @@ test("[P-B20] on wide screens the pad is the phone pad magnified: a genuine trac
   testInfo.annotations.push({ type: "pad-scale", description: String(s) });
   expect(s).toBeGreaterThan(1);
   const box = await padBox(page);
-  expect(Math.abs(Math.round(box.width / s) - 320)).toBeLessThanOrEqual(2);
+  expect(Math.round(box.width / s)).toBe(320);
   const slots = (await page.locator(".trace__slots").boundingBox())!;
   expect(slots.x).toBeGreaterThanOrEqual(box.x + box.width);
   const overflow = await page.evaluate(

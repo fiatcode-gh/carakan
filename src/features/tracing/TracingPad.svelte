@@ -316,12 +316,13 @@
     user-select: none;
   }
 
-  /* Fills the size container its parent gives it (TracePractice), keeping the phone pad's shape. */
+  /* Fills the size container its parent gives it (TracePractice), keeping the phone pad's shape: the inner box (inside the two 2px borders) is 320:336. */
   @media (min-width: 48rem) {
     .trace-pad {
-      width: min(100cqw, 100cqh * 324 / 340);
+      box-sizing: content-box;
+      width: min(100cqw - 4px, (100cqh - 4px) * 320 / 336);
       height: auto;
-      aspect-ratio: 324 / 340;
+      aspect-ratio: 320 / 336;
     }
   }
 

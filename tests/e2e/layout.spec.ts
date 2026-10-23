@@ -8,7 +8,7 @@ import {
   tabIds,
   tabOf,
 } from "../../src/app/router.ts";
-import { SRS_ITEMS } from "../../src/core/db/schema.ts";
+import { MISTAKE_LOGS, SRS_ITEMS } from "../../src/core/db/schema.ts";
 import { kajRulesetId } from "../../src/engine/index.ts";
 import { expectNoHorizontalOverflow, settle } from "./support/a11y.ts";
 import { gotoRoute, tokenColor } from "./support/app.ts";
@@ -156,6 +156,47 @@ test("[P-A11Y] Review puts Hari ini beside the strength list from 64rem", async 
   } else {
     expect(strengths.y).toBeGreaterThanOrEqual(today.y + today.height);
   }
+});
+
+test("[P-A11Y] Review keeps the drill right under Hari ini beside a long strength list", async ({
+  page,
+}) => {
+  test.skip(
+    page.viewportSize()!.width < DESKTOP_MIN_PX,
+    "the two columns start at 64rem",
+  );
+  const now = Date.now();
+  const HOUR = 3_600_000;
+  const longList = [...solver.table.byId.keys()].slice(0, 20).map((itemId) => ({
+    itemId,
+    intervalDays: 3,
+    ease: 2.5,
+    repetitions: 2,
+    dueAt: now + 24 * HOUR,
+    lastReviewedAt: now - HOUR,
+  }));
+  await gotoRoute(page, "");
+  await writeRows(page, SRS_ITEMS, [...reviewSeed(), ...longList]);
+  await writeRows(page, MISTAKE_LOGS, [
+    { confusionPair: "suku-wulu", count: 3, lastAt: now },
+  ]);
+  await page.reload();
+  await page.locator('#app[data-boot="ready"]').waitFor();
+  await gotoRoute(page, "#/review");
+  const drill = page.getByRole("heading", { name: id["drillHeading"]! });
+  await expect(drill).toBeVisible();
+  await expect(page.locator(".review__strengths")).toBeVisible();
+  await settle(page);
+  const today = (await page.locator(".review-today").boundingBox())!;
+  const strengths = (await page.locator(".review__strengths").boundingBox())!;
+  const drillBox = (await page
+    .locator("section:has(> #drill-heading)")
+    .boundingBox())!;
+  expect(strengths.height).toBeGreaterThan(today.height + drillBox.height);
+  const gap = await page.evaluate(() =>
+    parseFloat(getComputedStyle(document.querySelector(".review")!).rowGap),
+  );
+  expect(drillBox.y - (today.y + today.height)).toBeLessThanOrEqual(gap + 1);
 });
 
 test("[P-A11Y] the converter puts input and result side by side from 64rem", async ({

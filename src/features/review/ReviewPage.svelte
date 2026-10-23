@@ -202,6 +202,7 @@
   @media (min-width: 64rem) {
     .review:has(> .review__strengths) {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: auto 1fr;
       align-items: start;
     }
 
