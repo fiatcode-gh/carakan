@@ -53,6 +53,14 @@ describe("parsePrecache", () => {
     const text = sw(`{url:"manifest.webmanifest",revision:"${REV_A}"}`);
     expect(() => parsePrecache(text)).toThrow("index.html is not precached");
   });
+
+  it("throws when an entry does not match the expected revision format", () => {
+    const text = sw(
+      `{url:"index.html",revision:"${REV_A}"},` +
+        `{url:"icon.png",revision:"sha256-abc"}`,
+    );
+    expect(() => parsePrecache(text)).toThrow("parsed 1 of 2 precache entries");
+  });
 });
 
 describe("workboxScript", () => {

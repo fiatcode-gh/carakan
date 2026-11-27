@@ -23,7 +23,7 @@ export function baseUrl(): string {
 }
 
 /** GET without any automatic decompression. */
-export function get(url: string, acceptEncoding?: string): Promise<Fetched> {
+export function get(url: string): Promise<Fetched> {
   const request = url.startsWith("https:") ? httpsRequest : httpRequest;
   return new Promise((resolve, reject) => {
     const req = request(
@@ -31,7 +31,7 @@ export function get(url: string, acceptEncoding?: string): Promise<Fetched> {
       {
         method: "GET",
         agent: false,
-        headers: acceptEncoding ? { "Accept-Encoding": acceptEncoding } : {},
+        headers: { "Accept-Encoding": ACCEPT_ENCODING },
       },
       (res) => {
         const chunks: Buffer[] = [];

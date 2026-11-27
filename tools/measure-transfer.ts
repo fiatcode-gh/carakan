@@ -4,6 +4,7 @@ import { gzipSync } from "node:zlib";
 
 const HEADER_ESTIMATE = 500;
 const BUDGET = 1_000_000;
+const DIST = "dist";
 
 interface DistFile {
   /** Path relative to dist/, with `/` separators. */
@@ -14,7 +15,7 @@ interface DistFile {
   ext: string;
 }
 
-function distFiles(dist = "dist"): DistFile[] {
+function distFiles(): DistFile[] {
   const out: DistFile[] = [];
   const walk = (dir: string): void => {
     for (const name of readdirSync(dir).sort()) {
@@ -23,7 +24,7 @@ function distFiles(dist = "dist"): DistFile[] {
         walk(full);
         continue;
       }
-      const rel = relative(dist, full).split("\\").join("/");
+      const rel = relative(DIST, full).split("\\").join("/");
       out.push({
         rel,
         urlPath: rel === "index.html" ? "/" : `/${rel}`,
@@ -32,12 +33,12 @@ function distFiles(dist = "dist"): DistFile[] {
       });
     }
   };
-  walk(dist);
+  walk(DIST);
   return out;
 }
 
-function readDist(rel: string, dist = "dist"): Buffer {
-  return readFileSync(join(dist, rel));
+function readDist(rel: string): Buffer {
+  return readFileSync(join(DIST, rel));
 }
 
 /** Extensions the estimate counts as gzip-compressed in transit. */

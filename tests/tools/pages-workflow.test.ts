@@ -55,4 +55,16 @@ describe("pages workflow", () => {
     expect(deployJob).toContain("pages: write");
     expect(deployJob).toContain("id-token: write");
   });
+
+  it("serializes runs per ref at workflow level without cancelling queued deploys", () => {
+    const topLevel = wf.slice(0, wf.indexOf("\njobs:\n"));
+    expect(topLevel).toContain(
+      "\nconcurrency:\n  group: pages-${{ github.ref }}\n",
+    );
+    expect(
+      topLevel,
+      "workflow concurrency must keep cancel-in-progress: false",
+    ).toMatch(/^ {2}cancel-in-progress: false$/m);
+    expect(deployJob).not.toContain("concurrency:");
+  });
 });

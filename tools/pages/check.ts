@@ -1,12 +1,5 @@
 import { createHash } from "node:crypto";
-import {
-  ACCEPT_ENCODING,
-  baseUrl,
-  decodedBody,
-  get,
-  headerBytes,
-  urlFor,
-} from "./http.ts";
+import { baseUrl, decodedBody, get, headerBytes, urlFor } from "./http.ts";
 import { parsePrecache, workboxScript } from "./sw-manifest.ts";
 
 const CACHE_CONTROL = "max-age=600";
@@ -38,9 +31,9 @@ function expect(ok: boolean, path: string, message: string): void {
   if (!ok) failures.push(`FAIL ${path}: ${message}`);
 }
 
-async function fetchPath(urlPath: string, url = urlFor(base, urlPath)) {
+async function fetchPath(urlPath: string) {
   requests++;
-  return get(url, ACCEPT_ENCODING);
+  return get(urlFor(base, urlPath));
 }
 
 function contentType(res: { headers: Record<string, unknown> }): string {
@@ -123,7 +116,8 @@ expect(missing.status === 404, "/no-such-path", `status ${missing.status}`);
 
 if (base.startsWith("https:")) {
   const httpUrl = `http:${base.slice("https:".length)}`;
-  const redirect = await fetchPath("/", httpUrl);
+  requests++;
+  const redirect = await get(httpUrl);
   expect(redirect.status === 301, httpUrl, `status ${redirect.status}`);
   const location = redirect.headers["location"];
   expect(
