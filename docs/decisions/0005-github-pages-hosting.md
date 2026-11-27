@@ -1,8 +1,8 @@
 # 0005 — Hosting on GitHub Pages
 
 - Date: 2026-11-27
-- Status: accepted; cutover pending.
-- Work: branch `chore/github-pages`.
+- Status: done.
+- Work: [#16](https://github.com/fiatcode-gh/carakan/pull/16).
 
 ## Context
 
@@ -26,3 +26,15 @@ Carakan ran on the VPS (`fiatcode-infra`, a rootless podman quadlet behind Traef
 - **Certificate gap at the DNS switch.** GitHub issues the certificate only after DNS points at Pages; until then new visitors may see a certificate error, while installed clients keep running from the service worker cache. The switch happens at a quiet time, not during a class.
 - **No server logs.** Carakan has no request logs any more.
 - **The `ghcr.io/fiatcode-gh/carakan` package is kept.** Its images are harmless; deleting them is a separate decision.
+
+## Cutover
+
+Done on 2026-11-27; times are UTC.
+
+- **DNS.** The `carakan` CNAME was switched to `fiatcode-gh.github.io.` and first seen on netcup's authoritative server at 11:07.
+- **Certificate.** GitHub did not request one on its own after DNS moved; there was still none at 12:18. Clearing and re-setting the custom domain in the Pages settings triggered it, and it was approved within seconds (12:19, expires 2027-02-25). HTTPS was enforced at about 12:41; the HTTP → HTTPS 301 took a few minutes to reach every edge.
+- **First Pages build:** `40b6148` (#16).
+- **`pages:check`:** `42 requests, 125 checks, 0 failure(s), total 443356 bytes (budget 1000000)`.
+- **`test:e2e:pages`:** 60 passed. Lighthouse medians: `/` performance 0.99, accessibility 0.98; `/#/chart` 0.98 and 0.99.
+- **Teacher path.** A browser holding the VPS build `25116c7` was offered the update to `40b6148` on its first visit after the switch (the banner showed 9 s after the visit started) and reloaded onto it.
+- **Lesson.** If the certificate is still missing an hour after DNS points at Pages, clear and re-set the custom domain.
