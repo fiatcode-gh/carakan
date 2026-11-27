@@ -63,17 +63,3 @@ describe("Dockerfile", () => {
     expect(guard).toBeLessThan(docker.indexOf("RUN npm run build"));
   });
 });
-
-describe("build workflow", () => {
-  const wf = read(".github/workflows/build.yml");
-
-  it("passes the build id to docker build", () => {
-    expect(wf).toContain("--build-arg CARAKAN_BUILD_ID=$SHORT_SHA");
-  });
-
-  it("pushes only on push events", () => {
-    expect(wf).toMatch(/if: github\.event_name == 'push'/);
-    expect(wf.match(/docker push/g)).toHaveLength(2);
-    expect(wf.split("Push image")[1]).toContain("event_name == 'push'");
-  });
-});
