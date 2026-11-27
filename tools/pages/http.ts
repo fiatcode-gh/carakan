@@ -1,9 +1,13 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
 import { request as httpRequest } from "node:http";
 import { request as httpsRequest } from "node:https";
-import { extname, join, relative } from "node:path";
+import {
+  brotliDecompressSync,
+  gunzipSync,
+  inflateSync,
+  zstdDecompressSync,
+} from "node:zlib";
 
-export const ACCEPT_ENCODING = "gzip, deflate, br, zstd";
+const ACCEPT_ENCODING = "gzip, deflate, br, zstd";
 
 export interface Fetched {
   status: number;
@@ -14,12 +18,12 @@ export interface Fetched {
 }
 
 export function baseUrl(): string {
-  const base = process.env["SERVED_BASE_URL"] ?? "http://localhost:8090/";
+  const base = process.env["PAGES_BASE_URL"] ?? "https://carakan.fiatcode.dev/";
   return base.endsWith("/") ? base : `${base}/`;
 }
 
 /** GET without any automatic decompression. */
-export function get(url: string, acceptEncoding?: string): Promise<Fetched> {
+export function get(url: string): Promise<Fetched> {
   const request = url.startsWith("https:") ? httpsRequest : httpRequest;
   return new Promise((resolve, reject) => {
     const req = request(
@@ -27,7 +31,7 @@ export function get(url: string, acceptEncoding?: string): Promise<Fetched> {
       {
         method: "GET",
         agent: false,
-        headers: acceptEncoding ? { "Accept-Encoding": acceptEncoding } : {},
+        headers: { "Accept-Encoding": ACCEPT_ENCODING },
       },
       (res) => {
         const chunks: Buffer[] = [];
@@ -49,54 +53,16 @@ export function get(url: string, acceptEncoding?: string): Promise<Fetched> {
   });
 }
 
-export interface DistFile {
-  /** Path relative to dist/, with `/` separators. */
-  rel: string;
-  /** Request path: `/` for the index, `/<rel>` otherwise. */
-  urlPath: string;
-  size: number;
-  ext: string;
+/** The response body with its content-encoding undone. */
+export function decodedBody(res: Fetched): Buffer {
+  const enc = res.headers["content-encoding"];
+  if (enc === undefined || enc === "identity") return res.body;
+  if (enc === "gzip") return gunzipSync(res.body);
+  if (enc === "deflate") return inflateSync(res.body);
+  if (enc === "br") return brotliDecompressSync(res.body);
+  if (enc === "zstd") return zstdDecompressSync(res.body);
+  throw new Error(`unsupported content-encoding ${String(enc)}`);
 }
-
-export function distFiles(dist = "dist"): DistFile[] {
-  const out: DistFile[] = [];
-  const walk = (dir: string): void => {
-    for (const name of readdirSync(dir).sort()) {
-      const full = join(dir, name);
-      if (statSync(full).isDirectory()) {
-        walk(full);
-        continue;
-      }
-      const rel = relative(dist, full).split("\\").join("/");
-      out.push({
-        rel,
-        urlPath: rel === "index.html" ? "/" : `/${rel}`,
-        size: statSync(full).size,
-        ext: extname(rel),
-      });
-    }
-  };
-  walk(dist);
-  return out;
-}
-
-export function readDist(rel: string, dist = "dist"): Buffer {
-  return readFileSync(join(dist, rel));
-}
-
-/** Extensions sws compresses (text types and non-woff2 fonts). */
-export const COMPRESSIBLE = new Set([
-  ".html",
-  ".js",
-  ".css",
-  ".json",
-  ".webmanifest",
-  ".svg",
-  ".txt",
-  ".ttf",
-]);
-
-export const MIN_COMPRESS_BYTES = 200;
 
 export function urlFor(base: string, urlPath: string): string {
   return new URL(urlPath.slice(1), base).toString();

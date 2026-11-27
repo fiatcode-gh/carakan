@@ -6,7 +6,7 @@ const RUNS = 3;
 const OUT = ".cache/lighthouse";
 const urls = (
   process.env["LIGHTHOUSE_URLS"] ??
-  "http://localhost:8090/,http://localhost:8090/#/chart"
+  "https://carakan.fiatcode.dev/,https://carakan.fiatcode.dev/#/chart"
 )
   .split(",")
   .map((u) => u.trim())
