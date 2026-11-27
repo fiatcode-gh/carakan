@@ -29,10 +29,10 @@ Revert the offending commit in a pull request and squash-merge it. The revert de
 
 ## 5. One-off Pages setup
 
-Already done; this is for a rebuild.
+Already done on 2026-11-27: `fiatcode.dev` is verified for the account, Pages builds from GitHub Actions with the custom domain set, the DNS CNAME is in place and HTTPS is enforced. The steps are for a rebuild.
 
 1. Verify `fiatcode.dev` in the `fiatcode-gh` account's Pages settings (GitHub, Settings, Pages, Add a domain), so no other account can claim its subdomains.
 2. Enable Pages with GitHub Actions as the source: `gh api -X POST repos/fiatcode-gh/carakan/pages -f build_type=workflow`.
 3. Set the custom domain: `gh api -X PUT repos/fiatcode-gh/carakan/pages -f cname=carakan.fiatcode.dev`. It lives in the Pages settings; the repository has no `CNAME` file.
 4. DNS: `carakan` `CNAME fiatcode-gh.github.io.`
-5. Once `gh api repos/fiatcode-gh/carakan/pages --jq .https_certificate.state` reads `approved`, enforce HTTPS: `gh api -X PUT repos/fiatcode-gh/carakan/pages -F https_enforced=true`.
+5. Once `gh api repos/fiatcode-gh/carakan/pages --jq .https_certificate.state` reads `approved`, enforce HTTPS: `gh api -X PUT repos/fiatcode-gh/carakan/pages -F https_enforced=true`. GitHub may not request the certificate on its own after DNS moves: if it is still missing an hour after DNS points at Pages, clear and re-set the custom domain in the Pages settings.
