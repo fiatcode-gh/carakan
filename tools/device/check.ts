@@ -34,7 +34,7 @@ import {
 import { createSolver } from "../../tests/e2e/support/solver.ts";
 
 const CDP = "http://localhost:9222";
-const DEFAULT_PREFIX = "http://localhost:8090/";
+const DEFAULT_PREFIX = "https://carakan.fiatcode.dev/";
 const READY = '#app[data-boot="ready"]';
 
 const { values, positionals } = parseArgs({

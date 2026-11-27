@@ -25,8 +25,8 @@ export interface StaticServer {
 /**
  * Minimal static server for a directory that can be swapped at runtime, so a
  * test can publish a new build under the same origin. No compression, and
- * `no-cache` like the production image so worker updates never read a stale
- * HTTP cache.
+ * `no-cache` so a swapped build is visible on the next request (production on
+ * GitHub Pages sends `max-age=600`; see `docs/spec.md` section 9).
  */
 export async function startStaticServer(
   root: string,
