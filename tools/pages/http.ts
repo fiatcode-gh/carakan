@@ -7,7 +7,7 @@ import {
   zstdDecompressSync,
 } from "node:zlib";
 
-export const ACCEPT_ENCODING = "gzip, deflate, br, zstd";
+const ACCEPT_ENCODING = "gzip, deflate, br, zstd";
 
 export interface Fetched {
   status: number;
